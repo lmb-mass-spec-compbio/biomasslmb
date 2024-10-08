@@ -1,3 +1,6 @@
+
+
+
 #' Adds new feature describing the average reporter Signal/Noise ratio.
 #'
 #' @description PD column `Average.Reporter.SN` is NA when all tags have missing
@@ -21,9 +24,7 @@
 update_average_sn <- function(obj,
                               sn_col='Average.Reporter.SN'){
 
-  if(class(obj)!="SummarizedExperiment"){
-    stop("`obj` must be a SummarizedExperiment object. Typically it would be the PSM-level quantification, e.g obj['psm']")
-  }
+  check_se_psm(obj)
 
   rowData(obj)[[sn_col]] <- rowMeans(assay(obj), na.rm=TRUE)
 
@@ -59,9 +60,7 @@ filter_TMT_PSMs <- function(obj,
                             sn_col='Average.Reporter.SN',
                             verbose=TRUE){
 
-  if(class(obj)!="SummarizedExperiment"){
-    stop("`obj` must be a SummarizedExperiment object. Typically it would be the PSM-level quantification, e.g obj['psm']")
-  }
+  check_se_psm(obj)
 
   if(verbose) message("Filtering PSMs...")
   if(verbose) message_parse(rowData(obj),

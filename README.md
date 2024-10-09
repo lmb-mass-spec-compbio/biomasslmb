@@ -23,16 +23,43 @@ This is a basic example which shows you how to perform some simple filtering for
 ``` r
 library(QFeatures)
 library(biomasslmb)
+
+
+# Read in PSM-level quantification from TMT experiment (using QFeatures function)
 tmt_qf <- readQFeatures(assayData = psm_tmt_total,
                         quantCols = 36:45, 
                         name = "psms_raw")
 
+# Remove PSMs where protein ID is empty
+tmt_qf[['psms_raw']] <- tmt_qf[['psms_raw']][rowData(tmt_qf[['psms_raw']])$Master.Protein.Accessions!='',]
+
+# Add more accurate average S:N ratio value
 tmt_qf[['psms_raw']] <- update_average_sn(tmt_qf[['psms_raw']])
 
+# Filter PSMs to remove low S:N and/or high interference
 tmt_qf[['psms_filtered']] <- filter_TMT_PSMs(tmt_qf[['psms_raw']], inter_thresh=50, sn_thresh=5)
 
+# Plot the missing values in relation to S:N
 plot_missing_SN(tmt_qf[['psms_filtered']])
 plot_missing_SN_per_sample(tmt_qf[['psms_filtered']])
+
+# Remove PSMs for proteins with fewer than 2 PSMs
+min_psms <- 2
+tmt_qf[['psms_filtered']] <- filter_features_per_protein(tmt_qf[['psms_filtered']], min_features = min_psms)
+
+# Aggregate to protein-level abundances (using QFeatures function)
+tmt_qf <- aggregateFeatures(tmt_qf, 
+                            i = "psms_filtered", 
+                            fcol = "Master.Protein.Accessions",
+                            name = "Protein",
+                            fun = base::colSums,
+                            na.rm = TRUE)
+
+# Replace protein-level quantification values with NA where they derive from fewer
+# than 2 finite PSM-level quantification values
+protein_mask <- get_protein_no_quant_mask(tmt_qf[['psms_filtered']], min_features = min_psms)
+tmt_qf[['Protein']] <- mask_protein_level_quant(tmt_qf[['Protein']], protein_mask)
+
 
 ```
 

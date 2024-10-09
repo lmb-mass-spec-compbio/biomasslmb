@@ -5,7 +5,7 @@
 #' This function visualises this relationship to aid selection of thresholds for
 #' minimal S:N filtering
 #'
-#' @param obj `MSnSet` containing PSM level TMT intensities
+#' @param obj `SummarizedExperiment` containing PSM level TMT intensities
 #' @param sn_column `character` column name for signal:noise values
 #' @param bins `numeric` Number of bins to plot
 #'
@@ -51,7 +51,7 @@ plot_missing_SN <- function(obj,
 #' This function visualises this relationship for each sample to aid selection
 #' of thresholds for minimal S:N filtering.
 #'
-#' @param obj `MSnSet` containing PSM level TMT intensities
+#' @param obj `SummarizedExperiment` containing PSM level TMT intensities
 #' @param sn_column `character` column name for Signal:noise values
 #' @param bins `numeric` Number of bins to plot
 #'

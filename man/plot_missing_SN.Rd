@@ -7,7 +7,7 @@
 plot_missing_SN(obj, sn_column = "Average.Reporter.SN", bins = 20)
 }
 \arguments{
-\item{obj}{\code{MSnSet} containing PSM level TMT intensities}
+\item{obj}{\code{SummarizedExperiment} containing PSM level TMT intensities}
 
 \item{sn_column}{\code{character} column name for signal:noise values}
 

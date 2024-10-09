@@ -20,9 +20,11 @@ remotes::install_github("lmb-mass-spec-compbio/biomasslmb", dependencies = TRUE)
 
 ## Example
 
-This is a basic example which shows you how to perform some simple filtering for PSM-level quantification from TMT proteomics and plot the percentage of missing values in the remaining data.
+This is a basic example which shows you how to perform a routine work flow for generating
+accurate protein-level abundances from PSM level quantification for TMT proteomics.
 
 ``` r
+
 library(QFeatures)
 library(biomasslmb)
 
@@ -41,21 +43,34 @@ crap_accessions <- get_crap_fasta_accessions(crap_fasta_inf)
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
 # - Remove PSMs where protein ID is empty or not unique
-tmt_qf[['psms_raw']] <- filter_features(tmt_qf[['psms_raw']], crap_proteins=crap_accessions)
+tmt_qf[['psms_raw']] <- filter_features(tmt_qf[['psms_raw']],
+  crap_proteins=crap_accessions)
 
 # Add more accurate average S:N ratio value
 tmt_qf[['psms_raw']] <- update_average_sn(tmt_qf[['psms_raw']])
 
 # Filter PSMs to remove low S:N and/or high interference
-tmt_qf[['psms_filtered']] <- filter_TMT_PSMs(tmt_qf[['psms_raw']], inter_thresh=50, sn_thresh=5)
+tmt_qf[['psms_filtered']] <- filter_TMT_PSMs(tmt_qf[['psms_raw']], 
+  inter_thresh=50, sn_thresh=5)
 
 # Plot the missing values in relation to S:N
 plot_missing_SN(tmt_qf[['psms_filtered']])
 plot_missing_SN_per_sample(tmt_qf[['psms_filtered']])
 
+# Add information about where the peptide sequence is within the protein sequence
+# For this, we need a fasta file with the protein sequences
+protein_ids <- rowData(tmt_qf[['psms_filtered']])$Master.Protein.Accessions
+temp_fasta_file <- tempfile()
+make_fasta(protein_ids, temp_fasta_file)
+
+tmt_qf[['psms_filtered']] <- add_peptide_positions(tmt_qf[['psms_filtered']],
+  proteome_fasta=temp_fasta_file)
+
+
 # Remove PSMs for proteins with fewer than 2 PSMs
 min_psms <- 2
-tmt_qf[['psms_filtered']] <- filter_features_per_protein(tmt_qf[['psms_filtered']], min_features = min_psms)
+tmt_qf[['psms_filtered']] <- filter_features_per_protein(tmt_qf[['psms_filtered']],
+  min_features = min_psms)
 
 # Aggregate to protein-level abundances (using QFeatures function)
 tmt_qf <- aggregateFeatures(tmt_qf, 

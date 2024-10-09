@@ -91,7 +91,7 @@ filter_features_per_protein <- function(obj,
 #' @param plot Set TRUE to plot how many proteins are quantified in each sample.
 #'  Horizontal line represents total number of proteins quantified across all samples
 #'
-#' @return `data.frame` with booleon defining whether the protein was quantified from sufficient features
+#' @return `Matrix` defining whether the protein was quantified from sufficient features
 #' @export
 get_protein_no_quant_mask <- function(obj,
                                       min_features,
@@ -131,7 +131,7 @@ get_protein_no_quant_mask <- function(obj,
 #'
 #' @description
 #'
-#' Protein level abundances are more accurately quantified where there are too more
+#' Protein level abundances are more accurately quantified where there are more
 #' features (PSMs/peptides) to summarise from.
 #'
 #' Usually, we are performing the summarisation
@@ -143,8 +143,8 @@ get_protein_no_quant_mask <- function(obj,
 #' to replace protein level quantification values with NA where they were derived from too few quantification values
 #'
 #' @param obj `SummarizedExperiment` with PSM or peptide-level quantification
-#' @param retain_mask `matrix` Matrix detailing whether a protein-level quantification had sufficient lower level
-#'  quantification values for each sample
+#' @param retain_mask `matrix` detailing whether a protein-level quantification had sufficient lower level
+#'  quantification values for each sample. Can be obtained with \code{\link{get_protein_no_quant_mask }}
 #'
 #' @return `SummarizedExperiment` with quantification values replaced by NA where they derive from too few lower feature level quantifications
 #' @export

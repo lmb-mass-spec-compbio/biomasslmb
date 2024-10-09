@@ -11,8 +11,6 @@
 #'
 #' @return `ggplot` stacked bar plot to show S:N vs # missing values
 #' @export
-#' @import dplyr
-#' @import tidyr
 #' @importFrom grDevices colorRampPalette
 plot_missing_SN <- function(obj,
                           sn_column="Average.Reporter.SN",
@@ -56,7 +54,6 @@ plot_missing_SN <- function(obj,
 #' @param bins `numeric` Number of bins to plot
 #'
 #' @return `ggplot` tile plot to show S:N vs # missing values for each sample
-#' @importFrom magrittr %>%
 #' @export
 plot_missing_SN_per_sample <- function(obj,
                                        sn_column="Average.Reporter.SN",

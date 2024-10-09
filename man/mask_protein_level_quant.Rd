@@ -9,14 +9,14 @@ mask_protein_level_quant(obj, retain_mask)
 \arguments{
 \item{obj}{\code{SummarizedExperiment} with PSM or peptide-level quantification}
 
-\item{retain_mask}{\code{matrix} Matrix detailing whether a protein-level quantification had sufficient lower level
-quantification values for each sample}
+\item{retain_mask}{\code{matrix} detailing whether a protein-level quantification had sufficient lower level
+quantification values for each sample. Can be obtained with \code{\link{get_protein_no_quant_mask }}}
 }
 \value{
 \code{SummarizedExperiment} with quantification values replaced by NA where they derive from too few lower feature level quantifications
 }
 \description{
-Protein level abundances are more accurately quantified where there are too more
+Protein level abundances are more accurately quantified where there are more
 features (PSMs/peptides) to summarise from.
 
 Usually, we are performing the summarisation

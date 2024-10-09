@@ -22,7 +22,7 @@ get_protein_no_quant_mask(
 Horizontal line represents total number of proteins quantified across all samples}
 }
 \value{
-\code{data.frame} with booleon defining whether the protein was quantified from sufficient features
+\code{Matrix} defining whether the protein was quantified from sufficient features
 }
 \description{
 Protein level abundances are more accurately quantified where there are too more

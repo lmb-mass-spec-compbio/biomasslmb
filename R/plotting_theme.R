@@ -12,7 +12,6 @@
 #' Default is `TRUE`.
 #'
 #' @return Returns a _theme_ object.
-#' @import ggplot2
 #' @export
 #'
 #' @examples

@@ -47,7 +47,7 @@ get_n_feature_per_prot <- function(obj,
 filter_features_per_protein <- function(obj,
                                         min_features,
                                         master_protein_col = "Master.Protein.Accessions",
-                                        plot = TRUE) {
+                                        plot = FALSE) {
 
   check_se_psm(obj)
 
@@ -96,7 +96,7 @@ filter_features_per_protein <- function(obj,
 get_protein_no_quant_mask <- function(obj,
                                       min_features,
                                       master_protein_col = "Master.Protein.Accessions",
-                                      plot = TRUE) {
+                                      plot = FALSE) {
 
   check_se_psm(obj)
 

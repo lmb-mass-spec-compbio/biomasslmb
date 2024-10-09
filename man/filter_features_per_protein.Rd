@@ -9,7 +9,7 @@ filter_features_per_protein(
   obj,
   min_features,
   master_protein_col = "Master.Protein.Accessions",
-  plot = TRUE
+  plot = FALSE
 )
 }
 \arguments{

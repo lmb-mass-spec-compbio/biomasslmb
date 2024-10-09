@@ -8,7 +8,7 @@ get_protein_no_quant_mask(
   obj,
   min_features,
   master_protein_col = "Master.Protein.Accessions",
-  plot = TRUE
+  plot = FALSE
 )
 }
 \arguments{

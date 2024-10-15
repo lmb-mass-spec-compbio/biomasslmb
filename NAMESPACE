@@ -3,6 +3,7 @@
 export(add_peptide_positions)
 export(check_uniprot_release)
 export(filter_TMT_PSMs)
+export(filter_by_protein_fdr)
 export(filter_features)
 export(filter_features_per_protein)
 export(get_cat_palette)

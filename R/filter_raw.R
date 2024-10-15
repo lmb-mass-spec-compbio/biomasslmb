@@ -43,6 +43,7 @@
 #' @param crap_proteins `character vector`. The protein IDs form the cRAP proteins,
 #' @param filter_associated_crap `logical`. Filter out features which
 #' match a cRAP associated protein.
+#' @param remove_no_quant `logical`. Remove features with no quantification
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @examples
 #' \dontrun{
@@ -81,8 +82,13 @@ filter_features <- function(obj,
                             level = "peptide",
                             filter_crap = TRUE,
                             crap_proteins = NULL,
-                            filter_associated_crap = TRUE) {
+                            filter_associated_crap = TRUE,
+                            remove_no_quant = TRUE) {
+
+
   # check arguments
+  check_se(obj)
+
   stopifnot(level %in% c("PSM", "peptide"))
   if (filter_crap) {
     if (is.null(crap_proteins)) {
@@ -152,9 +158,9 @@ filter_features <- function(obj,
   }
 
   # remove features with quantification warnings if necessary
-  if (silac | TMT & level == "peptide") {
-    obj <- obj[(is.na(rowData(obj)[["Quan.Info"]]) | rowData(obj)[["Quan.Info"]] == ''), ]
-    message_parse(rowData(obj), master_protein_col, "features without quantification removed")
+  if (remove_no_quant) {
+    obj <- obj[rowSums(is.finite(assay(obj)))>0,]
+     message_parse(rowData(obj), master_protein_col, "features without quantification removed")
   }
 
   return(obj)

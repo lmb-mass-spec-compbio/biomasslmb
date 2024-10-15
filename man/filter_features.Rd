@@ -14,7 +14,8 @@ filter_features(
   level = "peptide",
   filter_crap = TRUE,
   crap_proteins = NULL,
-  filter_associated_crap = TRUE
+  filter_associated_crap = TRUE,
+  remove_no_quant = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ protein.}
 
 \item{filter_associated_crap}{\code{logical}. Filter out features which
 match a cRAP associated protein.}
+
+\item{remove_no_quant}{\code{logical}. Remove features with no quantification}
 }
 \value{
 Returns a \code{SummarisedExperiment} with the filtered Proteome Discoverer output.

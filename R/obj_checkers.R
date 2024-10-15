@@ -26,6 +26,16 @@ check_se_psm <- function(obj){
 }
 
 #' @noRd
+check_se_peptide <- function(obj){
+
+  check_null(obj)
+
+  if(class(obj)!="SummarizedExperiment"){
+    stop("`obj` must be a SummarizedExperiment object. It should contain the Peptide-level quantification, e.g obj[['psm']].")
+  }
+}
+
+#' @noRd
 check_se_protein <- function(obj){
 
   check_null(obj)

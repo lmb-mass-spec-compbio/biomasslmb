@@ -10,7 +10,7 @@ theme_biomasslmb(
   base_line_size = base_size/18,
   base_rect_size = base_size/9,
   aspect_square = TRUE,
-  border = TRUE
+  border = FALSE
 )
 }
 \arguments{

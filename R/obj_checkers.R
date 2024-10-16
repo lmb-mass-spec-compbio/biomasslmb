@@ -1,9 +1,30 @@
 #' @noRd
-check_null <- function(obj){
+check_null <- function(obj, object_name='obj'){
   if(is.null(obj)){
-    stop("`obj` is a null object. Did you mistype the QFeatures experiment name?")
+    stop(sprintf("Summarised experiment `%s` is a null object. Did you mistype the QFeatures experiment name?", object_name))
   }
 }
+
+#' @noRd
+check_q <- function(obj){
+
+  check_null(obj)
+
+  if(class(obj)!="QFeatures"){
+    stop("`obj` must be a QFeatures object")
+  }
+}
+
+
+
+#' @noRd
+check_se_exists <- function(obj, i){
+
+  check_null(obj[[i]], object_name=i)
+
+}
+
+
 
 #' @noRd
 check_se <- function(obj){

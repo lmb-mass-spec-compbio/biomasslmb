@@ -25,5 +25,6 @@ Imports:
     cutr,
     dplyr,
     ggplot2,
+    naniar,
     QFeatures,
     tidyr

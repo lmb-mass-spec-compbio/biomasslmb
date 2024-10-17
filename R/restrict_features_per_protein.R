@@ -51,7 +51,7 @@ filter_features_per_protein <- function(obj,
 
   check_se_psm(obj)
 
-  n_feature_per_prot <- get_n_feature_per_prot(obj)
+  n_feature_per_prot <- get_n_feature_per_prot(obj, master_protein_col)
 
   if (plot) {
     p <- ggplot(n_feature_per_prot, aes(log2(n))) +
@@ -100,7 +100,7 @@ get_protein_no_quant_mask <- function(obj,
 
   check_se_psm(obj)
 
-  n_feature_per_prot <- get_n_feature_per_prot(obj)
+  n_feature_per_prot <- get_n_feature_per_prot(obj, master_protein_col)
 
   protein_quant_mask <- n_feature_per_prot %>%
     pivot_wider(names_from=sample, values_from=n, values_fill=0) %>%
@@ -151,6 +151,14 @@ get_protein_no_quant_mask <- function(obj,
 mask_protein_level_quant <- function(obj, retain_mask){
 
   check_se_protein(obj)
+
+  if(length(setdiff(rownames(obj), rownames(retain_mask)))>0){
+    stop('`obj` contains rows (proteins) not in `retain mask`')
+  }
+
+  if(length(setdiff(rownames(obj), rownames(retain_mask)))>0){
+    stop('`retain_mask` contains rows (proteins) not in `obj`')
+  }
 
   colnames(retain_mask) <- remove_x(colnames(retain_mask))
 

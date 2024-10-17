@@ -1,7 +1,7 @@
-#' Filter Proteome Discoverer output
+#' Filter Proteome Discoverer DDA output
 #'
 #' @description This function filters the output .txt files (peptide groups or PSMs) from
-#' Proteome Discoverer based on various criteria.
+#' Proteome Discoverer for DDA, based on various criteria:
 #'
 #' 1. Remove features without a master protein
 #' 2. (Optional) Remove features without a unique master protein  (i.e.
@@ -58,7 +58,7 @@
 #' crap_accessions <- get_crap_fasta_accessions(crap_fasta_inf)
 #'
 #' # filter thg peptides
-#' psm2 <- parse_features(
+#' psm2 <- filter_features_pd_dda(
 #'   obj = tmt_qf[['psms_raw']],
 #'   master_protein_col = "Master.Protein.Accessions",
 #'   protein_col = "Protein.Accessions",
@@ -73,17 +73,17 @@
 #'
 #' }
 #' @export
-filter_features <- function(obj,
-                            master_protein_col = "Master.Protein.Accessions",
-                            protein_col = "Protein.Accessions",
-                            unique_master = TRUE,
-                            silac = FALSE,
-                            TMT = FALSE,
-                            level = "peptide",
-                            filter_crap = TRUE,
-                            crap_proteins = NULL,
-                            filter_associated_crap = TRUE,
-                            remove_no_quant = TRUE) {
+filter_features_pd_dda <- function(obj,
+                                   master_protein_col = "Master.Protein.Accessions",
+                                   protein_col = "Protein.Accessions",
+                                   unique_master = TRUE,
+                                   silac = FALSE,
+                                   TMT = FALSE,
+                                   level = "peptide",
+                                   filter_crap = TRUE,
+                                   crap_proteins = NULL,
+                                   filter_associated_crap = TRUE,
+                                   remove_no_quant = TRUE) {
 
 
   # check arguments

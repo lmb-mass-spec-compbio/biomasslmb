@@ -66,3 +66,11 @@ check_se_protein <- function(obj){
   }
 }
 
+
+#' @noRd
+check_colData_col <- function(obj, col){
+  if(! col %in% colnames(colData(obj))){
+    stop(sprintf("column %s is not in the colData. Available columns are: %s", col, paste(colnames(colData(obj)), collapse=',')))
+  }
+}
+

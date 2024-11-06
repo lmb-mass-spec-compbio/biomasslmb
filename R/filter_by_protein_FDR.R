@@ -34,7 +34,8 @@ filter_by_protein_fdr <- function(obj,
 
   ## Extract protein accessions and corresponding confidence from search output file
   protein_search_output <- proteinData %>%
-    select(!!sym(protein_col_protein), !!sym(protein_FDR_col))
+    select(!!sym(protein_col_protein), !!sym(protein_FDR_col)) %>%
+    distinct()
 
   ## Combine data
   protein_fdr <- left_join(

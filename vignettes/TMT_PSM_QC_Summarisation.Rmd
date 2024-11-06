@@ -76,14 +76,14 @@ tmt_qf[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf[['psms_raw']])
 
 We first perform routine filtering to remove PSMs that:
 
-- Could originate from contaminants. See `?filter_features` for further details, including the removal of 'associated cRAP'.
+- Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated cRAP'.
 - Don't have a unique master protein. 
 
 ```{r}
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
 # - Remove PSMs where protein ID is empty or not unique
-tmt_qf[['psms_filtered']] <- filter_features(tmt_qf[['psms_raw']],
+tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']],
                                              crap_proteins=crap_accessions,
                                              level='PSM',
                                              TMT=TRUE,

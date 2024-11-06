@@ -141,6 +141,9 @@ filter_features_pd_dda <- function(obj,
         message_parse(rowData(obj), master_protein_col, "associated cRAP features removed")
       }
     }
+
+    obj <- obj[rowData(obj)$Contaminant=='False',]
+    message_parse(rowData(obj), master_protein_col, "PD-labelled 'Contaminants' removed")
   }
 
   # remove features without a master protein

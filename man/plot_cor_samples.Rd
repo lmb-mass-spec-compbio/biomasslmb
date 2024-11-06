@@ -4,7 +4,7 @@
 \alias{plot_cor_samples}
 \title{Plot the correlation between sample}
 \usage{
-plot_cor_samples(obj, i, ...)
+plot_cor_samples(obj, i, order = "original", ...)
 }
 \arguments{
 \item{obj}{\code{QFeatures}. Proteomics dataset}
@@ -23,14 +23,10 @@ the correlation values in a heatmap. Samples are not clustered and are ordered
 on the axes in the order they are in the SummarizedExperiment
 }
 \examples{
-set.seed(11)
-library(ggplot2)
-
-df <- diamonds[sample(nrow(diamonds), 1000), ]
 
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
   quantCols = 36:45,
   name = "psms_raw")
 
-cor_sample(obj, 'psms_raw')
+cor_sample(tmt_qf, 'psms_raw')
 }

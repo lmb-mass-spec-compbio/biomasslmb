@@ -12,17 +12,13 @@
 #' @export
 #' @importFrom corrplot corrplot
 #' @examples
-#' set.seed(11)
-#' library(ggplot2)
-#'
-#' df <- diamonds[sample(nrow(diamonds), 1000), ]
 #'
 #' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
 #'   quantCols = 36:45,
 #'   name = "psms_raw")
 #'
-#' cor_sample(obj, 'psms_raw')
-plot_cor_samples <- function(obj, i, ...){
+#' cor_sample(tmt_qf, 'psms_raw')
+plot_cor_samples <- function(obj, i, order='original', ...){
 
   check_q(obj)
 
@@ -30,11 +26,10 @@ plot_cor_samples <- function(obj, i, ...){
 
   corrplot(cor(assay(obj[[i]]),use='complete', method='spearman'),
            method = 'circle',
-           order = 'original',
            type = 'upper',
-           title='Pearson correlation',
+           order=order,
+           tl.col='grey20',
            tl.cex=1,
-           tl.col=rep(get_cat_palette(10), each=3),
            cl.cex=1,
            ...)
 

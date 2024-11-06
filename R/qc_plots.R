@@ -43,7 +43,7 @@ plot_quant <- function(obj,
   }
   else if(method=='density'){
     p <- p +
-      geom_density(aes(intensity, col=sample)) +
+      stat_density(aes(intensity, col=sample), geom="line",position="identity") +
       xlab(intensity_label) +
       ylab("Density")
   }

@@ -1,6 +1,6 @@
 Package: biomasslmb
 Title: BioMass LMB Proteomics Data Analysis Utility Functions 
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: c(
     person(given = "Tom", family = "Smith", role = c("aut", "cre"),
            email = "tsmith@mrc-lmb.cam.ac.uk", comment = c(ORCID = "0000-0002-0697-8777"))
@@ -29,3 +29,4 @@ Imports:
     naniar,
     QFeatures,
     tidyr
+URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/

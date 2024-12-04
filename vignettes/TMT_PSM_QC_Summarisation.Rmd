@@ -26,7 +26,7 @@ Because TMT quantifies from the same MS1 ion for all samples, this standardises 
 
 However, TMT does suffer from ratio compression, which should be avoiding by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2]. 
 
-Here, we will QC and filter the PSM level abundanpkgdown::build_site()ces from PD before summarising them to protein-level abundances.
+Here, we will QC and filter the PSM level abundances from PD before summarising them to protein-level abundances.
 
 # Load required packages
 

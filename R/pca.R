@@ -34,7 +34,7 @@ plot_pca <- function(obj,
   p <- pca$x %>%
     merge(data.frame(colData(obj)), by='row.names') %>%
     ggplot(aes(!!sym(pca_x), !!sym(pca_y))) +
-    geom_point(size=5, colour='grey20', stroke=0.5) +
+
     scale_shape_manual(values=21:25) +
     xlab(sprintf('%s (%s %%)', pca_x, round(var_explained[x], 2))) +
     ylab(sprintf('%s (%s %%)', pca_y, round(var_explained[y], 2))) +
@@ -52,8 +52,11 @@ plot_pca <- function(obj,
 
     check_colData_col(obj, shape_by)
 
-    p <- p + aes(shape=!!sym(shape_by))
+    p <- p + geom_point(size=5, colour='grey20', stroke=0.5) + aes(shape=!!sym(shape_by))
+  } else{
+    p <- p + geom_point(size=5, colour='grey20', stroke=0.5, pch=21)
   }
+
 
   return(p)
 }

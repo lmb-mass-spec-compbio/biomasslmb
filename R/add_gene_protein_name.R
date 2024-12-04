@@ -32,9 +32,11 @@ add_gene_long_protein_name_pd <- function(obj,
 
   rowData(obj)$Master.Protein.gene.name <-
     sapply(strsplit(rowData(obj)[[master_protein_desc_col]], ';'),
-           function(x) paste(
-             ifelse(grepl('GN=', x),gsub('.* GN=(.*) PE.*', '\\1', x), ''),
-             collapse=';'))
+           function(x){
+             if(any(grepl("GN=", x))){
+               paste(gsub(".* GN=(.*) PE.*", "\\1", x[grepl("GN=", x)]), collapse = ";")
+             } else ''
+           })
 
   rowData(obj)$Master.Protein.long.name <-
     sapply(strsplit(rowData(obj)[[master_protein_desc_col]], ';'),

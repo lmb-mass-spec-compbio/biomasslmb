@@ -30,5 +30,6 @@ Imports:
     grDevices,
     naniar,
     QFeatures,
+    robustbase,
     tidyr
 URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/

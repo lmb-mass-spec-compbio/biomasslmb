@@ -534,7 +534,7 @@ plot_go <- function(obj,
     ggplot(aes(x = .data$adj_overrep, y = .data$term_ontology,
                fill = -log10(.data$over_represented_adj_pval))) +
     geom_bar(stat = 'identity') +
-    theme_camprot(base_size = 15, border = FALSE) +
+    theme_biomasslmb(base_size = 15, border = FALSE) +
     scale_fill_continuous(limits = c(0, NA),
                           high = get_cat_palette(1),
                           low = 'grey',
@@ -554,6 +554,51 @@ plot_go <- function(obj,
 
   return(p)
 }
+
+#' Plot selected GO terms
+#'
+#' @description This function plots a set of GO terms of interest.
+#' be run after \code{\link{get_enriched_go}} and \code{\link{estimate_go_overrep}}.
+#' To avoid plotting too many terms, you may wish to use
+#' \code{\link{remove_redundant_go}} first too. A warning is shown if you try
+#' and plot more than 100 GO terms.
+#'
+#' @param goi `character` GO terms of interest
+#' @param foi `character` features (genes/proteins etc) of interest
+#' @param gene2cat `data.frame` with 2 columns containing the mapping between
+#' genes (usually UniProt accessions, Ensembl gene IDs or similar) and GO terms.
+#' @param term_col `character` column name for GO term description.
+#' @param gene_col `character` column name for genes (or protein etc).
+#'
+#' @return Returns a `ggplot` object.
+#'
+#' @export
+plot_go_terms_upset <- function(goi,
+                                foi,
+                                gene2cat,
+                                term_col='TERM',
+                                gene_col='UNIPROTKB'){
+
+  to_plot_upset <- gene2cat %>% filter(!!sym(term_col) %in% goi) %>%
+    filter(!!sym(gene_col) %in% foi) %>%
+    mutate(present=1) %>%
+    select(!!sym(gene_col), !!sym(term_col), present) %>%
+    pivot_wider(names_from=!!sym(term_col), values_from=present) %>%
+    select(-!!sym(gene_col))
+
+  to_plot_upset[is.na(to_plot_upset)] <- 0
+
+  p <- UpSetR::upset(data.frame(to_plot_upset),
+                nsets = length(goi),
+                nintersects = 50,
+                mb.ratio = c(0.5, 0.5),
+                order.by = "freq",
+                decreasing = TRUE)
+  return(p)
+}
+
+
+
 
 #' Perform independent filtering to threshold the over-representation testing
 #' on the number of features in each category to limit the multiple testing burden

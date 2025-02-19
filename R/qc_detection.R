@@ -13,7 +13,7 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 
   check_q(obj)
 
-  samples_present <- longFormat(lfq_qf, rowvars=rowVars) %>%
+  samples_present <- longFormat(obj, rowvars=rowVars) %>%
     data.frame() %>%
     filter(is.finite(value)) %>%
     group_by_at(.vars=c('assay', 'colname', rowVars)) %>%
@@ -29,7 +29,7 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 
   }
 
-  samples_present
+  ungroup(samples_present)
 }
 
 #' Plots the number of samples each feature was detected in for each experiment in a Qfeatures object

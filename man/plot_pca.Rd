@@ -4,7 +4,7 @@
 \alias{plot_pca}
 \title{Create a Principle Component plot from the feature quantification}
 \usage{
-plot_pca(obj, i, colour_by = NULL, shape_by = NULL, x = 1, y = 2)
+plot_pca(obj, i, colour_by = NULL, shape_by = NULL, x = 1, y = 2, ...)
 }
 \arguments{
 \item{obj}{\code{QFeatures}. Proteomics dataset}

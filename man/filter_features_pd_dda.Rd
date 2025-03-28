@@ -9,13 +9,12 @@ filter_features_pd_dda(
   master_protein_col = "Master.Protein.Accessions",
   protein_col = "Protein.Accessions",
   unique_master = TRUE,
-  silac = FALSE,
-  TMT = FALSE,
-  level = "peptide",
-  filter_crap = TRUE,
+  filter_contaminant = TRUE,
+  contaminant_proteins = NULL,
   crap_proteins = NULL,
-  filter_associated_crap = TRUE,
-  remove_no_quant = TRUE
+  filter_associated_contaminant = TRUE,
+  remove_no_quant = TRUE,
+  ...
 )
 }
 \arguments{
@@ -31,20 +30,15 @@ matches.}
 \item{unique_master}{\code{logical}. Filter out features without a unique
 master protein.}
 
-\item{silac}{\code{logical}. Is the experiment a SILAC experiment?}
-
-\item{TMT}{\code{logical}. Is the experiment a TMT experiment?}
-
-\item{level}{\code{string}. Type of input file, must be one of either
-\code{"peptide"} or \code{"PSM"}.}
-
-\item{filter_crap}{\code{logical}. Filter out features which match a cRAP
+\item{filter_contaminant}{\code{logical}. Filter out features which match a contaminant
 protein.}
 
-\item{crap_proteins}{\verb{character vector}. The protein IDs form the cRAP proteins,}
+\item{contaminant_proteins}{\verb{character vector}. The protein IDs form the contaminant proteins}
 
-\item{filter_associated_crap}{\code{logical}. Filter out features which
-match a cRAP associated protein.}
+\item{crap_proteins}{\verb{character vector}. Same as contaminant_proteins. Available for backwards compatibility. Default is NULL. If both contaminant_proteins and crap_proteins are set, an error is thrown.}
+
+\item{filter_associated_contaminant}{\code{logical}. Filter out features which
+match a contaminant associated protein.}
 
 \item{remove_no_quant}{\code{logical}. Remove features with no quantification}
 }
@@ -56,26 +50,25 @@ This function filters the output .txt files (peptide groups or PSMs) from
 Proteome Discoverer for DDA, based on various criteria:
 \enumerate{
 \item Remove features without a master protein
-\item (Optional) Remove features without a unique master protein  (i.e.
+\item Remove features without a unique master protein  (i.e.
 Number.of.Protein.Groups == 1)
-\item (Optional) Remove features matching a cRAP protein
-\item (Optional) Remove features matching any protein associated with
-a cRAP protein (see below)
-\item Remove features without quantification values (only if TMT or SILAC
-are \code{TRUE} and \code{level = "peptide"}.)
+\item Remove features matching a contaminant protein
+\item Remove features matching any protein associated with
+a contaminant protein (see below)
+\item Remove features without quantification values
 }
 }
 \details{
-\strong{Associated cRAP proteins} are proteins which have at least
-one feature shared with a cRAP protein. It has been observed that the cRAP
-fasta files often do not contain all possible cRAP proteins e.g. some features
-can be assigned to a keratin which is not in the provided cRAP database.
+\strong{Associated contaminant proteins} are proteins which have at least
+one feature shared with a contaminant protein. It has been observed that the contaminant
+fasta files often do not contain all possible contaminant proteins e.g. some features
+can be assigned to a keratin which is not in the provided contaminant database.
 
-In the example below, using \code{filter_associated_crap = TRUE} will filter out f2 and f3 in
+In the example below, using \code{filter_associated_contaminant = TRUE} will filter out f2 and f3 in
 addition to f1, regardless of the value in the Master.Protein.Accession column.
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{feature  Protein.Accessions         Master.Protein.Accessions
-f1       protein1, protein2, cRAP,  protein1,
+f1       protein1, protein2, contaminant,  protein1,
 f2       protein1, protein3         protein3,
 f3       protein2                   protein2
 }\if{html}{\out{</div>}}
@@ -89,8 +82,8 @@ tmt_qf <- readQFeatures(assayData = psm_tmt_total,
  quantCols = 36:45,
  name = "psms_raw")
 
-# extract the UniProt accessions from the cRAP FASTA headers
-crap_accessions <- get_crap_fasta_accessions(crap_fasta_inf)
+# extract the UniProt accessions from the contaminant FASTA headers
+contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta_inf)
 
 # filter thg peptides
 psm2 <- filter_features_pd_dda(
@@ -99,10 +92,9 @@ psm2 <- filter_features_pd_dda(
   protein_col = "Protein.Accessions",
   unique_master = TRUE,
   TMT = TRUE,
-  level = "PSM",
-  filter_crap = TRUE,
-  crap_proteins = crap_accessions,
-  filter_associated_crap = TRUE
+  filter_contaminant = TRUE,
+  contaminant_proteins = contaminant_accessions,
+  filter_associated_contaminant = TRUE
 )
 
 

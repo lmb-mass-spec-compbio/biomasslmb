@@ -6,7 +6,7 @@ articles:
   LFQ_DIA_Peptide_QC: LFQ_DIA_Peptide_QC.html
   TMT_PSM_QC_Summarisation: TMT_PSM_QC_Summarisation.html
   TMT_summarisation_methods: TMT_summarisation_methods.html
-last_built: 2025-03-28T12:41Z
+last_built: 2025-03-28T13:40Z
 urls:
   reference: https://lmb-mass-spec-compbio.github.io/biomasslmb/reference
   article: https://lmb-mass-spec-compbio.github.io/biomasslmb/articles

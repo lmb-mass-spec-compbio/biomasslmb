@@ -21,7 +21,7 @@ The peptide_position_info column details why the peptide positions columns are N
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,9 @@ The peptide_position_info column details why the peptide positions columns are N
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_peptide_positions</span><span class="op">(</span></span>
 <span>  <span class="va">obj</span>,</span>
 <span>  <span class="va">proteome_fasta</span>,</span>
-<span>  master_protein_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span></span>
+<span>  master_protein_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span>
+<span>  protein_col_split <span class="op">=</span> <span class="st">"; "</span>,</span>
+<span>  sequence_col <span class="op">=</span> <span class="st">"Sequence"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,6 +86,14 @@ The peptide_position_info column details why the peptide positions columns are N
 
 <dt id="arg-master-protein-col">master_protein_col<a class="anchor" aria-label="anchor" href="#arg-master-protein-col"></a></dt>
 <dd><p><code>character</code> Column name for master protein</p></dd>
+
+
+<dt id="arg-protein-col-split">protein_col_split<a class="anchor" aria-label="anchor" href="#arg-protein-col-split"></a></dt>
+<dd><p><code>character</code> Delimiter for multiple proteins in master_protein_col</p></dd>
+
+
+<dt id="arg-sequence-col">sequence_col<a class="anchor" aria-label="anchor" href="#arg-sequence-col"></a></dt>
+<dd><p><code>character</code> Column name for peptide sequence</p></dd>
 
 </dl></div>
     <div class="section level2">

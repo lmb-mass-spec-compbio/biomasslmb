@@ -19,10 +19,9 @@ knitr::opts_chunk$set(
 
 Here, we will consider different protein summarisation approaches for TMT data, depending on whether missing values need to be retained. The comparison between summarisation approaches is also informative when considering what it means to summarise from PSMs to protein-level abundances.
 
+
 For PSM to protein summarisation with TMT quantification, simply summing together the PSM-level abundances provides accurate estimates, so long as there are no missing values.  If many missing values are present, the `MsCoreUtils::robustSummary` method may be preferred, since it is able 
 to summarise accurately, even in the presence of missing values [@http://zotero.org/users/5634351/items/FZN3QTTZ]. 
-
-`tmt_qf` is a `QFeatures` object available from the `biomasslmb` package which was generated in the `TMT QC PSM-level quantification and summarisation to protein-level abundance` vignette. It already contains protein-level quantification from a simple 'sum' summarisation, where missing values were removed and proteins with a single PSM were removed. Here, we will compare this with the 'robust' summaristion, which requires some additional steps to ensure it is performed appropriately.
 
 # Load required packages
 
@@ -35,6 +34,8 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 ```
+
+`tmt_qf` is a `QFeatures` object available from the `biomasslmb` package which was generated in the `TMT QC PSM-level quantification and summarisation to protein-level abundance` vignette. It already contains protein-level quantification from a simple 'sum' summarisation, where missing values were removed and proteins with a single PSM were removed. Here, we will compare this with the 'robust' summaristion, which requires some additional steps to ensure it is performed appropriately.
 
 ## Summarisation with robustSummary
 
@@ -93,6 +94,7 @@ tmt_qf[['protein_robust']] <- biomasslmb::mask_protein_level_quant(
 We will also include summarisation with mean and median, since these are typical approaches for summarising across observations and will aid the interpretation when we compare the summasiation approaches. We will use the PSMs with missing values filtered, even though `mean` and `median` can handle missing values with `na.rm=TRUE`, since ignoring missing values is inappropriate for summarisation of PSMs to proteins with these methods.
 
 ```{r}
+
 tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
                                        i = "psms_filtered_forSum", 
                                        fcol = "Master.Protein.Accessions",

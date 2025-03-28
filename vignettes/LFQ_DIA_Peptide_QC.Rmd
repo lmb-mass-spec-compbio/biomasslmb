@@ -1,0 +1,297 @@
+---
+title: "LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DIA.
+
+MORE DETAILS ON DIA REQUIRED HERE!
+
+# Load required packages
+
+To clarify which functionality is provided by which package, we will use `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+
+# Defining the contaminant proteins
+
+We need to remove contaminant proteins. These were defined here using the cRAP database. Below, we parse the contaminants fasta to extract the IDs for the proteins in both 'cRAP' format and Uniprot IDs.
+
+```{r}
+
+crap_fasta_inf <- system.file(
+  "extdata", "cRAP_20190401.fasta.gz", 
+  package = "biomasslmb"
+)
+
+# Extract the protein IDs associated with each cRAP protein
+crap_accessions <- biomasslmb::get_crap_fasta_accessions(crap_fasta_inf)
+
+print(head(crap_accessions))
+```
+
+# Read in input data
+
+We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object. 
+
+Here, we will use the `biomasslmb::readDIANNFilter` function, which also allows us to control the FDR thresholds for the precursor and protein (run-specific and global). This function reads in the `report.tsv` file from DIA-NN. If you are happy with the filtering settings in DIA-NN, you can directly read the `report.pr_matrix.tsv` into a `QFeatures` object using the `QFeatures::readQFeatures` function.
+
+`diann_report.tsv` is a file available from the `biomasslmb` package containing the output from DIA-NN for an experiment with 6 samples. It is a truncated file containing the precursors (peptides) for just 500 proteins. 
+
+```{r}
+diann_report_inf <- system.file(
+  "extdata", "diann_report.tsv", 
+  package = "biomasslmb"
+)
+
+dia_qf <- readDIANNFilterQJoin(diann_report_inf,
+                               global_protein_q=0.01,
+                               run_protein_q=0.01,
+                               run_precursor_q=0.01)
+
+
+```
+We have `r sum(assay(dia_qf[['peptides_fdr_cntrl']])==0, na.rm=TRUE)` quantification values which are exactly zero here. Where these do exist, they should be replaced with NA, since mass spectrometry is not capable of asserting that the protein had zero abundance in the sample.
+
+```{r}
+tmt_qf[['peptides_fdr_cntrl']] <- QFeatures::zeroIsNA(dia_qf[['peptides_fdr_cntrl']])
+```
+
+Our column names include redundant information ('HYE_DIA')
+```{r}
+colnames(dia_qf)[["peptides_fdr_cntrl"]]
+```
+
+Below, we update the column names to remove the redundant information and then update the sample names in the QFeatures
+```{r}
+colnames(dia_qf)[["peptides_fdr_cntrl"]] <- gsub('HYE_DIA_', '', colnames(dia_qf)[["peptides_fdr_cntrl"]])
+dia_qf <- renamePrimary(dia_qf, colnames(dia_qf)[["peptides_fdr_cntrl"]])
+```
+
+We need to populate the `colData`, which is currently empty
+```{r}
+data.frame(colData(dia_qf))
+```
+
+Here, we can create our `colData` from the sample names. In other cases, you may need to read in a separate experimental design file.
+```{r}
+
+colData(dia_qf) <- data.frame(quantCols=rownames(colData(dia_qf))) %>%
+  separate(quantCols, sep='', into=c(NA, 'condition', 'replicate'), remove = FALSE) %>%
+  tibble::column_to_rownames('quantCols')
+
+data.frame(colData(dia_qf))
+
+```
+
+
+Adding the `colData` to the peptide-level data too.
+
+```{r}
+colData(dia_qf[['peptides_fdr_cntrl']]) <- colData(dia_qf)
+
+
+```
+
+
+We first perform routine filtering to remove PSMs that:
+
+-   Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated cRAP'.
+-   Don't have a unique master protein.
+
+```{r}
+dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(dia_qf[['peptides_fdr_cntrl']], contaminant_proteins=crap_accessions)
+```
+
+
+# Check normalisation
+
+Next, we plot the peptide intensity distribution to check they are approximately the same using `biomasslmb::plot_quant`. By default, DIA-NN performs normalisation. See the [documentation](https://github.com/vdemichev/DiaNN?tab=readme-ov-file#readme) for details of the underlying assumptions for the normalisation and use cases where this normalisation approach may not be appropriate, e.g interactome proteomics.
+
+```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
+
+# Plot the peptide-level quantification distributions per sample
+biomasslmb::plot_quant(dia_qf[['peptides_filtered']],
+                       log2transform=TRUE,
+                       method='density') +
+  theme_biomasslmb() +
+  xlab('PSM abundance (log2)')
+
+```
+
+## Missing values
+
+Below, we inspect the number of missing values per sample
+
+```{r}
+
+
+nNA(dia_qf[['peptides_filtered']])$nNAcols %>%
+  data.frame() %>% knitr::kable(digits=2)
+ 
+
+```
+Here, the samples have between `r round(min(nNA(dia_qf[['peptides_filtered']])$nNAcols$pNA)*100)` -  `r round(max(nNA(dia_qf[['peptides_filtered']])$nNAcols$pNA)*100)` % missing values. This is fairly typical of DIA data at the precursor level.
+
+Next, we inspect the most common patterns for the missing values.
+
+```{r, fig.height=6, fig.width=8}
+plot_missing_upset(dia_qf, i='peptides_filtered')
+```
+The missingness is frequently observed for all 3 replicates of a single condition, but also commonly just for a single sample.
+
+## Summarising to protein-level abundances
+
+Now that we have inspected the peptide-level quantification and filtered the peptides, we can summarise the peptide-level quantification to protein-level abundances.
+
+Since DIA typically has too many missing values to exclude peptides with missing values, the `MsCoreUtils::robustSummary` method should preferred for summarisation to protein-level abundance. With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately  [@http://zotero.org/users/5634351/items/FZN3QTTZ].. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs with at most 4/6 missing values 
+
+```{r}
+dia_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
+  dia_qf[['peptides_filtered']], 4/6)
+
+biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
+                           'Protein.Group',
+                           "Removing peptides with > 4/6 missing values")
+
+```
+
+Next, we will remove PSMs for proteins with fewer than 2 PSMs. This is a common filter in proteomics to ensure the protein-level quantifications are derived from at least two independent observations. In some cases, for example phosphoproteomics, or where this filter appears to be too stringent, it may be appropriate to skip it.
+
+```{r}
+
+min_psms <- 2
+ 
+dia_qf[['peptides_filtered_forRobust']] <- biomasslmb::filter_features_per_protein(
+  dia_qf[['peptides_filtered_missing']], min_features = min_psms, master_protein_col='Protein.Group')
+
+biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_forRobust']]),
+                           'Protein.Group',
+                           "Removing peptides for proteins with < 2 peptides")
+```
+
+
+Now we can summarise with `robustSummary`
+
+```{r}
+
+# Aggregate to protein-level abundances (using QFeatures function)
+dia_qf <- QFeatures::aggregateFeatures(dia_qf, 
+                                       i = "peptides_filtered_forRobust", 
+                                       fcol = "Protein.Group",
+                                       name = "protein",
+                                       fun = MsCoreUtils::robustSummary,
+                                       maxit=10000) # ensure sufficient iterations for convergance
+
+biomasslmb:::message_parse(rowData(dia_qf[['protein']]),
+                           'Protein.Group',
+                           "Summarised to proteins")
+
+```
+
+Prior to summaristaion, we removed PSMs from proteins with fewer than 2 PSMs. However, since we left in PSMs with missing values, it's possible for some protein-level abundances to be derived from just a single PSM. We can use the `get_protein_no_quant_mask` from `biomasslmb` to identify where the protein abundances will be derived from fewer than `n` features (PSMs). We can then give this mask to `mask_protein_level_quant` to replace these quantification values with NA.
+ 
+```{r, fig.height=5, fig.width=5, out.width='50%'}
+# plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
+protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
+  dia_qf[['peptides_filtered_forRobust']], min_features=2, plot=TRUE, master_protein_col='Protein.Group') 
+
+dia_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
+  dia_qf[['protein']], protein_retain_mask)
+```
+
+## Re-inspecting missing values at protein-level
+
+Now that we have protein-level abundances, we would like to re-inspect the missing values. Overall, we have `r round(nNA(dia_qf[['protein']])$nNA$pNA*100, 3)` % missing values, with at most `r round(max(nNA(dia_qf[['protein']])$nNAcols$pNA)*100, 3)` % missing values in any given sample. The most common missingness pattern is for the protein to be missing from all 3 samples for a single condition.
+
+
+```{r, fig.height=6, fig.width=8}
+
+nNA(dia_qf[['protein']])$nNAcols %>%
+  data.frame() %>% knitr::kable(digits=2)
+
+plot_missing_upset(dia_qf, i='protein')
+```
+
+## Inspecting the number of peptides and proteins through the processing steps
+
+Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many peptides/proteins were retained at each level of the processing. We can use the `biomasslmb::get_samples_present` and `biomasslmb::plot_samples_present` functions for this. First though, we need to decide which 'experiments' we want to plot and define a named character vector since the QFeatures names are not sufficiently clear by themselves
+
+Below, we inspect the experiment names.
+
+```{r}
+names(dia_qf)
+```
+
+In this case, we want to plot all the experiments.
+
+### Samples per PSM 
+
+We'll start by inspecting the number of PSMs in each experiment. We therefore define a named character vector all the PSM-level experiments, exlcuding `psms_filtered_norm`. We set the row variables to be `Precursor.Id` so that we count the number of unique peptides (precursors).
+
+```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each PSM at each level of processing", out.width='75%'}
+
+
+
+rename_cols <- c('Peptides passing FDR thresholds' = 'peptides_fdr_cntrl' ,
+                 'Quantified, contaminants removed' = 'peptides_filtered',
+                 '<= 4/6 missing values' = 'peptides_filtered_missing',
+                 '>1 peptides per protein' = 'peptides_filtered_forRobust')
+
+rowvars <- c('Precursor.Id')
+
+samples_present <- get_samples_present(dia_qf[,,unname(rename_cols)], rowvars, rename_cols)
+plot_samples_present(samples_present, rowvars, breaks=seq(2,10,2)) + ylab('PSM')
+
+
+   
+```
+
+### Samples per Protein
+
+Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accesions` column.
+
+```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
+
+rename_cols_prot <- c(rename_cols, 'Protein'='protein')
+
+rowvars_prot <- c('Protein.Group')
+
+samples_present <- get_samples_present(dia_qf, rowvars_prot, rename_cols_prot)
+plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
+```
+
+From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.
+
+
+```{r, include = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(dia_qf, overwrite=TRUE)
+```
+
+
+```{r}
+sessionInfo()
+```

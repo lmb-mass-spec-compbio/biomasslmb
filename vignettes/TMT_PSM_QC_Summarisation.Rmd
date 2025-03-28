@@ -69,9 +69,7 @@ tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
                                    quantCols = 36:45, 
                                    name = "psms_raw")
 
-# Add a more accurate average S:N ratio value.
-# The one calculated by PD doesn't treat NA values appropriately!
-tmt_qf[['psms_raw']] <- update_average_sn(tmt_qf[['psms_raw']])
+
 
 ```
 
@@ -142,14 +140,17 @@ We want to remove low Signal:Noise (S:N) PSMs, since the quantification values w
 Note that where the signal:noise \> 10, there are far fewer missing values.
 
 ```{r, fig.height=6, fig.width=8, fig.fullwidth=TRUE, fig.cap="Missing values per PSM, in relation to the signal:noise ratio", out.width='75%'}
+# Add a more accurate average S:N ratio value.
+# The one calculated by PD doesn't treat NA values appropriately!
+tmt_qf[['psms_filtered_norm']] <- update_average_sn(tmt_qf[['psms_filtered_norm']])
 
-plot_missing_SN(tmt_qf[['psms_filtered_norm']], bins = 30)
+plot_missing_SN(tmt_qf[['psms_filtered_norm']], bins = 20)
 ```
 
 We can also look into this relationship at the tag level using `plot_missing_SN_per_sample` to inspect whether there was a labeling issue with any particular tag. In this case, there is no tag which appears to have a high proportion of missing values when signal:noise \> 10.
 
 ```{r, fig.height=6, fig.width=8, fig.fullwidth=TRUE, fig.cap="Missing values per tag, in relation to the signal:noise ratio", out.width='75%'}
-plot_missing_SN_per_sample(tmt_qf[['psms_filtered_norm']], bins = 30)
+plot_missing_SN_per_sample(tmt_qf[['psms_filtered_norm']], bins = 20)
 ```
 
 Based on the above, we will filter the PSMs to only retain those with S:N \> 10 using `filter_TMT_PSMs` since these PSMs are clearly much closer to the limit of detection for the MS and therefore likely to contain less accurate quantification data. Note that this only necessitates removing \~ 1/20 of the PSMs in this case. Using the same function, we will also remove PSMs with interference/co-isolation \>50% since these are also likely to contain less accurate quantification data.
@@ -216,7 +217,7 @@ In this case, we don't want to plot the `psms_filterered_norm`, since that's jus
 
 ### Samples per PSM 
 
-We'll start by inspecting the number of PSMs in each experiment. We therefore define a named character vector all the PSM-level experiments, exlcuding `psms_filtered_norm`. We set the row variables to be `Sequence`, `Modifications` and `RT.in.min` so that we count the number of unique PSMs.
+We'll start by inspecting the number of PSMs in each experiment. We therefore define a named character vector all the PSM-level experiments, excluding `psms_filtered_norm`. We set the row variables to be `Sequence`, `Modifications` and `RT.in.min` so that we count the number of unique PSMs.
 
 ```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each PSM at each level of processing", out.width='75%'}
 

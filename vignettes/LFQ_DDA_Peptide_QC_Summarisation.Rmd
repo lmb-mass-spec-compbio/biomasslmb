@@ -57,25 +57,53 @@ print(head(crap_accessions))
 
 We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.In this case, we are not adding any experimental details to the `QFeatures` object, so the `ColData` will be empty.
 
-`??` is a data set available from the `biomasslmb` package containing the Peptide-level output from Proteome Discoverer (PD) for an experiment with ? samples. It is a truncated file containing ??. 
+`??` is a data set available from the `biomasslmb` package 
 
+`lfq_dda_pd_PeptideGroups.txt` is a file available from the `biomasslmb` package containing the Peptide-level output from Proteome Discoverer (PD) for an experiment with 6 samples. It is a truncated file containing the precursors peptides quantification for just 500 proteins. 
+
+```{r}
+pep_inf <- system.file(
+  "extdata", "lfq_dda_pd_PeptideGroups.txt", 
+  package = "biomasslmb"
+)
+
+```
+
+Inspecting the column names for the abundances, we see the names are not particularly useful. The `Abundance.FXX.na.Sample.` part is irrelevant and the replicate number is not included
 ```{r}
 infdf <- read.delim(pep_inf)
 
-abundance_cols <- 47:55
+abundance_cols_ix <-18:23
 
+colnames(infdf)[abundance_cols_ix]
+```
+
+Below, we update the column names for the abundance columns
+```{r}
 # Clean up sample names
-#colnames(infdf)[abundance_cols] <- gsub('(Abundance.|.Sample.*)', '',
-#                                        colnames(infdf)[abundance_cols], perl=TRUE)
-#colnames(infdf)[abundance_cols] <- sapply(colnames(infdf)[abundance_cols],
-#                                          function(x) f2sample_name[[x]])
+colnames(infdf)[abundance_cols_ix] <- paste(gsub('Abundance.F\\d+.na.Sample.', '',
+                                        colnames(infdf)[abundance_cols_ix]), rep(1:3, times=2), sep='_')
 
-exp_design <- exp_design[colnames(infdf)[abundance_cols],]
+colnames(infdf)[abundance_cols_ix]
+```
+
+Before we read in the data, we also want to define the experimental conditions for each sample. We can then provide the 
+
+```{r}
+exp_design <- data.frame(quantCols=colnames(infdf)[abundance_cols_ix]) %>%
+  separate(quantCols, sep='_', into=c('condition', 'replicate'), remove = FALSE) 
+
+knitr::kable(exp_design)
+```
+
+Now we can read the data into a `QFeatures` object
+```{r}
 # Read in PSM-level quantification from TMT experiment (using QFeatures function)
 lfq_qf <- readQFeatures(assayData = infdf,
-                        quantCols = abundance_cols, 
+                        quantCols = abundance_cols_ix, 
                         colData = exp_design,
                         name = "peptides_raw")
+
 ```
 
 Adding the `colData` to the peptide-level data too.
@@ -86,35 +114,16 @@ colData(lfq_qf[['peptides_raw']]) <- colData(lfq_qf)
 
 ```
 
-Adding gene name and gene long name columns
+Extract the gene name and long-form protein name from the descriptions.
+```{r, eval=FALSE}
 
-```{r}
-
-
-lfq_qf[['peptides_raw']] <- add_gene_long_protein_name_pd(
-  lfq_qf[['peptides_raw']])
-
-
+tmt_qf[['peptides_raw']] <- add_gene_long_protein_name_pd(tmt_qf[['peptides_raw']])
 ```
-
-Inspecting how many missing values there are per sample.
-
-```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
-p <- data.frame(nNA(lfq_qf[['peptides_raw']])$nNAcols) %>%
-  ggplot(aes(name, 100*pNA)) +
-  geom_bar(stat='identity') +
-  theme_biomasslmb(border=FALSE) +
-  theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1)) +
-  labs(x='', y='Missing (%)')
-
-print(p)
-```
-
 
 
 It's helpful to assess the retention time (RT) for the peptides and the
 relationship with the delta mass for the precursor ion. Everything looks
-OK here, though there was a noticeable increase in peptide IDs at the end of the gradient.
+OK here.
 
 ```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
 plot_rt_dist(lfq_qf[['peptides_raw']])
@@ -135,11 +144,10 @@ We first perform routine filtering to remove PSMs that:
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
 # - Remove PSMs where protein ID is empty or not unique
-biomasslmb::filter
+
 lfq_qf[['peptides_filtered']] <- filter_features_pd_dda(lfq_qf[['peptides_raw']],
-                                                 crap_proteins=crap_accessions,
-                                                 level='peptide',
-                                                 TMT=TRUE,
+                                                        protein_col='Master.Protein.Accessions', # UPDATE WHEN RE-EXPORTED
+                                                 contaminant_proteins=crap_accessions,
                                                  filter_crap=TRUE,
                                                  filter_associated_crap=TRUE,
                                                  unique_master=FALSE,
@@ -183,25 +191,7 @@ plot_quant(lfq_qf[['peptides_filtered']], log2transform=FALSE, method='density')
 ```
 
 
-## Missing values
 
-Below, we inspect the missing values.
-
-```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
-
-
-data.frame(nNA(lfq_qf[['peptides_filtered']])$nNAcols) %>%
-  merge(data.frame(colData(lfq_qf)), by.x='name', by.y='row.names') %>%
-  ggplot(aes(condition, 100*pNA, colour=factor(replicate))) +
-  ggbeeswarm::geom_quasirandom(width=0.25) +
-  scale_colour_manual(values=get_cat_palette(3), name='Replicate') +
-  theme_biomasslmb() +
-  ylim(0, 100) +
-  labs(x='Condition', y='Missing values (%)') +
-  theme(strip.background=element_blank())
- 
-
-```
 
 ## Normalise
 
@@ -226,7 +216,7 @@ plot_quant(lfq_qf[['peptides_norm']], log2transform=FALSE, method='density') +
 ```
 
 
-# Summarisation to protein
+## Summarising to protein-level abundances
 
 For the summarisation to protein, we will use `robustSummary`. We do not need to remove
 peptides with any missing values. However, we still don't want to retain
@@ -235,24 +225,22 @@ informative in estimating the protein-level quantification.
 
 Below, we inspect the most common patterns for the missing values.
 
-The missingness is rarely consigned to a single experimental group, e.g
-all control samples.
+The missingness is most frequently consigned to all samples from one condition and also commonly 2/3 replicates from one condition. It looks like the missingness is far from missing at random (MAR) and is likely missing due to falling below detection limits.
 
 ```{r, fig.height=6, fig.width=8}
 plot_missing_upset(lfq_qf, i='peptides_norm')
 ```
 
-Here, we will retain peptides with at most 6/9 missing values, to allow
-for some peptides to be present in just one condition.
+Since DDA LFQ typically has too many missing values to exclude peptides with missing values, the `MsCoreUtils::robustSummary` method should preferred for summarisation to protein-level abundance. With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately  [@http://zotero.org/users/5634351/items/FZN3QTTZ].. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs with at most 4/6 missing values 
 
 ```{r}
 
 lfq_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
-  lfq_qf[['peptides_norm']], 6/9)
+  lfq_qf[['peptides_norm']], 4/6)
 
 biomasslmb:::message_parse(rowData(lfq_qf[['peptides_filtered_missing']]),
                            'Master.Protein.Accessions',
-                           "Removing peptides with more than 6/9 missing values")
+                           "Removing peptides with more than 4/6 missing values")
 ```
 
 Next, we remove peptides for proteins with fewer than 2 peptides.
@@ -302,122 +290,69 @@ lfq_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
 
 ```
 
-Plot missing values at the protein level.
+## Re-inspecting missing values at protein-level
+
+Now that we have protein-level abundances, we would like to re-inspect the missing values. Overall, we have `r round(nNA(lfq_qf[['protein']])$nNA$pNA*100, 3)` % missing values, with at most `r round(max(nNA(dia_qf[['protein']])$nNAcols$pNA)*100, 3)` % missing values in any given sample. The most common missingness patterns are for the protein to be missing from 1,2 or 3 replicates from a single condition, suggesting the quantification is missing due to detection limits.
 
 ```{r, fig.height=6, fig.width=8}
 
 plot_missing_upset(lfq_qf, i='protein' )
 ```
 
-# Impute missing values
 
-How dependent are the missing values on the peptide abundance? If they
-are very dependent, likely that protein values are too and we should
-impute using left-censored approach. Note that this is harder to inspect
-at the protein level since we need to summarise the peptide abundances
-to protein-level and the approach we take will significantly affect how
-we interpret the association.
+## Inspecting the number of peptides and proteins through the processing steps
 
-```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
+Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many peptides/proteins were retained at each level of the processing. We can use the `biomasslmb::get_samples_present` and `biomasslmb::plot_samples_present` functions for this. First though, we need to decide which 'experiments' we want to plot and define a named character vector since the QFeatures names are not sufficiently clear by themselves
 
+Below, we inspect the experiment names.
 
-
-pep_mean_abund <- apply(assay(lfq_qf[['peptides_norm']]), MARGIN=1,
-                        FUN=function(x) mean(x, na.rm=TRUE))
-pep_n_miss <- nNA(lfq_qf[['peptides_norm']])$nNArows
-
-pep_n_miss <- pep_n_miss %>% data.frame() %>%
-  mutate(mean_abund=pep_mean_abund)
-
-pep_n_miss %>%
-  ggplot(aes(y=mean_abund, nNA, group=nNA)) +
-  geom_violin() +
-  geom_boxplot(width=0.2, outlier.shape=NA) +
-  theme_biomasslmb() +
-  scale_y_continuous(breaks=1:100)
-
-plot_quant(lfq_qf[['peptides_norm']], method='density')
-
-pep_n_miss %>%
-  ggplot(aes(x=mean_abund, colour=factor(nNA), group=nNA)) +
-  geom_density() +
-  theme_biomasslmb()
-
+```{r}
+names(lfq_qf)
 ```
 
-OK, so there is definitely a relationship between the peptide abundance
-and the number of missing values. 75% of peptides with no missing values
-have mean abundance \> 2\~20, where are 75% of peptides with 4 or more
-missing values have mean abundance \< 2\~20. I think a left-censored
-imputation is probably the most appropriate for most missing values. The ideal approach would be
-to segment the missing values into those most likely to be issing at random (MAR) and missing not at random
-(MNAR), impute MAR with a 'hot deck' method and MNAR with a left-censor method.
-In practice, this is not straightforward as we have little information
-by which to segregate the missing values. Should the imputation
-approaches used here be inadequate, we can return to this.
+In this case, we don't want to plot the `peptides_norm`, since that's just the normalised quantification present in `peptides_filtered` and no peptides were removed in that step.
 
-Below, we plot the abundance estimates for the non imputed data, then
-with imputation using QRILC or MinProb.
+### Samples per peptide
 
-```{r, warning=FALSE, message=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
-set.seed(0)
-lfq_qf[['protein_impute_qrilc']] <- QFeatures::impute(
-  lfq_qf[['protein']], method='QRILC')
-lfq_qf[['protein_impute_minprob']] <- QFeatures::impute(
-lfq_qf[['protein']], method='MinProb')
+We'll start by inspecting the number of peptides in each experiment. We therefore define a named character vector all the peptides-level experiments, excluding `psms_filtered_norm`. We set the row variables to be `Annotated.Sequence` and `Modifications` so that we count the number of unique peptides.
+
+```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each PSM at each level of processing", out.width='75%'}
 
 
+rename_cols <- c('All peptides' = 'peptides_raw' ,
+                 'Quantified, contaminants removed' = 'peptides_filtered',
+                 'No missing values' = 'peptides_filtered_missing',
+                 '>1 PSM per protein' = 'peptides_for_summarisation')
 
-# Plot the peptide-level quantification distributions per sample
-plot_quant(lfq_qf[['protein']], log2transform=FALSE, method='density') +
-  scale_colour_manual(values=rep(get_cat_palette(2), each=8)) +
-  aes(linetype=sample) +
-  scale_linetype_manual(values=rep(rep(c(1,2), each=4), times=2)) +
-  xlab('Protein abundance (log2)')
-
-plot_quant(lfq_qf[['protein_impute_qrilc']],
-           log2transform=FALSE, method='density') +
-  scale_colour_manual(values=rep(get_cat_palette(2), each=8)) +
-  aes(linetype=sample) +
-  scale_linetype_manual(values=rep(rep(c(1,2), each=4), times=2)) +
-  xlab('Protein abundance (log2)')
-
-plot_quant(lfq_qf[['protein_impute_minprob']],
-           log2transform=FALSE, method='density') +
-  scale_colour_manual(values=rep(get_cat_palette(2), each=8)) +
-  aes(linetype=sample) +
-  scale_linetype_manual(values=rep(rep(c(1,2), each=4), times=2)) +
-  xlab('Protein abundance (log2)')
-
-```
-
-```{r, fig.height=7, , fig.width=7}
-
-
-rename_cols <- c('peptides_raw', 'peptides_filtered', 'peptides_filtered_missing')
-names(rename_cols) <- c('Peptides - quantified', 'Peptides - filtered contaminants', 'Peptides - Excl. >6/9 missing')
-
-rowvars <- c('Sequence', 'Modifications')
+rowvars <- c('Annotated.Sequence', 'Modifications')
 
 samples_present <- get_samples_present(lfq_qf[,,unname(rename_cols)], rowvars, rename_cols)
-plot_samples_present(samples_present, rowvars, breaks=seq(1,9,2)) + ylab('Peptides')
+plot_samples_present(samples_present, rowvars, breaks=seq(2,10,2)) + ylab('PSM')
 
 
-   
+
 ```
 
+### Samples per Protein
 
-```{r, fig.height=7, , fig.width=7}
+Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accesions` column.
+
+```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
+
+rename_cols_prot <- c(rename_cols, 'Protein'='protein')
+
+rowvars_prot <- c('Master.Protein.Accessions')
+
+samples_present <- get_samples_present(lfq_qf, rowvars_prot, rename_cols_prot)
+plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
+```
+
+From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.
 
 
-rename_cols <- c('peptides_raw', 'peptides_filtered', 'peptides_filtered_missing', 'protein')
-names(rename_cols) <- c('Peptides - quantified', 'Peptides - filtered contaminants', 'Peptides - Excl. >6/9 missing', 'Proteins')
-class(rename_cols)
-
-rowvars <- c('Master.Protein.Accessions')
-
-samples_present <- get_samples_present(lfq_qf, rowvars, rename_cols)
-plot_samples_present(samples_present, rowvars, breaks=seq(1,9,2))
+```{r, include = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(lfq_qf, overwrite=TRUE)
 ```
 
 ```{r}

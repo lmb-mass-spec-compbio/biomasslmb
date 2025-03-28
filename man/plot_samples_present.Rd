@@ -4,7 +4,7 @@
 \alias{plot_samples_present}
 \title{Plots the number of samples each feature was detected in for each experiment in a Qfeatures object}
 \usage{
-plot_samples_present(samples_present, rowvars)
+plot_samples_present(samples_present, rowvars, breaks = NULL)
 }
 \arguments{
 \item{samples_present}{\code{data.frame} output from \code{get_samples_present}}

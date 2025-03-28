@@ -18,13 +18,14 @@ plot_pca <- function(obj,
                      colour_by=NULL,
                      shape_by=NULL,
                      x = 1,
-                     y = 2){
+                     y = 2,
+                     ...){
 
   check_q(obj)
 
   check_se_exists(obj, i)
 
-  pca <- prcomp(t(assay(filterNA(obj[[i]]))))
+  pca <- prcomp(t(assay(filterNA(obj[[i]]))), ...)
 
   var_explained <- 100*pca$sdev^2/sum(pca$sdev^2)
 

@@ -8,7 +8,9 @@ to the protein}
 add_peptide_positions(
   obj,
   proteome_fasta,
-  master_protein_col = "Master.Protein.Accessions"
+  master_protein_col = "Master.Protein.Accessions",
+  protein_col_split = "; ",
+  sequence_col = "Sequence"
 )
 }
 \arguments{
@@ -17,6 +19,10 @@ add_peptide_positions(
 \item{proteome_fasta}{\code{character} Filepath for proteome fasta}
 
 \item{master_protein_col}{\code{character} Column name for master protein}
+
+\item{protein_col_split}{\code{character} Delimiter for multiple proteins in master_protein_col}
+
+\item{sequence_col}{\code{character} Column name for peptide sequence}
 }
 \value{
 \code{SummarizedExperiment} with extra row columns detailing the peptide position

@@ -13,12 +13,16 @@
 #' @param obj `SummarizedExperiment` with PD output at PSM/peptide level
 #' @param proteome_fasta `character` Filepath for proteome fasta
 #' @param master_protein_col `character` Column name for master protein
+#' @param protein_col_split `character` Delimiter for multiple proteins in master_protein_col
+#' @param sequence_col `character` Column name for peptide sequence
 #'
 #' @return `SummarizedExperiment` with extra row columns detailing the peptide position
 #' @export
 add_peptide_positions <- function(obj,
                                   proteome_fasta,
-                                  master_protein_col = "Master.Protein.Accessions") {
+                                  master_protein_col = "Master.Protein.Accessions",
+                                  protein_col_split='; ',
+                                  sequence_col = 'Sequence') {
 
   check_se(obj)
 
@@ -31,7 +35,7 @@ add_peptide_positions <- function(obj,
     # return the AA position with respect to protein sequence
     # If more than one position, possible, return NA
 
-    if (length(strsplit(protein, '; ')[[1]]) > 1) {
+    if (length(strsplit(protein, 'protein_col_split')[[1]]) > 1) {
       return(c(NA, NA, NA, 'Multiple proteins'))
     }
 
@@ -55,7 +59,7 @@ add_peptide_positions <- function(obj,
   rowData(obj)[, c('peptide_start', 'peptide_end', 'protein_length', 'peptide_position_info')] <- t(apply(
     rowData(obj),
     MARGIN = 1, function(x) combine_protein_peptide_positions(
-      proteome, x[[master_protein_col]], x[["Sequence"]]
+      proteome, x[[master_protein_col]], x[[sequence_col]]
     )
   ))
 

@@ -1,7 +1,10 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/404.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/LICENSE.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/LFQ_DDA_Peptide_QC_Summarisation.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/LFQ_DIA_Peptide_QC.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/TMT_PSM_QC_Summarisation.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/TMT_summarisation_methods.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/index.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/authors.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/index.html</loc></url>
@@ -9,17 +12,21 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_gene_long_protein_name_pd.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_independent_filtering_padj.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_peptide_positions.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/append_fasta.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/biomasslmb-package.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/center_normalise_to_ref.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/check_uniprot_release.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/determine_ancestor_function.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/determine_offspring_function.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/dia_qf.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/estimate_overrep.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/expand_terms.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_pd_dda.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_per_protein.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_sn.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_all_mappings.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_ancestor_go.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_cat_palette.html</loc></url>
@@ -46,11 +53,13 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_samples_present.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_volcano.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_total.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/readDIANNFilterQJoin.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_dots.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_redundant_go.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_x.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/sub_crap.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/theme_biomasslmb.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/tmt_qf.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/update_average_sn.html</loc></url>
 </urlset>
 

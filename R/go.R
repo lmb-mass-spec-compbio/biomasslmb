@@ -456,7 +456,7 @@ remove_redundant_go <- function(obj, go_category_col='category', p_value_col='ov
     terms_to_remove <- dplyr::union(offspring[[top_go]], ancestors[[top_go]]) %>%
       dplyr::intersect(go_tree)
 
-    processed <- dplyr::union(processed, go_tree) # all terms in go_tree now 'processed'
+    processed <- dplyr::union(processed, c(top_go, terms_to_remove)) # all terms in go_tree now 'processed'
     retained <- dplyr::setdiff(retained, terms_to_remove) # remove 'processed' terms from retained
   }
 
@@ -534,7 +534,7 @@ plot_go <- function(obj,
     ggplot(aes(x = .data$adj_overrep, y = .data$term_ontology,
                fill = -log10(.data$over_represented_adj_pval))) +
     geom_bar(stat = 'identity') +
-    theme_biomasslmb(base_size = 15, border = FALSE) +
+    theme_biomasslmb(base_size = 15, border = FALSE, aspect_square = FALSE) +
     scale_fill_continuous(limits = c(0, NA),
                           high = get_cat_palette(1),
                           low = 'grey',

@@ -146,7 +146,7 @@ remove_contaminant <- function(obj,
 #' # extract the UniProt accessions from the contaminant FASTA headers
 #' contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta_inf)
 #'
-#' # filter thg peptides
+#' # filter the PSMs
 #' psm2 <- filter_features_pd_dda(
 #'   obj = tmt_qf[['psms_raw']],
 #'   master_protein_col = "Master.Protein.Accessions",
@@ -169,7 +169,7 @@ filter_features_pd_dda <- function(obj,
                                    contaminant_proteins = NULL,
                                    crap_proteins = NULL,
                                    filter_associated_contaminant = TRUE,
-                                   remove_no_quant = TRUE, ...){
+                                   remove_no_quant = TRUE){
 
   # Check use of contaminants/crap arguments
   if(!is.null(crap_proteins)){

@@ -29,6 +29,13 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 
   }
 
+  else{
+
+    samples_present <- samples_present %>%
+      select(all_of(rowVars), names(obj))
+
+  }
+
   ungroup(samples_present)
 }
 

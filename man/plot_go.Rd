@@ -8,7 +8,8 @@ plot_go(
   obj,
   term_col = "term_short",
   ontology_col = "ontology",
-  annotate_n = TRUE
+  annotate_n = TRUE,
+  make_terms_unique = TRUE
 )
 }
 \arguments{
@@ -20,7 +21,9 @@ See below for an example.}
 
 \item{ontology_col}{\code{character} column name for GO term ontology.}
 
-\item{annotate_n}{\code{logical} Include the number of features per term
+\item{annotate_n}{\code{logical} Include the number of features per term}
+
+\item{make_terms_unique}{\code{logical} Make GO terms unique. Useful if truncated GO terms are being plotted
 (i.e. numDEInCat column) in the plot? (Default is \code{TRUE})}
 }
 \value{

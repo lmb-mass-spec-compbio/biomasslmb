@@ -39,5 +39,7 @@ Filter PSMs from TMT quantification to remove the following:
 \item Missing values (\code{NA}) for all tags
 \item Interference/co-isolation above a set value (default=100, e.g no filtering)
 \item Signal:noise ratio below a set value (default=0, e.g no filtering)
+\item Quan.Info is not empty ('')
+\item PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 }
 }

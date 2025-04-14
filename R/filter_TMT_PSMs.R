@@ -40,6 +40,8 @@ update_average_sn <- function(obj,
 #' 1. Missing values (`NA`) for all tags
 #' 2. Interference/co-isolation above a set value (default=100, e.g no filtering)
 #' 3. Signal:noise ratio below a set value (default=0, e.g no filtering)
+#' 4. Quan.Info is not empty ('')
+#' 5. PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 #'
 #' @param obj `summarizedExperiment`. Should contain PSMs-level TMT quantification
 #' @param inter_thresh `numeric`. Maximum allowed interference/co-isolation
@@ -67,6 +69,16 @@ filter_TMT_PSMs <- function(obj,
                             master_protein_col,
                             "Initial PSMs")
 
+  obj <- obj[rowData(obj)$Quan.Info=='',]
+  if(verbose) message_parse(rowData(obj),
+                            master_protein_col,
+                            "PSMs with Quan.Info removed")
+
+  obj <- obj[rowData(obj)$PSM.Ambiguity %in% c('Selected', 'Unambiguous'),]
+  if(verbose) message_parse(rowData(obj),
+                            master_protein_col,
+                            "PSMs which are not selected or unambiguous removed")
+
   obj <- obj[rowSums(is.finite(assay(obj)))>0,]
   if(verbose) message_parse(rowData(obj),
                             master_protein_col,
@@ -78,7 +90,8 @@ filter_TMT_PSMs <- function(obj,
                               master_protein_col,
                               "Removing PSMs with high Co-isolation/interference")
   } else{
-    if(verbose) message(sprintf('Not performing filtering by interference thresholding (`inter_thresh`=%s)', inter_thresh))
+    if(verbose) message(sprintf('Not performing filtering by interference thresholding (`inter_thresh`=%s)',
+                                inter_thresh))
   }
 
   if(sn_thresh>0){
@@ -89,7 +102,8 @@ filter_TMT_PSMs <- function(obj,
                               master_protein_col,
                               "Removing PSMs with low average S:N ratio")
   } else{
-    if(verbose) message(sprintf('Not performing filtering by average S:N ratio (`sn_thresh`=%s)', sn_thresh))
+    if(verbose) message(sprintf('Not performing filtering by average S:N ratio (`sn_thresh`=%s)',
+                                sn_thresh))
   }
 
   return(obj)

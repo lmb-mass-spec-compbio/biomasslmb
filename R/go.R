@@ -480,6 +480,7 @@ remove_redundant_go <- function(obj, go_category_col='category', p_value_col='ov
 #' @param term_col `character` column name for GO term description.
 #' @param ontology_col `character` column name for GO term ontology.
 #' @param annotate_n `logical` Include the number of features per term
+#' @param make_terms_unique `logical` Make GO terms unique. Useful if truncated GO terms are being plotted
 #' (i.e. numDEInCat column) in the plot? (Default is `TRUE`)
 #'
 #' @return Returns a `ggplot` object.
@@ -501,7 +502,8 @@ remove_redundant_go <- function(obj, go_category_col='category', p_value_col='ov
 plot_go <- function(obj,
                     term_col = "term_short",
                     ontology_col = "ontology",
-                    annotate_n = TRUE) {
+                    annotate_n = TRUE,
+                    make_terms_unique = TRUE) {
   # throw an error if peptide input does not contain the required columns
   req_cols <- c(term_col, ontology_col, "over_represented_adj_pval",
                 "adj_overrep", "numDEInCat")
@@ -520,14 +522,16 @@ plot_go <- function(obj,
   if (any(duplicated(obj[, term_col]))) {
     message(sprintf("The column '%s' contains duplicates.", term_col))
 
-    obj[, term_col] <- make.unique(obj[, term_col])
+    if(make_terms_unique){
+      obj[, term_col] <- make.unique(obj[, term_col])
+    }
   }
 
   # construct y axis text
   to_plot <- obj %>%
     arrange(desc(.data$over_represented_adj_pval)) %>%
     mutate(term_ontology = paste0(!!sym(term_col), ' (', !!sym(ontology_col), ')')) %>%
-    mutate(term_ontology = factor(.data$term_ontology, levels = .data$term_ontology))
+    mutate(term_ontology = factor(.data$term_ontology, levels = unique(.data$term_ontology)))
 
   # construct plot
   p <- to_plot %>%

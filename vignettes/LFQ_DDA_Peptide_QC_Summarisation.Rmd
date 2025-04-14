@@ -148,8 +148,8 @@ We first perform routine filtering to remove PSMs that:
 lfq_qf[['peptides_filtered']] <- filter_features_pd_dda(lfq_qf[['peptides_raw']],
                                                         protein_col='Master.Protein.Accessions', # UPDATE WHEN RE-EXPORTED
                                                  contaminant_proteins=crap_accessions,
-                                                 filter_crap=TRUE,
-                                                 filter_associated_crap=TRUE,
+                                                 filter_contaminant =TRUE,
+                                                 filter_associated_contaminant=TRUE,
                                                  unique_master=FALSE,
                                                  remove_no_quant = TRUE)
 

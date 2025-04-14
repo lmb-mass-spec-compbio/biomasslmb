@@ -15,7 +15,7 @@ and plot more than 100 GO terms."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ and plot more than 100 GO terms.</p>
 <span>  <span class="va">obj</span>,</span>
 <span>  term_col <span class="op">=</span> <span class="st">"term_short"</span>,</span>
 <span>  ontology_col <span class="op">=</span> <span class="st">"ontology"</span>,</span>
-<span>  annotate_n <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  annotate_n <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  make_terms_unique <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,7 +85,11 @@ See below for an example.</p></dd>
 
 
 <dt id="arg-annotate-n">annotate_n<a class="anchor" aria-label="anchor" href="#arg-annotate-n"></a></dt>
-<dd><p><code>logical</code> Include the number of features per term
+<dd><p><code>logical</code> Include the number of features per term</p></dd>
+
+
+<dt id="arg-make-terms-unique">make_terms_unique<a class="anchor" aria-label="anchor" href="#arg-make-terms-unique"></a></dt>
+<dd><p><code>logical</code> Make GO terms unique. Useful if truncated GO terms are being plotted
 (i.e. numDEInCat column) in the plot? (Default is <code>TRUE</code>)</p></dd>
 
 </dl></div>

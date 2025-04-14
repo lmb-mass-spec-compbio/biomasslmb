@@ -27,7 +27,7 @@ Remove features without quantification values
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,8 +81,7 @@ a contaminant protein (see below)</p></li>
 <span>  contaminant_proteins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crap_proteins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_associated_contaminant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -163,7 +162,7 @@ addition to f1, regardless of the value in the Master.Protein.Accession column.<
 <span class="r-in"><span><span class="co"># extract the UniProt accessions from the contaminant FASTA headers</span></span></span>
 <span class="r-in"><span><span class="va">contaminant_accessions</span> <span class="op">&lt;-</span> <span class="fu">get_contaminant_fasta_accessions</span><span class="op">(</span><span class="va">contaminant_fasta_inf</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># filter thg peptides</span></span></span>
+<span class="r-in"><span><span class="co"># filter the PSMs</span></span></span>
 <span class="r-in"><span><span class="va">psm2</span> <span class="op">&lt;-</span> <span class="fu">filter_features_pd_dda</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  obj <span class="op">=</span> <span class="va">tmt_qf</span><span class="op">[[</span><span class="st">'psms_raw'</span><span class="op">]</span><span class="op">]</span>,</span></span>
 <span class="r-in"><span>  master_protein_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span></span>

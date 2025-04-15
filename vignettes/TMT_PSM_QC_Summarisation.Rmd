@@ -96,6 +96,7 @@ tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']],
                                              unique_master=TRUE, )
 ```
 
+
 # Normalise
 
 Next, we plot the peptide intensities to check they are approximately the same using `biomasslmb::plot_quant`.
@@ -158,6 +159,23 @@ Based on the above, we will filter the PSMs to only retain those with S:N \> 10 
 tmt_qf[['psms_filtered_sn']] <- filter_TMT_PSMs(tmt_qf[['psms_filtered_norm']],
                                                 inter_thresh=50, sn_thresh=10)
 ```
+We will also remove peptides that are not rank 1 according to the search engine
+
+```{r}
+
+tmt_qf[['psms_filtered_rank']] <- tmt_qf[['psms_filtered_sn']]
+
+tmt_qf <- tmt_qf %>%
+  filterFeatures(~ Rank == 1, i = 'psms_filtered_rank')
+
+biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
+                         'Master.Protein.Accessions',
+                         "Removing peptides that are not rank 1")
+
+
+
+
+```
 
 # Summarising to protein-level abundances
 
@@ -169,7 +187,7 @@ Here, we will use the simple sum summarisation. First, we need to consider the m
 
 ```{r}
 tmt_qf[['psms_filtered_missing']] <- QFeatures::filterNA(
-  tmt_qf[['psms_filtered_sn']], 0)
+  tmt_qf[['psms_filtered_rank']], 0)
 
 ```
 
@@ -221,6 +239,7 @@ We'll start by inspecting the number of PSMs in each experiment. We therefore de
 rename_cols <- c('All PSMs' = 'psms_raw' ,
                  'Quantified, contaminants removed' = 'psms_filtered',
                  'Signal:Noise > 10' = 'psms_filtered_sn',
+                 'PSMs - filtered (Rank1)' = 'psms_filtered_rank',
                  'No missing values' = 'psms_filtered_missing',
                  '>1 PSM per protein' = 'psms_filtered_forSum')
 

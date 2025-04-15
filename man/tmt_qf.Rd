@@ -5,7 +5,7 @@
 \alias{tmt_qf}
 \title{TMT data}
 \format{
-An object of class \code{QFeatures} of length 7.
+An object of class \code{QFeatures} of length 8.
 }
 \usage{
 tmt_qf

@@ -43,7 +43,7 @@ With `robustSummary`, we do not need to remove all PSMs with missing values sinc
 
 ```{r}
 tmt_qf[['psms_filtered_forRobust']] <- QFeatures::filterNA(
-  tmt_qf[['psms_filtered_sn']], 5/10)
+  tmt_qf[['psms_filtered_rank']], 5/10)
 
 ```
 

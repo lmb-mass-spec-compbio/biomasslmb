@@ -186,6 +186,14 @@ filter_features_pd_dda <- function(obj,
   # check arguments
   check_se(obj)
 
+  if('Identifying.Node' %in% colnames(rowData(obj))){
+    if(length(unique(rowData(obj)$Identifying.Node))>1){
+      message('Results from multiple search engines detected. See documentation for
+              update_peptide_assignments() and remove_redundant_psm_quant()
+              functions to handle this')
+    }
+  }
+
   # print input summary
   message("Filtering data...")
   message_parse(rowData(obj), master_protein_col, "Input")

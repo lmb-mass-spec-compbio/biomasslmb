@@ -11,6 +11,7 @@ filter_TMT_PSMs(
   master_protein_col = "Master.Protein.Accessions",
   inter_col = "Isolation.Interference.in.Percent",
   sn_col = "Average.Reporter.SN",
+  from_PD = TRUE,
   verbose = TRUE
 )
 }
@@ -28,7 +29,10 @@ proteins.}
 
 \item{sn_col}{\code{string}. Name of column containing the signal:noise value.}
 
-\item{verbose}{\code{boolean}. Default is TRUE, use verbose output messages.}
+\item{from_PD}{\code{logical}. Input is from ProteomeDiscover. If set, will filter using
+Quan.Info and PSM.Ambiguity columns. Default is TRUE}
+
+\item{verbose}{\code{logical}. Default is TRUE, use verbose output messages.}
 }
 \value{
 Returns an \code{summarizedExperiment} with the filtered PSMs.

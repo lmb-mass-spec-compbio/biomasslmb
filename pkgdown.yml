@@ -1,12 +1,12 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   LFQ_DDA_Peptide_QC_Summarisation: LFQ_DDA_Peptide_QC_Summarisation.html
   LFQ_DIA_Peptide_QC: LFQ_DIA_Peptide_QC.html
   TMT_PSM_QC_Summarisation: TMT_PSM_QC_Summarisation.html
   TMT_summarisation_methods: TMT_summarisation_methods.html
-last_built: 2025-04-15T19:33Z
+last_built: 2025-06-13T21:51Z
 urls:
   reference: https://lmb-mass-spec-compbio.github.io/biomasslmb/reference
   article: https://lmb-mass-spec-compbio.github.io/biomasslmb/articles

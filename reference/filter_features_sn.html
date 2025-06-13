@@ -69,7 +69,8 @@ Spectronaut, based on various criteria:</p><ol><li><p>Remove features without a 
 <span>  unique_master <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  filter_contaminant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  contaminant_proteins <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  cont_string <span class="op">=</span> <span class="st">"Cont_"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -104,6 +105,10 @@ protein.</p></dd>
 <dt id="arg-remove-no-quant">remove_no_quant<a class="anchor" aria-label="anchor" href="#arg-remove-no-quant"></a></dt>
 <dd><p><code>logical</code>. Remove features with no quantification</p></dd>
 
+
+<dt id="arg-cont-string">cont_string<a class="anchor" aria-label="anchor" href="#arg-cont-string"></a></dt>
+<dd><p><code>string</code>. string to search for contaminants</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -119,7 +124,7 @@ protein.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

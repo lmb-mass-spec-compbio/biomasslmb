@@ -23,7 +23,11 @@ add_peptide_positions <- function(obj,
                                   master_protein_col = "Master.Protein.Accessions",
                                   protein_col_split='; ',
                                   sequence_col = 'Sequence') {
-
+  warning('This function will provide the positions of peptides within proteins,
+          irrespective of whether the peptide could have originated from those locations
+          given the digestion enzyme employed. If you want to use in-silico digestion
+          to filter the peptide positions, use the add_peptide_positions_from_cleavage
+          function instead.')
   check_se(obj)
 
   proteome <- readAAStringSet(proteome_fasta)

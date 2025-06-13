@@ -13,7 +13,8 @@ filter_features_pd_dda(
   contaminant_proteins = NULL,
   crap_proteins = NULL,
   filter_associated_contaminant = TRUE,
-  remove_no_quant = TRUE
+  remove_no_quant = TRUE,
+  cont_string = "Cont_"
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ protein.}
 match a contaminant associated protein.}
 
 \item{remove_no_quant}{\code{logical}. Remove features with no quantification}
+
+\item{cont_string}{\code{string}. string to search for contaminants}
 }
 \value{
 Returns a \code{SummarisedExperiment} with the filtered Proteome Discoverer output.

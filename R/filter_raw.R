@@ -33,7 +33,8 @@ remove_contaminant <- function(obj,
                                contaminant_proteins,
                                filter_associated_contaminant,
                                master_protein_col,
-                               protein_col=NULL){
+                               protein_col=NULL,
+                               cont_string='cont_string'){
 
   if (is.null(contaminant_proteins)) {
     stop("must supply the contaminant_proteins argument to filter contaminant proteins")
@@ -47,9 +48,10 @@ remove_contaminant <- function(obj,
   # Identify features for contaminant_proteins
   if(!is.null(protein_col)){
     contaminant_features <- rowData(obj)[[master_protein_col]] %in% contaminant_proteins |
-      grepl("contaminant", rowData(obj)[[protein_col]])
+      grepl(cont_string, rowData(obj)[[protein_col]])
   } else{
-    contaminant_features <- rowData(obj)[[master_protein_col]] %in% contaminant_proteins
+    contaminant_features <- rowData(obj)[[master_protein_col]] %in% contaminant_proteins |
+      grepl(cont_string, rowData(obj)[[master_protein_col]])
   }
 
 
@@ -133,6 +135,7 @@ remove_contaminant <- function(obj,
 #' @param filter_associated_contaminant `logical`. Filter out features which
 #' match a contaminant associated protein.
 #' @param remove_no_quant `logical`. Remove features with no quantification
+#' @param cont_string `string`. string to search for contaminants
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @examples
 #' \dontrun{
@@ -169,7 +172,8 @@ filter_features_pd_dda <- function(obj,
                                    contaminant_proteins = NULL,
                                    crap_proteins = NULL,
                                    filter_associated_contaminant = TRUE,
-                                   remove_no_quant = TRUE){
+                                   remove_no_quant = TRUE,
+                                   cont_string = 'Cont_'){
 
   # Check use of contaminants/crap arguments
   if(!is.null(crap_proteins)){
@@ -197,7 +201,8 @@ filter_features_pd_dda <- function(obj,
                        contaminant_proteins,
                        filter_associated_contaminant,
                        master_protein_col,
-                       protein_col)
+                       protein_col,
+                       cont_string = cont_string)
 
     if('Contaminant' %in% colnames(rowData(obj))){
       obj <- obj[rowData(obj)$Contaminant=='False',]
@@ -263,6 +268,7 @@ filter_features_pd_dda <- function(obj,
 #' @param filter_associated_contaminant `logical`. Filter out features which
 #' match a contaminant associated protein.
 #' @param remove_no_quant `logical`. Remove features with no quantification
+#' @param cont_string `string`. string to search for contaminants
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @export
 filter_features_diann <- function(obj,
@@ -272,7 +278,8 @@ filter_features_diann <- function(obj,
                                  filter_contaminant = TRUE,
                                  contaminant_proteins = NULL,
                                  filter_associated_contaminant = TRUE,
-                                 remove_no_quant = TRUE){
+                                 remove_no_quant = TRUE,
+                                 cont_string='Cont_'){
 
 
   # check arguments
@@ -289,7 +296,8 @@ filter_features_diann <- function(obj,
                        contaminant_proteins,
                        filter_associated_contaminant,
                        master_protein_col,
-                       protein_col)
+                       protein_col,
+                       cont_string = cont_string)
 
   }
 
@@ -334,6 +342,7 @@ filter_features_diann <- function(obj,
 #' protein.
 #' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
 #' @param remove_no_quant `logical`. Remove features with no quantification
+#' @param cont_string `string`. string to search for contaminants
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @export
 filter_features_sn <- function(obj,
@@ -341,7 +350,8 @@ filter_features_sn <- function(obj,
                                  unique_master = TRUE,
                                  filter_contaminant = TRUE,
                                  contaminant_proteins = NULL,
-                                 remove_no_quant = TRUE){
+                                 remove_no_quant = TRUE,
+                                 cont_string = 'Cont_'){
 
 
   # check arguments
@@ -357,7 +367,8 @@ filter_features_sn <- function(obj,
     obj <- remove_contaminant(obj,
                        contaminant_proteins,
                        filter_associated_contaminant=FALSE,
-                       master_protein_col)
+                       master_protein_col,
+                       cont_string = cont_string)
 
   }
 

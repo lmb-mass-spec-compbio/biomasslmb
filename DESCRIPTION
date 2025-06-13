@@ -23,6 +23,7 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     Biostrings,
+    cleaver,
     corrplot,
     cutr,
     dplyr,

@@ -36,6 +36,8 @@ plot_missing_upset <- function(obj, i){
     assay() %>%
     data.frame()
 
+  missing_data <- missing_data[,colSums(is.na(missing_data))>0]
+
   p <- gg_miss_upset(missing_data,
                      sets = paste0(colnames(missing_data), '_NA'),
                      keep.order = TRUE,

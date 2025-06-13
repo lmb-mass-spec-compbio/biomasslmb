@@ -10,7 +10,8 @@ filter_features_sn(
   unique_master = TRUE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
-  remove_no_quant = TRUE
+  remove_no_quant = TRUE,
+  cont_string = "Cont_"
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ protein.}
 \item{contaminant_proteins}{\verb{character vector}. The protein IDs form the contaminant proteins}
 
 \item{remove_no_quant}{\code{logical}. Remove features with no quantification}
+
+\item{cont_string}{\code{string}. string to search for contaminants}
 }
 \value{
 Returns a \code{SummarisedExperiment} with the filtered Proteome Discoverer output.

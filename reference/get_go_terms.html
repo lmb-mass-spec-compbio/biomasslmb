@@ -82,7 +82,7 @@ consider the GO term heirarchy. Note that expansion will significantly increase 
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">uniprotIDs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'O76024'</span>, <span class="st">'Q03135'</span>, <span class="st">'Q96T23'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">get_go_terms</span><span class="op">(</span><span class="va">uniprotIDs</span>, expand_terms<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in uniprot_map(ids = UniprotID, from = "UniProtKB_AC-ID", verbosity = verbosity,     method = "stream", to = "UniProtKB", fields = "go", ):</span> could not find function "uniprot_map"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in (function (cond) .Internal(C_tryCatchHelper(addr, 1L, cond)))(structure(list(message = "there is no package called ‘GO.db’",     call = loadNamespace(x), package = "GO.db", lib.loc = NULL), class = c("packageNotFoundError", "error", "condition"))):</span> error in evaluating the argument 'x' in selecting a method for function 'select': there is no package called ‘GO.db’</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

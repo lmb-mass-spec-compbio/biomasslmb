@@ -70,6 +70,7 @@ PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 <span>  master_protein_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span>
 <span>  inter_col <span class="op">=</span> <span class="st">"Isolation.Interference.in.Percent"</span>,</span>
 <span>  sn_col <span class="op">=</span> <span class="st">"Average.Reporter.SN"</span>,</span>
+<span>  from_PD <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -103,8 +104,13 @@ proteins.</p></dd>
 <dd><p><code>string</code>. Name of column containing the signal:noise value.</p></dd>
 
 
+<dt id="arg-from-pd">from_PD<a class="anchor" aria-label="anchor" href="#arg-from-pd"></a></dt>
+<dd><p><code>logical</code>. Input is from ProteomeDiscover. If set, will filter using
+Quan.Info and PSM.Ambiguity columns. Default is TRUE</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p><code>boolean</code>. Default is TRUE, use verbose output messages.</p></dd>
+<dd><p><code>logical</code>. Default is TRUE, use verbose output messages.</p></dd>
 
 </dl></div>
     <div class="section level2">

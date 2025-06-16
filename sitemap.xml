@@ -30,6 +30,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_mq_dda.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_pd_dda.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_per_protein.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_sn.html</loc></url>
@@ -40,6 +41,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_crap_fasta_accessions.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_enriched_go.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_go_terms.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_maxquant_cont_accessions.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_medians.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_n_feature_per_prot.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_protein_no_quant_mask.html</loc></url>

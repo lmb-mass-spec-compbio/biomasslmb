@@ -50,7 +50,9 @@ update_average_sn <- function(obj,
 #' proteins.
 #' @param inter_col `string`. Name of column containing the interference value.
 #' @param sn_col `string`. Name of column containing the signal:noise value.
-#' @param verbose `boolean`. Default is TRUE, use verbose output messages.
+#' @param from_PD `logical`. Input is from ProteomeDiscover. If set, will filter using
+#' Quan.Info and PSM.Ambiguity columns. Default is TRUE
+#' @param verbose `logical`. Default is TRUE, use verbose output messages.
 #'
 #' @return Returns an `summarizedExperiment` with the filtered PSMs.
 #' @export
@@ -60,6 +62,7 @@ filter_TMT_PSMs <- function(obj,
                             master_protein_col='Master.Protein.Accessions',
                             inter_col='Isolation.Interference.in.Percent',
                             sn_col='Average.Reporter.SN',
+                            from_PD=TRUE,
                             verbose=TRUE){
 
   check_se_psm(obj)
@@ -69,15 +72,17 @@ filter_TMT_PSMs <- function(obj,
                             master_protein_col,
                             "Initial PSMs")
 
-  obj <- obj[rowData(obj)$Quan.Info=='',]
-  if(verbose) message_parse(rowData(obj),
-                            master_protein_col,
-                            "PSMs with Quan.Info removed")
+  if(from_PD){
+    obj <- obj[rowData(obj)$Quan.Info=='',]
+    if(verbose) message_parse(rowData(obj),
+                              master_protein_col,
+                              "PSMs with Quan.Info removed")
 
-  obj <- obj[rowData(obj)$PSM.Ambiguity %in% c('Selected', 'Unambiguous'),]
-  if(verbose) message_parse(rowData(obj),
-                            master_protein_col,
-                            "PSMs which are not selected or unambiguous removed")
+    obj <- obj[rowData(obj)$PSM.Ambiguity %in% c('Selected', 'Unambiguous'),]
+    if(verbose) message_parse(rowData(obj),
+                              master_protein_col,
+                              "PSMs which are not selected or unambiguous removed")
+  }
 
   obj <- obj[rowSums(is.finite(assay(obj)))>0,]
   if(verbose) message_parse(rowData(obj),

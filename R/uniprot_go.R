@@ -10,6 +10,7 @@
 #' @param verbosity `integer` Verbosity level for uniprotREST::uniprot_map
 #' @return `data.frame` object.
 #' @export
+#' @importFrom uniprotREST uniprot_map
 #' @examples
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' get_go_terms(uniprotIDs, expand_terms=TRUE)

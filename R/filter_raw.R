@@ -397,5 +397,124 @@ filter_features_sn <- function(obj,
   }
 
   return(obj)
-
 }
+
+
+#' @noRd
+remove_contaminant_mq <- function (obj, contaminant_proteins, filter_associated_contaminant,
+                                   master_protein_col='Leading.razor.protein', protein_col='Proteins')
+{
+  if (is.null(contaminant_proteins)) {
+    stop("must supply the contaminant_proteins argument to filter contaminant proteins")
+  }
+  message(sprintf("%s contaminant proteins supplied", length(contaminant_proteins)))
+  contaminant_features <- rowData(obj)[[master_protein_col]] %in%
+    contaminant_proteins | grepl("CON__", rowData(obj)[[protein_col]])
+  if (filter_associated_contaminant) {
+    associated_contaminant <- rowData(obj[contaminant_features,
+    ])[[protein_col]] %>% strsplit(";") %>% unlist()
+    associated_contaminant <- associated_contaminant[!grepl("CON__",
+                                                            associated_contaminant)]
+    message(sprintf("%s proteins identified as 'contaminant associated'",
+                    length(associated_contaminant)))
+  }
+  obj <- obj[!contaminant_features, ]
+  message_parse(rowData(obj), master_protein_col, "contaminant features removed")
+  if (filter_associated_contaminant) {
+    if (length(associated_contaminant) > 0) {
+      associated_contaminant_no_isoform <- unique(sapply(strsplit(associated_contaminant,
+                                                                  "-"), "[[", 1))
+      associated_contaminant_regex <- paste(associated_contaminant_no_isoform,
+                                            collapse = "|")
+      obj <- obj[!grepl(associated_contaminant_regex, rowData(obj)[[protein_col]]),
+      ]
+      message_parse(rowData(obj), master_protein_col, "associated contaminant features removed")
+    }
+  }
+  return(obj)
+}
+
+
+#' Filter MaxQuant DDA output
+#'
+#' @description This function filters the output .txt files (peptide groups or PSMs) from
+#' Proteome Discoverer for DDA, based on various criteria:
+#'
+#' 1. Remove features without a master protein
+#' 2. Remove features without a unique master protein  (i.e.
+#'    Number.of.Protein.Groups == 1)
+#' 3. Remove features matching a contaminant protein
+#' 4. Remove features matching any protein associated with
+#'    a contaminant protein (see below)
+#' 5. Remove features without quantification values
+#'
+#' @details **Associated contaminant proteins** are proteins which have at least
+#' one feature shared with a contaminant protein. It has been observed that the contaminant
+#' fasta files often do not contain all possible contaminant proteins e.g. some features
+#' can be assigned to a keratin which is not in the provided contaminant database.
+#'
+#' In the example below, using `filter_associated_contaminant = TRUE` will filter out f2 and f3 in
+#' addition to f1, regardless of the value in the Leading.razor.protein column.
+#'
+#' ```
+#' feature  Proteins                          Leading.razor.protein
+#' f1       protein1, protein2, contaminant,  protein1
+#' f2       protein1, protein3                protein3
+#' f3       protein2                          protein2
+#' ```
+#' @param obj `SummarisedExperiment` containing output from MaxQuant.
+#' Use \code{\link[QFeatures]{readQFeatures}} to read in .txt file
+#' @param master_protein_col `string`. Name of column containing master
+#' proteins.
+#' @param protein_col `string`. Name of column containing all protein
+#' matches.
+#' @param unique_master `logical`. Filter out features without a unique
+#' master protein.
+#' @param filter_contaminant `logical`. Filter out features which match a contaminant
+#' protein.
+#' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
+#' @param filter_associated_contaminant `logical`. Filter out features which
+#' match a contaminant associated protein.
+#' @param remove_no_quant `logical`. Remove features with no quantification
+#' @return Returns a `SummarisedExperiment` with the filtered MaxQuant output.
+
+#' @export
+filter_features_mq_dda <- function (obj,
+                                    master_protein_col ='Leading.razor.protein',
+                                    protein_col = "Proteins",
+                                    unique_master = TRUE,
+                                    filter_contaminant = TRUE,
+                                    contaminant_proteins = NULL,
+                                    filter_associated_contaminant = TRUE,
+                                    remove_no_quant = TRUE){
+
+  check_se(obj)
+  message("Filtering data...")
+
+  message_parse(rowData(obj), master_protein_col, "Input")
+
+  obj <- obj[rowData(obj)$Reverse=='',]
+
+  message_parse(rowData(obj), master_protein_col, "Removed hits to decoy database")
+
+  if (filter_contaminant) {
+    obj <- remove_contaminant_mq(obj, contaminant_proteins,
+                                 filter_associated_contaminant,
+                                 master_protein_col,
+                                 protein_col)
+    if ("Potential.contaminant" %in% colnames(rowData(obj))) {
+      obj <- obj[rowData(obj)$Potential.contaminant == "", ]
+      message_parse(rowData(obj), master_protein_col, "MaxQuant-labelled 'Contaminants' removed")
+    }
+  }
+  obj <- remove_no_master(obj, master_protein_col)
+  if (unique_master) {
+    rowData(obj)$Number.of.Protein.Groups <- sapply(strsplit(rowData(obj)$Leading.proteins, split = ';'), length)
+    obj <- remove_non_unique_master_protein(obj, master_protein_col)
+  }
+  if (remove_no_quant) {
+    obj <- remove_no_quant_assay(obj, master_protein_col)
+  }
+  return(obj)
+}
+

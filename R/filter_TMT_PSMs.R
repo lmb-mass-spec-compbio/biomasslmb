@@ -40,16 +40,19 @@ update_average_sn <- function(obj,
 #' 1. Missing values (`NA`) for all tags
 #' 2. Interference/co-isolation above a set value (default=100, e.g no filtering)
 #' 3. Signal:noise ratio below a set value (default=0, e.g no filtering)
-#' 4. Quan.Info is not empty ('')
-#' 5. PSM.Ambiguity is not 'Selected' or 'Unambiguous'
+#' 4. SPS-MM below a set value (default=0, e.g no filtering)
+#' 5. Quan.Info is not empty ('')
+#' 6. PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 #'
 #' @param obj `summarizedExperiment`. Should contain PSMs-level TMT quantification
 #' @param inter_thresh `numeric`. Maximum allowed interference/co-isolation
-#' @param sn_thresh `numeric`. Minimum allowed average signal:noise
+#' @param sn_thresh `numeric`. Minimum allowed average signal:
+#' @param spsmm_thresh `numeric`. Minimum allowed value for Synchronous precursor selection mass matches (%) - SPS-MM, e.g the percentage of MS3 fragments that can be explicitly traced back to the precursor peptides
 #' @param master_protein_col `string`. Name of column containing master
 #' proteins.
 #' @param inter_col `string`. Name of column containing the interference value.
 #' @param sn_col `string`. Name of column containing the signal:noise value.
+#' @param spsmm_col `string`. Name of column containing the SPS-MM value.
 #' @param from_PD `logical`. Input is from ProteomeDiscover. If set, will filter using
 #' Quan.Info and PSM.Ambiguity columns. Default is TRUE
 #' @param verbose `logical`. Default is TRUE, use verbose output messages.
@@ -59,9 +62,11 @@ update_average_sn <- function(obj,
 filter_TMT_PSMs <- function(obj,
                             inter_thresh=100,
                             sn_thresh=0,
+                            spsmm_thresh=0,
                             master_protein_col='Master.Protein.Accessions',
                             inter_col='Isolation.Interference.in.Percent',
                             sn_col='Average.Reporter.SN',
+                            spsmm_col='SPS.Mass.Matches.in.Percent',
                             from_PD=TRUE,
                             verbose=TRUE){
 
@@ -109,6 +114,18 @@ filter_TMT_PSMs <- function(obj,
   } else{
     if(verbose) message(sprintf('Not performing filtering by average S:N ratio (`sn_thresh`=%s)',
                                 sn_thresh))
+  }
+
+  if(spsmm_thresh>0){
+
+    obj <- obj[rowData(obj)[[spsmm_col]]>=spsmm_thresh,]
+
+    if(verbose) message_parse(rowData(obj),
+                              master_protein_col,
+                              "Removing PSMs with low SPS-MM")
+  } else{
+    if(verbose) message(sprintf('Not performing filtering by SPS-MM (`spsmm_thresh`=%s)',
+                                spsmm_thresh))
   }
 
   return(obj)

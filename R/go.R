@@ -263,11 +263,11 @@ get_ancestor_go <- function(go_df, feature_col = "UNIPROTKB", go_col = "GO.ID",
 #' the output GO terms be added to the output data.frame? Default is `TRUE`.
 #' @param shorten_lims `integer vector` of length 2. The start and stop
 #' coordinates of the substring.
-#'
+#' @param filter_no_DE `logical`. Should terms without any features in the foreground be removed?
 #' @return Returns a `data.frame` of over/underrepresented GO terms.
 #' @export
 get_enriched_go <- function(pwf, gene2cat = NULL, ...,
-                            shorten_term = TRUE, shorten_lims = c(1L, 30L)) {
+                            shorten_term = TRUE, shorten_lims = c(1L, 30L), filter_no_DE=TRUE) {
   # perform GO term enrichment with or without gene2cat
   if(!is.null(gene2cat)) {
     message(sprintf("Number of DE genes input: %i", sum(pwf$DEgenes)))
@@ -288,7 +288,10 @@ get_enriched_go <- function(pwf, gene2cat = NULL, ...,
   }
 
   # remove GO terms without any genes assigned to them
-  filter(out, .data$numDEInCat > 0)
+  if(filter_no_DE){
+    out <- filter(out, .data$numDEInCat > 0)
+  }
+  return(out)
 }
 
 #' Estimate effect size of over-representation

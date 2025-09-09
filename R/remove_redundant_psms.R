@@ -51,6 +51,16 @@ update_peptide_assignments <- function(obj,
   pep2assignments <- pep_infdf %>% select(Sequence, all_of(assignment_cols_present)) %>%
     distinct()
 
+  if('Protein.Accessions' %in% assignment_cols_present){
+    # Protein.Accessions column is not always consistent, eg. Sequest may include contaminant IDs, where
+    # Comet does not. We will use whichever value is longest
+    pep2assignments <-  pep2assignments %>%
+      mutate(prot_acc_len=nchar(Protein.Accessions)) %>%
+      group_by(across(all_of(setdiff(assignment_cols_present, 'Protein.Accessions')))) %>%
+      slice_max(prot_acc_len, n=1) %>%
+      select(-prot_acc_len) %>% ungroup()
+  }
+
   if(sum(duplicated(pep2assignments$Sequence))>0){
     duplicated_pep <- pep2assignments$Sequence[duplicated(pep2assignments$Sequence)]
     print(filter(pep2assignments, Sequence==duplicated_pep[[1]]))

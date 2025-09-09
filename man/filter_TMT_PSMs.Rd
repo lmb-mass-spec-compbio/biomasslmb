@@ -8,9 +8,11 @@ filter_TMT_PSMs(
   obj,
   inter_thresh = 100,
   sn_thresh = 0,
+  spsmm_thresh = 0,
   master_protein_col = "Master.Protein.Accessions",
   inter_col = "Isolation.Interference.in.Percent",
   sn_col = "Average.Reporter.SN",
+  spsmm_col = "SPS.Mass.Matches.in.Percent",
   from_PD = TRUE,
   verbose = TRUE
 )
@@ -20,7 +22,9 @@ filter_TMT_PSMs(
 
 \item{inter_thresh}{\code{numeric}. Maximum allowed interference/co-isolation}
 
-\item{sn_thresh}{\code{numeric}. Minimum allowed average signal:noise}
+\item{sn_thresh}{\code{numeric}. Minimum allowed average signal:}
+
+\item{spsmm_thresh}{\code{numeric}. Minimum allowed value for Synchronous precursor selection mass matches (\%) - SPS-MM, e.g the percentage of MS3 fragments that can be explicitly traced back to the precursor peptides}
 
 \item{master_protein_col}{\code{string}. Name of column containing master
 proteins.}
@@ -28,6 +32,8 @@ proteins.}
 \item{inter_col}{\code{string}. Name of column containing the interference value.}
 
 \item{sn_col}{\code{string}. Name of column containing the signal:noise value.}
+
+\item{spsmm_col}{\code{string}. Name of column containing the SPS-MM value.}
 
 \item{from_PD}{\code{logical}. Input is from ProteomeDiscover. If set, will filter using
 Quan.Info and PSM.Ambiguity columns. Default is TRUE}
@@ -43,6 +49,7 @@ Filter PSMs from TMT quantification to remove the following:
 \item Missing values (\code{NA}) for all tags
 \item Interference/co-isolation above a set value (default=100, e.g no filtering)
 \item Signal:noise ratio below a set value (default=0, e.g no filtering)
+\item SPS-MM below a set value (default=0, e.g no filtering)
 \item Quan.Info is not empty ('')
 \item PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 }

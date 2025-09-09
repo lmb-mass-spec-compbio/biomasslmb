@@ -7,6 +7,7 @@
 #'
 #' @param obj `QFeatures`. Proteomics dataset
 #' @param i `string`. Index for the SummarizedExperiment you wish to plot
+#' @param allowing_missing `logical`. If TRUE, will use pcaMethods::pca to allow for missing values. If FALSE (default), will use stats::prcomp and remove any features with missing values
 #' @param colour_by `string`. ColData column to colour points by
 #' @param shape_by `string`. ColData column to shape points by
 #' @param x `numeric`. Principle component to plot on x-axis
@@ -15,24 +16,38 @@
 #' @export
 plot_pca <- function(obj,
                      i,
+                     allowing_missing=FALSE,
                      colour_by=NULL,
                      shape_by=NULL,
                      x = 1,
                      y = 2,
                      ...){
 
+
   check_q(obj)
 
   check_se_exists(obj, i)
+  # Switch between prcomp and use pca from pcaMethods to handle cases with missing values
 
-  pca <- prcomp(t(assay(filterNA(obj[[i]]))), ...)
+  if(allowing_missing){
+    if(!requireNamespace("pcaMethods", quietly = TRUE)) {
+      stop("pcaMethods package needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+    pca <- pcaMethods::pca(t(assay(obj[[i]])), nPcs = ncol(assay(obj[[i]])), ...)
+    proj <- pca@scores
+    var_explained <- 100*pca@R2
+  } else{
+    pca <- prcomp(t(assay(filterNA(obj[[i]], pNA=0))), ...)
+    var_explained <- 100*pca$sdev^2/sum(pca$sdev^2)
+    proj <- pca$x
+  }
 
-  var_explained <- 100*pca$sdev^2/sum(pca$sdev^2)
 
   pca_x = sprintf('PC%s', x)
   pca_y = sprintf('PC%s', y)
 
-  p <- pca$x %>%
+  p <- proj %>%
     merge(data.frame(colData(obj)), by='row.names') %>%
     ggplot(aes(!!sym(pca_x), !!sym(pca_y))) +
 

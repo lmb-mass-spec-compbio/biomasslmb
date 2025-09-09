@@ -54,6 +54,7 @@ restrict_imputation <- function(obj, i_unimputed, i_imputed,
   use_imputed <- non_imputed_data %>% data.frame() %>%
     tibble::rownames_to_column('rowname') %>%
     pivot_longer(cols=-rowname) %>%
+    mutate(name=remove_x(name)) %>%
     merge(colData(obj), by.x='name', by.y='row.names') %>%
     data.frame() %>%
     group_by(rowname, across(all_of(group_cols))) %>%

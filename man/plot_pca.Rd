@@ -4,12 +4,23 @@
 \alias{plot_pca}
 \title{Create a Principle Component plot from the feature quantification}
 \usage{
-plot_pca(obj, i, colour_by = NULL, shape_by = NULL, x = 1, y = 2, ...)
+plot_pca(
+  obj,
+  i,
+  allowing_missing = FALSE,
+  colour_by = NULL,
+  shape_by = NULL,
+  x = 1,
+  y = 2,
+  ...
+)
 }
 \arguments{
 \item{obj}{\code{QFeatures}. Proteomics dataset}
 
 \item{i}{\code{string}. Index for the SummarizedExperiment you wish to plot}
+
+\item{allowing_missing}{\code{logical}. If TRUE, will use pcaMethods::pca to allow for missing values. If FALSE (default), will use stats::prcomp and remove any features with missing values}
 
 \item{colour_by}{\code{string}. ColData column to colour points by}
 

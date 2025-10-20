@@ -9,7 +9,8 @@ get_enriched_go(
   gene2cat = NULL,
   ...,
   shorten_term = TRUE,
-  shorten_lims = c(1L, 30L)
+  shorten_lims = c(1L, 30L),
+  filter_no_DE = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ the output GO terms be added to the output data.frame? Default is \code{TRUE}.}
 
 \item{shorten_lims}{\verb{integer vector} of length 2. The start and stop
 coordinates of the substring.}
+
+\item{filter_no_DE}{\code{logical}. Should terms without any features in the foreground be removed?}
 }
 \value{
 Returns a \code{data.frame} of over/underrepresented GO terms.

@@ -9,7 +9,8 @@ filter_by_protein_fdr(
   protein_fdr_filename,
   protein_col_peptide = "Master.Protein.Accessions",
   protein_col_protein = "Accession",
-  protein_FDR_col = "Protein.FDR.Confidence.Combined"
+  protein_FDR_col = "Protein.FDR.Confidence.Combined",
+  retain_proteins = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ proteins in the protein-level \code{protein_fdr_filename}}
 
 \item{protein_FDR_col}{\code{string}. Name of column containing FDR information in
 the protein-level \code{protein_fdr_filename}}
+
+\item{retain_proteins}{\verb{character vector}. Vector of protein accessions to always retain,
+even if they do not pass the FDR threshold. Default is NULL.}
 }
 \value{
 Returns a \code{SummarisedExperiment} with the filtered Proteome Discoverer output.

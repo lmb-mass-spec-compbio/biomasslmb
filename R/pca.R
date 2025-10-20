@@ -34,7 +34,7 @@ plot_pca <- function(obj,
       stop("pcaMethods package needed for this function to work. Please install it.",
            call. = FALSE)
     }
-    pca <- pcaMethods::pca(t(assay(obj[[i]])), nPcs = ncol(assay(obj[[i]])), ...)
+    pca <- pcaMethods::pca(t(assay(obj[[i]])), nPcs = min(20, ncol(assay(obj[[i]]))), ...)
     proj <- pca@scores
     var_explained <- 100*pca@R2
   } else{

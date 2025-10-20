@@ -114,7 +114,12 @@ add_ptm_pos_rowdata_mq <- function(obj,
 #' output from MaxQuant and adds rowData columns to describe the PTMs present in the peptide and their positions within the peptide' '
 #' @param obj `SummarizedExperiment`. Proteomics dataset
 #' @param ptms_to_retain `character` vector with PTMs to retain. Inspect values in rowData(obj)$Modified.sequence to get correct PTM name
-#' @param ptm_encoding_pos `character` name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values.
+#' @param ptm_encoding_pos `character` name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values
+#' @param prob_col `character` name of column containing PTM probabilities
+#' @param min_prob `numeric` Minimum acceptable probability for PTM localisation
+#' @param filter_pep_by_prob `logical` Filter the output to only return cases where the number of sites passing the probability threshold
+#' equals the number of PTMs in the peptide
+#' @param verbose `logical` Describe the number of PTMs detected
 #' @return Returns a `SummarizedExperiment` with an additional column in the RowData describing the position of the PTMs with respect to the peptide sequence
 #' @export
 #' @export

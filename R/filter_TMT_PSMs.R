@@ -78,7 +78,11 @@ filter_TMT_PSMs <- function(obj,
                             "Initial PSMs")
 
   if(from_PD){
-    obj <- obj[rowData(obj)$Quan.Info=='',]
+    # If all Quan Info are empty, will be read as logical column of NAs
+    if(!all(is.na(rowData(obj)$Quan.Info))){
+      obj <- obj[rowData(obj)$Quan.Info=='',]
+    }
+
     if(verbose) message_parse(rowData(obj),
                               master_protein_col,
                               "PSMs with Quan.Info removed")

@@ -14,13 +14,16 @@
 #' proteins in the protein-level `protein_fdr_filename`
 #' @param protein_FDR_col `string`. Name of column containing FDR information in
 #' the protein-level `protein_fdr_filename`
+#' @param retain_proteins `character vector`. Vector of protein accessions to always retain,
+#' even if they do not pass the FDR threshold. Default is NULL.
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @export
 filter_by_protein_fdr <- function(obj,
                                   protein_fdr_filename,
                                   protein_col_peptide = "Master.Protein.Accessions",
                                   protein_col_protein = "Accession",
-                                  protein_FDR_col = 'Protein.FDR.Confidence.Combined'){
+                                  protein_FDR_col = 'Protein.FDR.Confidence.Combined',
+                                  retain_proteins = NULL){
 
   check_se(obj)
 
@@ -47,8 +50,10 @@ filter_by_protein_fdr <- function(obj,
   rowData(obj)$Protein.Confidence <-
     protein_fdr$Protein.FDR.Confidence.Combined
 
-  obj <- obj[!is.na(rowData(obj)$Protein.Confidence),]
-  obj <- obj[rowData(obj)$Protein.Confidence == 'High',]
+
+  obj <- obj[(!is.na(rowData(obj)$Protein.Confidence) | rowData(obj)[[protein_col_peptide]] %in% retain_proteins), ]
+
+  obj <- obj[(rowData(obj)$Protein.Confidence == 'High' | rowData(obj)[[protein_col_peptide]] %in% retain_proteins),]
 
   message_parse(rowData(obj), protein_col_peptide,
                 'Removing peptides from proteins not passing the FDR threshold')

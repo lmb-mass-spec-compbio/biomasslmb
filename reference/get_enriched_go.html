@@ -68,7 +68,8 @@ expect Ensembl gene IDs to have been used to construct the <code>pwf</code> inpu
 <span>  gene2cat <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  shorten_term <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  shorten_lims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">30L</span><span class="op">)</span></span>
+<span>  shorten_lims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">30L</span><span class="op">)</span>,</span>
+<span>  filter_no_DE <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,6 +103,10 @@ the output GO terms be added to the output data.frame? Default is <code>TRUE</co
 <dt id="arg-shorten-lims">shorten_lims<a class="anchor" aria-label="anchor" href="#arg-shorten-lims"></a></dt>
 <dd><p><code>integer vector</code> of length 2. The start and stop
 coordinates of the substring.</p></dd>
+
+
+<dt id="arg-filter-no-de">filter_no_DE<a class="anchor" aria-label="anchor" href="#arg-filter-no-de"></a></dt>
+<dd><p><code>logical</code>. Should terms without any features in the foreground be removed?</p></dd>
 
 </dl></div>
     <div class="section level2">

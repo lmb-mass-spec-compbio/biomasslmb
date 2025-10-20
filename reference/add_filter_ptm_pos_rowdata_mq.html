@@ -70,8 +70,25 @@ output from MaxQuant and adds rowData columns to describe the PTMs present in th
 <dd><p><code>character</code> vector with PTMs to retain. Inspect values in rowData(obj)$Modified.sequence to get correct PTM name</p></dd>
 
 
+<dt id="arg-prob-col">prob_col<a class="anchor" aria-label="anchor" href="#arg-prob-col"></a></dt>
+<dd><p><code>character</code> name of column containing PTM probabilities</p></dd>
+
+
+<dt id="arg-min-prob">min_prob<a class="anchor" aria-label="anchor" href="#arg-min-prob"></a></dt>
+<dd><p><code>numeric</code> Minimum acceptable probability for PTM localisation</p></dd>
+
+
+<dt id="arg-filter-pep-by-prob">filter_pep_by_prob<a class="anchor" aria-label="anchor" href="#arg-filter-pep-by-prob"></a></dt>
+<dd><p><code>logical</code> Filter the output to only return cases where the number of sites passing the probability threshold
+equals the number of PTMs in the peptide</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p><code>logical</code> Describe the number of PTMs detected</p></dd>
+
+
 <dt id="arg-ptm-encoding-pos">ptm_encoding_pos<a class="anchor" aria-label="anchor" href="#arg-ptm-encoding-pos"></a></dt>
-<dd><p><code>character</code> name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values.</p></dd>
+<dd><p><code>character</code> name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values</p></dd>
 
 </dl></div>
     <div class="section level2">

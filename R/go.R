@@ -526,7 +526,7 @@ plot_go <- function(obj,
     message(sprintf("The column '%s' contains duplicates.", term_col))
 
     if(make_terms_unique){
-      obj[, term_col] <- make.unique(obj[, term_col])
+      obj[[term_col]] <- make.unique(obj[[term_col]])
     }
   }
 

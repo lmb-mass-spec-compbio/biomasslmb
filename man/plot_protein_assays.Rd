@@ -10,6 +10,7 @@ plot_protein_assays(
   experiments_to_plot = NULL,
   protein_id_col = "Master.Protein.Accessions",
   label_col = "Master.Protein.Accessions",
+  row_vars = NULL,
   rename_labels = NULL,
   log2transform_cols = "",
   norm_quant = FALSE,
@@ -28,6 +29,8 @@ plot_protein_assays(
 \item{protein_id_col}{\code{string}. Column with the protein ids to search for \code{poi} values}
 
 \item{label_col}{\code{string}. Column with labels to use for proteins in plot}
+
+\item{row_vars}{\verb{character vector}. Additional row variables to include in the plot data (e.g peptide sequence)}
 
 \item{rename_labels}{\verb{named list}. Mapping from labels to renamed labels}
 

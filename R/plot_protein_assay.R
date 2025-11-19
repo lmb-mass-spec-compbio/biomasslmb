@@ -9,6 +9,7 @@
 #' @param experiments_to_plot `list`. experiments (assays) to plot. Defaults to all assays
 #' @param protein_id_col `string`. Column with the protein ids to search for `poi` values
 #' @param label_col `string`. Column with labels to use for proteins in plot
+#' @param row_vars `character vector`. Additional row variables to include in the plot data (e.g peptide sequence)
 #' @param rename_labels `named list`. Mapping from labels to renamed labels
 #' @param log2transform_cols `list`. Assays which need to be log2-transforms (all values should ultimately be transformed)
 #' @param norm_quant `logical`. Should the quantifications be normalised to the fold-change vs mean abundance
@@ -23,6 +24,7 @@ plot_protein_assays <- function(obj,
                                 experiments_to_plot=NULL,
                                 protein_id_col='Master.Protein.Accessions',
                                 label_col='Master.Protein.Accessions',
+                                row_vars=NULL,
                                 rename_labels=NULL,
                                 log2transform_cols='',
                                 norm_quant=FALSE,
@@ -37,7 +39,7 @@ plot_protein_assays <- function(obj,
   }
 
   to_plot <- obj[, , experiments_to_plot] %>%
-    longFormat(rowvars=c(protein_id_col, label_col))  %>%
+    longFormat(rowvars=c(protein_id_col, label_col, row_vars))  %>%
     as_tibble() %>%
     filter(!!sym(protein_id_col) %in% poi) %>%
     mutate(label=!!sym(label_col)) %>%

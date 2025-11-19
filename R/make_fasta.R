@@ -71,6 +71,13 @@ make_fasta <- function(accessions, file, is_crap = FALSE, overwrite = FALSE, ver
     httr::stop_for_status(response, "query UniProt")
   }
 
+  # From ChatGPT: To ensure that the file is properly closed after writing, we can open a connection to the file in read mode and then immediately close it.
+  # This forces R to flush any buffered data to disk and release the file handle.
+  # https://chatgpt.com/share/6901f9a5-4af8-8003-9a3c-626605ac5881
+  if (file.exists(file)) {
+    flush <- file(file, "r"); close(flush)
+  }
+
   if (is_crap) {
     crap <- Biostrings::readAAStringSet(filepath = file)
     names(crap) <- sub_crap(names(crap))

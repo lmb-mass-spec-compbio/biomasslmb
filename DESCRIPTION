@@ -15,7 +15,8 @@ LazyDataCompression: bzip2
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-biocViews:
+biocViews: Software, Proteomics, QuantitativeProteomics
+BiocVersion: 3.21
 Remotes: 
     moodymudskipper/cutr,
     csdaw/uniprotREST

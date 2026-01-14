@@ -1,0 +1,1360 @@
+---
+title: "DIA-NN Correlation Profiling for Subcellular Proteomics"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{DIA-NN Correlation Profiling for Subcellular Proteomics}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+Subcellular fractionation combined with quantitative proteomics enables the determination of protein subcellular localization on a proteome-wide scale. In correlation profiling approaches, proteins are assumed to co-fractionate with their resident organelle, creating characteristic distribution profiles across fractions.
+
+This vignette demonstrates how to perform correlation profiling analysis on DIA-NN data to:
+
+- Identify protein subcellular localizations
+- Discover protein relocalization between conditions
+- Identify protein-protein interactions through co-fractionation
+- Quality control subcellular fractionation experiments
+
+The approach is based on correlation profiling methods where proteins with similar fractionation profiles are likely to reside in the same subcellular compartment or complex.
+
+# Background on Correlation Profiling
+
+## Principle
+
+In a typical subcellular fractionation experiment:
+
+1. Cells are lysed and fractionated (e.g., by differential centrifugation or density gradient)
+2. Each fraction is analyzed by MS to quantify protein abundances
+3. Each protein generates a distribution profile across fractions
+4. Proteins from the same organelle have correlated profiles
+5. Reference proteins (with known localizations) can be used to assign localizations to unknown proteins
+
+## Approaches
+
+There are several correlation profiling approaches:
+
+- **LOPIT** (Localization of Organelle Proteins by Isotope Tagging): Uses density gradient fractionation with multiplexed quantification
+- **hyperLOPIT**: Higher resolution variant using more fractions
+- **Protein Correlation Profiling (PCP)**: Can use any fractionation method including subcellular fractionation, size exclusion, or other separations
+- **PCP-SILAC**: Combines PCP with SILAC labeling to detect relocalization
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(pheatmap)
+```
+
+# Load preprocessed data
+
+We'll start with protein-level data from the DIA-NN processing vignette. In a real experiment, you would have data from multiple subcellular fractions.
+
+For this example, we'll simulate a subcellular fractionation experiment where the 6 samples represent different fractions (e.g., from a density gradient separation).
+
+```{r}
+# In a real analysis, you would load your own fractionation data
+# Here we'll use the example data and treat the samples as fractions
+data(dia_qf)
+
+# For this example, let's rename the samples to represent fractions
+frac_qf <- dia_qf
+
+# Update column data to represent fractions instead of conditions
+colData(frac_qf) <- data.frame(
+  fraction = paste0("F", 1:6),
+  row.names = rownames(colData(frac_qf))
+)
+
+# Update the protein-level colData too
+colData(frac_qf[['protein']]) <- colData(frac_qf)
+
+frac_qf
+```
+
+**Question 1:** What types of fractionation methods can be used for subcellular proteomics? What are the trade-offs?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Common fractionation methods:**
+
+1. **Differential centrifugation**:
+   - Sequential spins at increasing speeds
+   - Simple and fast
+   - Lower resolution, less pure fractions
+   - Good for major organelles (nuclei, mitochondria, etc.)
+
+2. **Density gradient centrifugation**:
+   - Proteins separate by density (e.g., sucrose or iodixanol gradients)
+   - Higher resolution
+   - Better separation of organelles with similar sizes
+   - More time-consuming
+
+3. **Free-flow electrophoresis**:
+   - Separation by charge
+   - Native conditions preserve complexes
+   - Expensive equipment
+
+4. **Size exclusion chromatography**:
+   - Separation by size
+   - Good for protein complexes
+   - Can preserve interactions
+
+**Trade-offs:**
+- **Resolution vs. throughput**: More fractions = better resolution but more MS time
+- **Purity vs. recovery**: Purer fractions may lose some proteins
+- **Native vs. denaturing**: Native conditions preserve complexes but may be less reproducible
+- **Cost and time**: More sophisticated methods are more expensive and time-consuming
+
+</details>
+
+# Data normalization for correlation profiling
+
+For correlation profiling, we need to normalize protein abundances across fractions. The goal is to make profiles comparable by:
+
+1. Removing differences in total protein loaded per fraction
+2. Scaling profiles to sum to 1 (creating proportional profiles)
+
+## Profile normalization
+
+```{r}
+# Extract protein-level data
+protein_data <- assay(frac_qf[['protein']])
+
+# First, we need to ensure we only work with proteins quantified in most fractions
+# For correlation profiling, we typically require quantification in at least 4-5 fractions
+min_fractions <- 4
+proteins_to_keep <- rowSums(!is.na(protein_data)) >= min_fractions
+
+protein_data_filtered <- protein_data[proteins_to_keep, ]
+
+cat(sprintf("Keeping %d proteins quantified in >= %d fractions\n", 
+            sum(proteins_to_keep), min_fractions))
+```
+
+```{r}
+# Normalize each protein profile to sum to 1 (proportional profile)
+# This makes profiles comparable regardless of absolute abundance
+protein_profiles <- t(apply(protein_data_filtered, 1, function(x) {
+  if(sum(!is.na(x)) >= min_fractions) {
+    x / sum(x, na.rm = TRUE)
+  } else {
+    rep(NA, length(x))
+  }
+}))
+
+# Remove any rows that became all NA
+protein_profiles <- protein_profiles[rowSums(!is.na(protein_profiles)) >= min_fractions, ]
+
+dim(protein_profiles)
+head(protein_profiles, 3)
+```
+
+**Question 2:** Why do we normalize protein profiles to sum to 1? What assumption does this make?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Why normalize to sum to 1:**
+
+1. **Comparability**: Makes profiles of different proteins directly comparable
+2. **Focus on distribution**: Emphasizes the shape of the distribution rather than absolute abundance
+3. **Removes abundance effects**: High abundance proteins don't dominate correlations
+4. **Mathematical convenience**: Profiles become probability distributions
+
+**Key assumption:**
+
+This normalization assumes that **each protein exists in only one location** (or a fixed set of locations). The normalized values represent the proportion of the protein in each fraction.
+
+**When this might fail:**
+- Proteins that genuinely relocalize between conditions
+- Proteins in multiple steady-state locations
+- Technical issues (aggregation, degradation) that create spurious distributions
+
+**Alternative normalizations:**
+- **Z-score normalization**: Standardizes to mean=0, SD=1; emphasizes relative changes
+- **Quantile normalization**: Forces all distributions to be identical; used when you expect similar distributions
+- **Robust scaling**: Uses median and MAD instead of mean and SD; less sensitive to outliers
+
+The choice depends on the experimental design and biological question.
+
+</details>
+
+## Imputation of missing values
+
+For correlation analysis, we need complete protein profiles. We can impute missing values using various strategies:
+
+```{r}
+# For correlation profiling, we might impute missing values with a small value
+# representing below detection limit, or use the minimum observed value
+# Here we'll use a simple approach: impute with the minimum value for that protein
+
+protein_profiles_imputed <- t(apply(protein_profiles, 1, function(x) {
+  if(any(is.na(x))) {
+    min_val <- min(x, na.rm = TRUE) * 0.01  # Use 1% of minimum as imputed value
+    x[is.na(x)] <- min_val
+  }
+  return(x)
+}))
+
+# Verify no missing values remain
+sum(is.na(protein_profiles_imputed))
+```
+
+**Question 3:** What are the risks and benefits of imputing missing values for correlation profiling?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Benefits of imputation:**
+
+1. **Complete profiles**: Enables calculation of correlation coefficients for all protein pairs
+2. **Increased coverage**: More proteins can be included in the analysis
+3. **Statistical power**: More data points for downstream analysis
+4. **Consistent workflow**: Same analysis pipeline for all proteins
+
+**Risks of imputation:**
+
+1. **Introduces noise**: Imputed values are guesses and may be wrong
+2. **Artificial correlations**: Proteins with imputed values in the same fractions may appear correlated
+3. **Biased results**: Imputation strategy can introduce systematic biases
+4. **False confidence**: Results may appear more certain than they are
+
+**Best practices:**
+
+1. **Minimize need for imputation**: 
+   - Require quantification in most fractions (e.g., 4/6)
+   - Optimize MS method for better coverage
+
+2. **Choose appropriate strategy**:
+   - **Left-censored imputation** (low value): For true biological absence
+   - **Local similarity imputation**: Use values from similar proteins
+   - **Don't impute**: Only analyze proteins with complete profiles
+
+3. **Sensitivity analysis**:
+   - Test multiple imputation strategies
+   - Check whether key results depend on imputed values
+   - Report how many values were imputed
+
+4. **Report clearly**:
+   - Document imputation method
+   - Show proportion of imputed values
+   - Consider excluding proteins with >1-2 imputed values
+
+In this example, we use minimal imputation and could alternatively exclude proteins without complete profiles.
+
+</details>
+
+# Calculate correlation matrix
+
+Now we can calculate correlations between all protein pairs. Proteins with similar subcellular localizations should have high correlations.
+
+```{r}
+# Calculate Pearson correlation between all protein pairs
+# This can be memory-intensive for large datasets
+cor_matrix <- cor(t(protein_profiles_imputed), method = "pearson")
+
+# Look at the distribution of correlation values
+hist(cor_matrix[upper.tri(cor_matrix)], 
+     breaks = 50, 
+     main = "Distribution of protein-protein correlations",
+     xlab = "Pearson correlation",
+     col = "steelblue")
+```
+
+**Question 4:** What correlation coefficient should we use (Pearson, Spearman, Kendall) and why?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Pearson correlation:**
+- Measures linear relationships
+- Assumes normally distributed data
+- Sensitive to outliers
+- **Best for**: Profile shapes that differ primarily in scale/intensity
+- **Most common** in published subcellular proteomics studies
+
+**Spearman correlation:**
+- Measures monotonic relationships (rank-based)
+- Does not assume normal distribution
+- More robust to outliers
+- **Best for**: Non-linear but monotonic relationships
+- Less sensitive to exact profile shape
+
+**Kendall's tau:**
+- Also rank-based
+- More robust to outliers than Spearman
+- Computationally more expensive
+- **Best for**: Small sample sizes, many tied ranks
+
+**For subcellular fractionation:**
+
+Most studies use **Pearson correlation** because:
+1. We expect similar shapes (linear relationships) for co-localized proteins
+2. Normalized profiles tend to be reasonably well-behaved
+3. Easier to interpret (ranges from -1 to 1 with clear meaning)
+4. Computationally efficient for large datasets
+
+**However, use Spearman if:**
+- Fractions span very different density/size ranges (non-linear separation)
+- You have many outliers or artifacts
+- Your fractionation method creates non-linear profiles
+
+**In practice:**
+- Try both Pearson and Spearman
+- Check if key findings are robust to the choice
+- Use Pearson for final analysis if results are similar (more interpretable)
+
+</details>
+
+# Identify reference proteins
+
+For subcellular localization assignment, we need a set of reference proteins with known localizations. These might come from:
+
+- Literature (validated localizations)
+- Database annotations (UniProt, GO Cellular Component)
+- Previous experiments in your cell type
+- Immunofluorescence microscopy
+
+```{r}
+# For this example, we'll simulate some reference proteins
+# In a real analysis, you would load these from a database or literature
+
+# Let's create some synthetic reference proteins based on the data
+# We'll select proteins with extreme profiles as "markers"
+
+# Proteins enriched in early fractions (e.g., nuclear markers)
+nuclear_profile <- protein_profiles_imputed[which.max(protein_profiles_imputed[,1]), , drop=FALSE]
+nuclear_markers <- rownames(protein_profiles_imputed)[
+  apply(protein_profiles_imputed, 1, function(x) cor(x, nuclear_profile[1,])) > 0.9
+][1:5]
+
+# Proteins enriched in middle fractions (e.g., ER/Golgi markers)
+er_profile <- protein_profiles_imputed[which.max(protein_profiles_imputed[,3]), , drop=FALSE]
+er_markers <- rownames(protein_profiles_imputed)[
+  apply(protein_profiles_imputed, 1, function(x) cor(x, er_profile[1,])) > 0.9
+][1:5]
+
+# Proteins enriched in late fractions (e.g., cytosol markers)
+cytosol_profile <- protein_profiles_imputed[which.max(protein_profiles_imputed[,6]), , drop=FALSE]
+cytosol_markers <- rownames(protein_profiles_imputed)[
+  apply(protein_profiles_imputed, 1, function(x) cor(x, cytosol_profile[1,])) > 0.9
+][1:5]
+
+# Create reference set
+reference_proteins <- data.frame(
+  protein = c(nuclear_markers, er_markers, cytosol_markers),
+  localization = c(rep("Nuclear", length(nuclear_markers)),
+                   rep("ER", length(er_markers)),
+                   rep("Cytosol", length(cytosol_markers))),
+  stringsAsFactors = FALSE
+)
+
+print(reference_proteins)
+```
+
+# Visualize reference protein profiles
+
+Let's visualize the profiles of our reference proteins to ensure they have distinct patterns:
+
+```{r, fig.width=10, fig.height=6}
+# Extract reference protein profiles
+ref_profiles <- protein_profiles_imputed[reference_proteins$protein, ]
+
+# Create a data frame for plotting
+ref_plot_data <- ref_profiles %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("protein") %>%
+  tidyr::pivot_longer(-protein, names_to = "fraction", values_to = "proportion") %>%
+  left_join(reference_proteins, by = "protein")
+
+# Plot profiles
+ggplot(ref_plot_data, aes(x = fraction, y = proportion, 
+                          group = protein, color = localization)) +
+  geom_line(alpha = 0.6) +
+  geom_point(alpha = 0.6) +
+  facet_wrap(~ localization, ncol = 3) +
+  theme_biomasslmb() +
+  labs(title = "Reference protein fractionation profiles",
+       x = "Fraction", y = "Proportion of total",
+       color = "Localization") +
+  theme(legend.position = "bottom")
+```
+
+**Question 5:** What makes a good reference/marker protein for subcellular localization? What should we check?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Characteristics of good reference proteins:**
+
+1. **Well-validated localization**:
+   - Multiple lines of evidence (microscopy, biochemistry, literature)
+   - Known to be specific to one organelle
+   - Validated in your specific cell type/condition
+
+2. **High confidence in MS data**:
+   - Reliably quantified in most/all fractions
+   - Good signal-to-noise
+   - Not known to have multiple isoforms with different localizations
+
+3. **Abundant enough to be well-quantified**:
+   - Not at the detection limit
+   - Stable quantification across replicates
+
+4. **Distributed across organelles**:
+   - Need markers for each organelle of interest
+   - Multiple markers per organelle (ideally 3-10)
+   - Cover all fractions in your separation
+
+5. **Distinct fractionation profiles**:
+   - Clear enrichment in expected fractions
+   - Minimal overlap with other organelle markers
+   - Reproducible profile shape
+
+**What to check:**
+
+1. **Profile quality**:
+   - Smooth profiles (not erratic)
+   - Clear peaks in expected fractions
+   - Low technical variation between replicates
+
+2. **Marker separation**:
+   - Different organelle markers should have distinct profiles
+   - Check correlation between markers (should be low across organelles)
+   - Visualize all marker profiles together
+
+3. **Literature consistency**:
+   - Compare to published fractionation studies
+   - Check if profiles match expected organelle densities/sizes
+   - Verify with GO Cellular Component annotations
+
+4. **Coverage**:
+   - Do you have markers spanning all fractions?
+   - Any fractions with no clear markers?
+   - Any organelles not well-represented?
+
+**Red flags:**
+
+- Marker proteins that correlate highly with markers from different organelles
+- Erratic or noisy profiles
+- Unexpected fractionation (e.g., nuclear protein in cytosol-enriched fraction)
+- Too few markers for an organelle (<3)
+- Markers only in technical replicates but not biological replicates
+
+**In this example**, we're using a data-driven approach to select markers, which works for demonstration but is less robust than using literature-validated markers in real analysis.
+
+</details>
+
+# Assign localization to unknown proteins
+
+For each protein without a known localization, we can assign it to the organelle whose reference proteins it correlates with most strongly.
+
+```{r}
+# For each protein, calculate its average correlation with each organelle's markers
+unknown_proteins <- setdiff(rownames(protein_profiles_imputed), reference_proteins$protein)
+
+# Calculate correlation with each reference set
+localization_scores <- lapply(unique(reference_proteins$localization), function(loc) {
+  markers <- reference_proteins$protein[reference_proteins$localization == loc]
+  
+  # Get correlation with each marker
+  cors <- cor_matrix[unknown_proteins, markers, drop = FALSE]
+  
+  # Average correlation with all markers for this organelle
+  data.frame(
+    protein = unknown_proteins,
+    localization = loc,
+    mean_cor = rowMeans(cors),
+    max_cor = apply(cors, 1, max),
+    stringsAsFactors = FALSE
+  )
+})
+
+localization_scores_df <- do.call(rbind, localization_scores)
+
+# For each protein, assign to the organelle with highest mean correlation
+assignments <- localization_scores_df %>%
+  group_by(protein) %>%
+  slice_max(mean_cor, n = 1) %>%
+  ungroup()
+
+# Show distribution of assigned localizations
+table(assignments$localization)
+```
+
+**Question 6:** How confident should we be in these localization assignments? What quality metrics should we use?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Confidence metrics for localization assignments:**
+
+1. **Correlation strength**:
+   - **High correlation (>0.8)**: High confidence
+   - **Moderate correlation (0.5-0.8)**: Moderate confidence
+   - **Low correlation (<0.5)**: Low confidence, may be multi-localized or artifact
+
+2. **Separation from other organelles**:
+   - Compare correlation with top organelle vs. second-best
+   - **Large gap (>0.2)**: More confident
+   - **Small gap (<0.1)**: Ambiguous, may be dual-localized
+
+3. **Number of correlated markers**:
+   - Correlation with multiple markers > correlation with single marker
+   - Check how many markers from the organelle correlate well
+
+4. **Consistency across replicates**:
+   - If you have biological replicates, check assignment consistency
+   - Proteins with variable assignments have low confidence
+
+5. **Distance metrics**:
+   - Some methods use distance to centroid of organelle markers
+   - Can use both correlation and Euclidean distance
+
+**Quality control approaches:**
+
+```r
+# Example: Add quality metrics
+assignments <- assignments %>%
+  group_by(protein) %>%
+  mutate(
+    second_best = sort(mean_cor, decreasing = TRUE)[2],
+    delta_cor = mean_cor - second_best,  # Separation
+    confidence = case_when(
+      mean_cor > 0.8 & delta_cor > 0.2 ~ "High",
+      mean_cor > 0.6 & delta_cor > 0.1 ~ "Medium",
+      TRUE ~ "Low"
+    )
+  )
+```
+
+**Additional validation:**
+
+1. **Cross-validation**: Leave-one-marker-out analysis to test robustness
+2. **Multiple methods**: Compare with other classification approaches (SVM, Random Forest)
+3. **External validation**: Check assignments against GO annotations, literature
+4. **Visual inspection**: Plot profiles of ambiguous proteins
+5. **Experimental validation**: Microscopy for select proteins
+
+**Reporting:**
+- Always report correlation scores, not just assignments
+- Provide confidence metrics
+- Flag ambiguous cases
+- Consider multi-localized proteins as separate category
+
+**In practice:**
+- Use high-confidence assignments (>0.7-0.8 correlation) for further analysis
+- Manually inspect medium-confidence assignments
+- Exclude or separately analyze low-confidence assignments
+
+</details>
+
+# Visualize localization assignments
+
+Let's create a heatmap showing protein profiles clustered by assigned localization:
+
+```{r, fig.width=10, fig.height=8}
+# Select top proteins from each localization for visualization
+top_assignments <- assignments %>%
+  group_by(localization) %>%
+  slice_max(mean_cor, n = 10) %>%
+  ungroup()
+
+# Get profiles for visualization
+viz_profiles <- protein_profiles_imputed[top_assignments$protein, ]
+
+# Create annotation for the heatmap
+annotation_row <- data.frame(
+  Localization = top_assignments$localization,
+  Correlation = top_assignments$mean_cor,
+  row.names = top_assignments$protein
+)
+
+# Create heatmap
+pheatmap(viz_profiles,
+         annotation_row = annotation_row,
+         cluster_rows = TRUE,
+         cluster_cols = FALSE,
+         show_rownames = FALSE,
+         main = "Protein fractionation profiles by localization",
+         color = colorRampPalette(c("white", "steelblue", "darkblue"))(100),
+         breaks = seq(0, max(viz_profiles), length.out = 101))
+```
+
+# Identify protein complexes through co-fractionation
+
+Proteins that are part of the same complex often co-fractionate. We can identify potential protein complexes by finding groups of highly correlated proteins.
+
+```{r}
+# Find proteins with very high correlations (>0.9) to any other protein
+high_cor_threshold <- 0.9
+
+# For each protein, find its highly correlated partners
+find_cofractionating <- function(protein, cor_matrix, threshold = 0.9) {
+  cors <- cor_matrix[protein, ]
+  partners <- names(cors[cors > threshold & names(cors) != protein])
+  return(partners)
+}
+
+# Create a network of co-fractionating proteins
+complex_network <- lapply(rownames(cor_matrix), function(p) {
+  partners <- find_cofractionating(p, cor_matrix, high_cor_threshold)
+  if(length(partners) > 0) {
+    data.frame(protein1 = p, protein2 = partners, 
+               correlation = cor_matrix[p, partners],
+               stringsAsf = FALSE)
+  }
+})
+
+complex_network_df <- do.call(rbind, complex_network[!sapply(complex_network, is.null)])
+
+# Show some examples
+if(nrow(complex_network_df) > 0) {
+  cat(sprintf("Found %d high-confidence co-fractionation pairs\n", nrow(complex_network_df)))
+  head(complex_network_df, 10)
+} else {
+  cat("No high-confidence co-fractionation pairs found with threshold", high_cor_threshold, "\n")
+}
+```
+
+**Question 7:** How can we distinguish between proteins in the same complex versus proteins in the same organelle?
+
+<details>
+<summary>Click to see answer</summary>
+
+This is a key challenge in correlation profiling! Here are approaches to distinguish:
+
+**1. Fractionation method matters:**
+
+- **Density gradients**: Primarily separate by organelle; complexes mostly stay together
+  - **Same complex + same organelle** → high correlation
+  - **Same organelle only** → moderate-high correlation
+  - Hard to distinguish!
+
+- **Size exclusion chromatography (SEC)**: Separates by size/shape
+  - **Same complex** → high correlation (co-elute)
+  - **Same organelle** → lower correlation (different sizes)
+  - Better for complex detection!
+
+- **Multi-dimensional separation**: Combine orthogonal methods
+  - E.g., density gradient + SEC
+  - Complex members correlate in both dimensions
+  - Organelle residents correlate only in one dimension
+
+**2. Correlation with markers:**
+
+```r
+# Proteins in a complex will correlate with each other 
+# more strongly than with organelle markers
+complex_cor <- cor_matrix[protein1, protein2]
+organelle_cor <- mean(cor_matrix[protein1, organelle_markers])
+
+if(complex_cor > organelle_cor + 0.1) {
+  # Likely a specific complex
+}
+```
+
+**3. Profile shape analysis:**
+
+- **Same organelle**: Similar average enrichment, but may differ in details
+- **Same complex**: Nearly identical profiles (high Pearson AND Spearman correlation)
+
+**4. Functional enrichment:**
+
+```r
+# Test if highly correlated proteins share:
+# - Same GO Biological Process (suggests functional complex)
+# - Same GO Cellular Component (suggests organelle)
+# - Known interactions in databases (STRING, BioGRID)
+```
+
+**5. Known complex information:**
+
+- Check if correlated proteins are in known complexes (CORUM database)
+- Known complex members should have very high correlation (>0.95)
+
+**6. Network analysis:**
+
+- Proteins in the same complex form tight clusters (cliques) in correlation network
+- Organelle residents form looser networks with more connections
+
+**7. Differential fractionation:**
+
+- Treat cells differently to disrupt specific organelles
+- **Complex members**: Profile unchanged
+- **Organelle residents**: Profile changes
+
+**Best practice:**
+
+1. **Start with good fractionation**:
+   - Use SEC or other size-based method if interested in complexes
+   - Use native conditions to preserve complexes
+
+2. **Use multiple evidence**:
+   - High correlation (>0.95) 
+   - Known interaction partners
+   - Shared GO terms
+   - Similar abundance levels
+
+3. **Experimental validation**:
+   - Co-immunoprecipitation
+   - Cross-linking MS
+   - Targeted disruption experiments
+
+**In subcellular fractionation data**, most high correlations reflect same-organelle localization. For complex detection, need specialized protocols (e.g., native SEC, cross-linking) or orthogonal validation.
+
+</details>
+
+# Detecting relocalization between conditions
+
+If you have data from multiple conditions (e.g., control vs. treatment), you can identify proteins that relocalize by comparing their fractionation profiles.
+
+```{r}
+# For this example, we'll simulate two conditions
+# In practice, you would process two separate DIA-NN datasets
+
+# Create synthetic "treatment" data by modifying a subset of proteins
+# (In real analysis, this would be actual experimental data)
+
+condition1_profiles <- protein_profiles_imputed
+condition2_profiles <- protein_profiles_imputed
+
+# Simulate relocalization of 5 proteins (shift their profiles)
+relocalized_proteins <- sample(rownames(condition2_profiles), 5)
+
+for(prot in relocalized_proteins) {
+  # Shift the profile to simulate relocalization
+  original_profile <- condition2_profiles[prot, ]
+  # Create a shifted profile (move peak to different fraction)
+  shifted_profile <- c(original_profile[-1], original_profile[1])
+  condition2_profiles[prot, ] <- shifted_profile / sum(shifted_profile)
+}
+
+# Calculate profile differences
+profile_differences <- condition2_profiles - condition1_profiles
+
+# Calculate magnitude of change for each protein
+change_magnitude <- apply(abs(profile_differences), 1, sum)
+
+# Identify proteins with largest changes
+relocalization_candidates <- data.frame(
+  protein = names(change_magnitude),
+  change_magnitude = change_magnitude,
+  stringsAsFactors = FALSE
+) %>%
+  arrange(desc(change_magnitude)) %>%
+  head(20)
+
+print(relocalization_candidates)
+```
+
+```{r, fig.width=10, fig.height=6}
+# Visualize the top relocalization candidate
+top_reloc <- relocalization_candidates$protein[1]
+
+reloc_data <- data.frame(
+  fraction = colnames(condition1_profiles),
+  condition1 = condition1_profiles[top_reloc, ],
+  condition2 = condition2_profiles[top_reloc, ]
+) %>%
+  pivot_longer(-fraction, names_to = "condition", values_to = "proportion")
+
+ggplot(reloc_data, aes(x = fraction, y = proportion, group = condition, color = condition)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  theme_biomasslmb() +
+  labs(title = paste("Example relocalization:", top_reloc),
+       x = "Fraction", y = "Proportion of total",
+       color = "Condition") +
+  theme(legend.position = "bottom")
+```
+
+**Question 8:** How can we statistically test for relocalization? What are the challenges?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Statistical approaches for testing relocalization:**
+
+**1. Profile distance/correlation comparison:**
+
+```r
+# Calculate correlation between profiles in each condition
+cor_within_condition1 <- cor(t(condition1_profiles))
+cor_within_condition2 <- cor(t(condition2_profiles))
+
+# For each protein, compare its correlation with markers
+for(protein in proteins) {
+  cor_change <- cor_condition2[protein, markers] - cor_condition1[protein, markers]
+  # Test if change is significant
+}
+```
+
+**2. Chi-square test:**
+
+Treat profiles as distributions and test if they differ:
+
+```r
+# Chi-square goodness of fit test
+chisq.test(rbind(
+  condition1_profiles[protein, ],
+  condition2_profiles[protein, ]
+))
+```
+
+**3. Euclidean distance:**
+
+```r
+# Calculate distance between condition profiles
+distance <- sqrt(sum((condition1_profiles[protein,] - condition2_profiles[protein,])^2))
+
+# Compare to null distribution (permutations or bootstrap)
+```
+
+**4. Machine learning classifiers:**
+
+```r
+# Train classifier to distinguish conditions using reference proteins
+# Proteins that change classification have likely relocalized
+```
+
+**5. Mixed-effects models:**
+
+```r
+# Model: abundance ~ fraction * condition + (1|protein) + (1|replicate)
+# Test fraction:condition interaction
+```
+
+**Challenges:**
+
+1. **Multiple testing correction**:
+   - Testing thousands of proteins requires stringent FDR control
+   - Bonferroni too conservative, use BH-FDR
+
+2. **Biological replicates needed**:
+   - Need replicates to distinguish biological change from technical variation
+   - Minimum 3 replicates per condition recommended
+
+3. **Magnitude vs. significance**:
+   - Small but consistent changes may be significant but not meaningful
+   - Large changes in low-abundance proteins may be artifacts
+   - Need to balance statistical significance with effect size
+
+4. **Profile normalization**:
+   - If total protein amount changes, normalization becomes complex
+   - May need spike-in standards or careful normalization strategy
+
+5. **Partial relocalization**:
+   - Many proteins don't fully relocalize (e.g., 30% moves)
+   - Profiles become mixture of two distributions
+   - Harder to detect statistically
+
+6. **Technical variation**:
+   - Fractionation reproducibility may vary fraction-to-fraction
+   - Some fractions may have higher technical noise
+   - Consider fraction-specific variance
+
+**Best practices:**
+
+1. **Use multiple metrics**:
+   - Distance, correlation change, classification
+   - Require agreement between metrics
+
+2. **Set effect size threshold**:
+   - Don't rely on p-value alone
+   - Require minimum change magnitude (e.g., >0.1 difference in any fraction)
+
+3. **Visual inspection**:
+   - Plot profiles for all candidates
+   - Check if changes make biological sense
+
+4. **Experimental validation**:
+   - Microscopy to confirm relocalization
+   - Immunoblotting of fractions
+   - Target validation for key proteins
+
+5. **Consider biology**:
+   - Check if relocalized proteins are in same pathway
+   - Look for enriched GO terms or protein complexes
+   - Consider whether relocalization makes sense for the treatment
+
+**Example workflow:**
+
+```r
+# 1. Calculate effect size
+effect_size <- apply(abs(profile_differences), 1, max)  # Max change in any fraction
+
+# 2. Statistical test (e.g., permutation)
+p_values <- apply(protein_profiles, 1, function(prot) {
+  # Permutation test comparing conditions
+  permutation_test(condition1, condition2)
+})
+
+# 3. Adjust for multiple testing
+fdr <- p.adjust(p_values, method = "BH")
+
+# 4. Filter by both p-value and effect size
+candidates <- proteins[fdr < 0.05 & effect_size > 0.15]
+
+# 5. Manual review and validation
+```
+
+</details>
+
+# Quality control for subcellular fractionation
+
+Several QC metrics help assess the success of the fractionation:
+
+## 1. Marker protein enrichment
+
+Check that known markers are enriched in expected fractions:
+
+```{r, fig.width=10, fig.height=6}
+# Plot all reference protein profiles
+ref_plot_data_all <- protein_profiles_imputed[reference_proteins$protein, ] %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("protein") %>%
+  tidyr::pivot_longer(-protein, names_to = "fraction", values_to = "proportion") %>%
+  left_join(reference_proteins, by = "protein")
+
+ggplot(ref_plot_data_all, aes(x = fraction, y = proportion, 
+                               group = protein, color = localization)) +
+  geom_line(alpha = 0.7, size = 0.8) +
+  geom_point(alpha = 0.7, size = 2) +
+  facet_wrap(~ localization, ncol = 3) +
+  theme_biomasslmb() +
+  labs(title = "Marker protein profiles - QC check",
+       subtitle = "Profiles should peak in organelle-specific fractions",
+       x = "Fraction", y = "Proportion of total",
+       color = "Localization") +
+  theme(legend.position = "none")
+```
+
+## 2. Separation quality
+
+Calculate separation between organelle marker groups:
+
+```{r}
+# For each pair of organelle types, calculate average correlation
+organelles <- unique(reference_proteins$localization)
+
+separation_matrix <- matrix(NA, length(organelles), length(organelles),
+                           dimnames = list(organelles, organelles))
+
+for(i in 1:length(organelles)) {
+  for(j in 1:length(organelles)) {
+    markers_i <- reference_proteins$protein[reference_proteins$localization == organelles[i]]
+    markers_j <- reference_proteins$protein[reference_proteins$localization == organelles[j]]
+    
+    # Average correlation between markers of these two organelles
+    cors <- cor_matrix[markers_i, markers_j]
+    separation_matrix[i, j] <- mean(cors)
+  }
+}
+
+print("Average correlations between organelle markers:")
+print(round(separation_matrix, 3))
+```
+
+High off-diagonal values indicate poor separation between organelles.
+
+## 3. Protein coverage per fraction
+
+```{r, fig.width=8, fig.height=5}
+# Count proteins quantified in each fraction
+coverage_per_fraction <- colSums(!is.na(protein_data_filtered))
+
+coverage_df <- data.frame(
+  fraction = names(coverage_per_fraction),
+  n_proteins = coverage_per_fraction
+)
+
+ggplot(coverage_df, aes(x = fraction, y = n_proteins)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_biomasslmb() +
+  labs(title = "Protein coverage per fraction",
+       x = "Fraction", y = "Number of quantified proteins") +
+  theme(axis.text.x = element_text(angle = 0))
+```
+
+Ideally, all fractions should have similar coverage.
+
+**Question 9:** What QC checks should you perform before analyzing subcellular fractionation data? What would make you concerned about data quality?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Essential QC checks:**
+
+**1. Marker protein behavior:**
+
+✓ **Good signs:**
+- Markers peak in expected fractions
+- Clear separation between organelle markers
+- Smooth profiles (not erratic)
+- Consistent across biological replicates
+
+✗ **Concerning signs:**
+- Nuclear markers in cytoplasm-enriched fractions
+- Multiple peaks for single-localized proteins
+- Poor separation (high correlation) between organelle markers
+- Different patterns between replicates
+
+**2. Fraction coverage:**
+
+✓ **Good signs:**
+- Similar protein numbers across fractions (within 20-30%)
+- Gradual change in composition across gradient
+- All fractions contribute meaningfully
+
+✗ **Concerning signs:**
+- Some fractions with very few proteins
+- One fraction dominates (suggests incomplete separation)
+- Sudden drops in coverage (suggests fraction lost or contaminated)
+
+**3. Technical replicate reproducibility:**
+
+✓ **Good signs:**
+- High correlation between technical replicates (>0.95)
+- Similar marker profiles across replicates
+- Consistent assignments
+
+✗ **Concerning signs:**
+- Low correlation between replicates (<0.90)
+- Different marker enrichment patterns
+- Batch effects visible in PCA
+
+**4. Protein abundance distribution:**
+
+✓ **Good signs:**
+- Smooth gradient of abundances
+- No obvious contamination peaks
+- Expected dynamic range (2-3 orders of magnitude)
+
+✗ **Concerning signs:**
+- Bimodal distributions (suggests mixing of populations)
+- All proteins in one fraction (no separation)
+- Abnormally low protein recovery
+
+**5. Mass balance:**
+
+```r
+# Check that total protein recovered ≈ total protein loaded
+total_input <- known_amount
+total_recovered <- sum(fraction_abundances)
+recovery <- total_recovered / total_input
+
+# Should be 70-100%
+```
+
+✗ **Concerning:** Recovery <50% suggests loss during fractionation
+
+**6. Organelle marker separation:**
+
+```r
+# Calculate average inter-organelle correlation
+mean_within_organelle <- mean(cor_within_organelle)
+mean_between_organelle <- mean(cor_between_organelle)
+
+separation_score <- mean_within_organelle - mean_between_organelle
+# Should be > 0.3
+```
+
+**7. Profile smoothness:**
+
+✓ **Good signs:**
+- Gradual changes across fractions
+- Bell-shaped or monotonic profiles
+
+✗ **Concerning signs:**
+- Erratic profiles with random peaks
+- Same pattern for all proteins (suggests technical artifact)
+
+**8. Expected protein distributions:**
+
+```r
+# Check if abundant proteins have expected localizations
+# E.g., histones should be nuclear, actin should be cytoplasmic
+```
+
+**What to do if QC fails:**
+
+1. **Poor marker separation**:
+   - Repeat fractionation with more fractions
+   - Try different gradient conditions
+   - Consider different fractionation method
+
+2. **Low reproducibility**:
+   - Improve sample handling
+   - Standardize timing of fractionation
+   - Pool fractions to reduce number
+
+3. **Uneven coverage**:
+   - Adjust fraction volumes to equalize protein content
+   - Pool low-coverage fractions
+   - Increase MS acquisition time for low-abundance fractions
+
+4. **Technical artifacts**:
+   - Check for protein aggregation
+   - Verify gradient integrity
+   - Check for protease activity
+
+**Documentation:**
+- Report all QC metrics
+- Include marker profile plots
+- Note any concerns and how addressed
+- Report fraction recovery and reproducibility
+
+</details>
+
+# Advanced: Machine learning for localization prediction
+
+For more sophisticated analysis, machine learning can improve localization predictions:
+
+```{r}
+# This is a simplified example - real ML would require more careful setup
+# and proper train/test splitting
+
+# Prepare training data from reference proteins
+train_data <- protein_profiles_imputed[reference_proteins$protein, ]
+train_labels <- reference_proteins$localization
+
+# Simple nearest-centroid classifier
+# Calculate centroid (mean profile) for each organelle
+centroids <- lapply(unique(train_labels), function(loc) {
+  markers <- reference_proteins$protein[reference_proteins$localization == loc]
+  colMeans(train_data[markers, , drop = FALSE])
+})
+names(centroids) <- unique(train_labels)
+
+# For each unknown protein, find nearest centroid
+classify_protein <- function(profile, centroids) {
+  distances <- sapply(centroids, function(centroid) {
+    sqrt(sum((profile - centroid)^2))
+  })
+  names(centroids)[which.min(distances)]
+}
+
+# Classify unknown proteins
+unknown_profiles <- protein_profiles_imputed[unknown_proteins, ]
+ml_predictions <- apply(unknown_profiles, 1, classify_protein, centroids = centroids)
+
+# Compare with correlation-based assignments
+comparison <- data.frame(
+  protein = unknown_proteins,
+  correlation_method = assignments$localization[match(unknown_proteins, assignments$protein)],
+  ml_method = ml_predictions,
+  stringsAsFactors = FALSE
+) %>%
+  mutate(agreement = correlation_method == ml_method)
+
+cat(sprintf("Agreement between methods: %.1f%%\n", mean(comparison$agreement, na.rm = TRUE) * 100))
+```
+
+**Question 10:** What are the advantages and disadvantages of machine learning vs. simple correlation for localization assignment?
+
+<details>
+<summary>Click to see answer</summary>
+
+**Machine Learning Approaches:**
+
+**Advantages:**
+
+1. **Can handle complex patterns**:
+   - Non-linear relationships
+   - Multiple features beyond just profiles
+   - Can integrate other data (sequence, abundance, etc.)
+
+2. **Probabilistic outputs**:
+   - Can report confidence scores
+   - Can identify ambiguous cases
+   - Enables uncertainty quantification
+
+3. **Multi-class naturally**:
+   - Handles many organelles simultaneously
+   - Can model interactions between classes
+   - Better for balanced classification
+
+4. **Feature learning**:
+   - Methods like neural networks can learn relevant features
+   - Don't need to manually define distance metrics
+   - Can discover unexpected patterns
+
+5. **Scalability**:
+   - Once trained, fast prediction
+   - Can handle large datasets efficiently
+
+**Disadvantages:**
+
+1. **Black box**:
+   - Hard to interpret why a prediction was made
+   - Can't easily explain to biologists
+   - Difficult to identify errors
+
+2. **Requires training data**:
+   - Need many well-validated markers (50-100+ per class)
+   - Biased by training set quality
+   - May not generalize to new organelles
+
+3. **Overfitting risk**:
+   - Can fit noise in training data
+   - Requires careful validation
+   - Need hold-out test sets
+
+4. **Hyperparameter tuning**:
+   - Many parameters to optimize
+   - Results depend on choices
+   - Requires expertise
+
+5. **Computational cost**:
+   - Training can be slow
+   - Requires more resources
+   - More complex to implement
+
+**Simple Correlation:**
+
+**Advantages:**
+
+1. **Interpretable**:
+   - Clear what correlation means
+   - Can visualize profiles easily
+   - Easy to explain to collaborators
+
+2. **Simple implementation**:
+   - Just calculate correlations
+   - No training required
+   - Few parameters
+
+3. **Works with few markers**:
+   - Can work with 3-5 markers per organelle
+   - Doesn't need extensive training data
+
+4. **Transparent**:
+   - Can see exactly which markers drive assignment
+   - Easy to spot errors
+   - Can manually override
+
+5. **Robust to outliers** (Spearman):
+   - Rank-based correlation less sensitive to outliers
+   - Doesn't assume specific distributions
+
+**Disadvantages:**
+
+1. **Limited to linear relationships**:
+   - May miss complex patterns
+   - Assumes profiles should be similar in shape
+   - Can't model non-linear separations
+
+2. **One-vs-all approach**:
+   - Compares to each organelle separately
+   - Doesn't optimize global classification
+   - May give inconsistent results
+
+3. **No probability scores**:
+   - Hard to quantify confidence
+   - Binary decisions (correlated or not)
+   - Difficult to identify ambiguous cases
+
+4. **Marker dependency**:
+   - Results strongly depend on marker choice
+   - One bad marker can skew results
+   - Need to carefully curate markers
+
+**Best Practice:**
+
+**Use both approaches:**
+
+```r
+# 1. Start with correlation for interpretability
+cor_assignments <- correlation_based_assignment()
+
+# 2. Use ML for validation
+ml_assignments <- ml_based_assignment()
+
+# 3. High confidence: methods agree
+high_confidence <- proteins[cor_assignments == ml_assignments]
+
+# 4. Medium confidence: methods differ slightly
+# Manual inspection needed
+
+# 5. Report both results
+```
+
+**When to prefer each:**
+
+**Use correlation when:**
+- Exploratory analysis
+- Few markers available
+- Need interpretable results
+- Small dataset (<1000 proteins)
+- Novel organelles not in training data
+
+**Use ML when:**
+- Large training set (>50 markers per class)
+- Many organelles (>10 classes)
+- Large dataset (>5000 proteins)
+- Have additional features (sequence, GO terms, etc.)
+- Want probability scores
+
+**Best of both:**
+- Use correlation for initial assignments
+- Train ML on high-confidence correlation assignments
+- Use ML for final predictions with uncertainty estimates
+- Manually inspect discrepancies
+
+**In practice**, most published studies use correlation-based methods due to simplicity and interpretability, with ML as a supplement for validation and confidence estimation.
+
+</details>
+
+# Summary
+
+This vignette has demonstrated a complete workflow for subcellular proteomics using correlation profiling:
+
+1. **Profile normalization**: Converting absolute abundances to proportional profiles
+2. **Reference proteins**: Identifying and validating markers for known localizations
+3. **Correlation analysis**: Finding proteins with similar fractionation patterns
+4. **Localization assignment**: Assigning unknown proteins to organelles
+5. **Complex identification**: Finding co-fractionating proteins
+6. **Relocalization detection**: Comparing conditions to find changes
+7. **Quality control**: Validating fractionation success
+8. **Machine learning**: Advanced classification methods
+
+**Key takeaways:**
+
+- Correlation profiling requires high-quality fractionation with good organelle separation
+- Reference markers are critical - validate them carefully
+- Multiple lines of evidence strengthen assignments (correlation, ML, databases)
+- Relocalization analysis requires careful statistics and biological replicates
+- Visual inspection and domain knowledge are essential for interpreting results
+
+**Next steps for your analysis:**
+
+1. Integrate with GO enrichment to validate assignments
+2. Compare with microscopy or published localizations
+3. Identify condition-specific changes
+4. Follow up interesting relocalization events experimentally
+5. Integrate with protein-protein interaction networks
+
+# Session Information
+
+```{r}
+sessionInfo()
+```

@@ -1,0 +1,557 @@
+---
+title: "DIA-NN Data Processing: QC, Filtering and Summarisation"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{DIA-NN Data Processing: QC, Filtering and Summarisation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+DIA-NN (Data-Independent Acquisition by Neural Networks) is a software tool for processing DIA mass spectrometry data. It performs peptide identification and quantification directly from DIA data using deep learning-based spectrum prediction and a targeted extraction approach.
+
+This vignette demonstrates a complete workflow for processing DIA-NN output data, including:
+
+- Reading and filtering DIA-NN report files
+- Quality control and data exploration
+- Handling missing values
+- Peptide to protein summarisation
+- Data normalisation
+
+The workflow follows best practices for DIA data analysis and is designed to produce high-quality, reproducible quantitative proteomics results.
+
+# Load required packages
+
+To clarify which functionality is provided by which package, we will use `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+# Defining the contaminant proteins
+
+We need to remove contaminant proteins. These were defined here using the cRAP database. Below, we parse the contaminants fasta to extract the IDs for the proteins in both 'cRAP' format and Uniprot IDs.
+
+```{r}
+crap_fasta_inf <- system.file(
+  "extdata", "cRAP_20190401.fasta.gz", 
+  package = "biomasslmb"
+)
+
+# Extract the protein IDs associated with each cRAP protein
+crap_accessions <- biomasslmb::get_crap_fasta_accessions(crap_fasta_inf)
+
+print(head(crap_accessions))
+```
+
+# Read in DIA-NN data
+
+We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
+
+Here, we will use the `biomasslmb::readDIANNFilterQJoin` function, which reads the `report.tsv` file from DIA-NN and allows us to control the FDR thresholds for the precursor and protein (both run-specific and global). 
+
+The function performs several key steps:
+1. Reads the DIA-NN report.tsv file
+2. Filters based on Q-values (FDR control)
+3. Joins quantification from individual samples into a single matrix
+
+`diann_report.tsv` is a file available from the `biomasslmb` package containing the output from DIA-NN for an experiment with 6 samples. It is a truncated file containing the precursors (peptides) for just 500 proteins.
+
+```{r}
+diann_report_inf <- system.file(
+  "extdata", "diann_report.tsv", 
+  package = "biomasslmb"
+)
+
+dia_qf <- readDIANNFilterQJoin(diann_report_inf,
+                               global_protein_q=0.01,
+                               run_protein_q=0.01,
+                               run_precursor_q=0.01)
+```
+
+**Question 1:** What do the three Q-value thresholds control? Why is it important to have both global and run-specific thresholds?
+
+<details>
+<summary>Click to see answer</summary>
+
+The three Q-value thresholds control different aspects of false discovery rate (FDR):
+
+1. `global_protein_q`: Controls the global protein-level FDR across all runs (Lib.PG.Q.Value)
+2. `run_protein_q`: Controls the run-specific protein-level FDR (PG.Q.Value)
+3. `run_precursor_q`: Controls the run-specific precursor-level FDR (Q.Value)
+
+Having both global and run-specific thresholds is important because:
+- **Global thresholds** ensure overall experiment-wide FDR control
+- **Run-specific thresholds** account for sample-to-sample variability and ensure quality within each run
+- This dual control provides more stringent filtering and higher confidence in identifications
+
+Setting these to 0.01 means we accept a 1% false discovery rate at each level.
+
+</details>
+
+## Initial data inspection
+
+Let's inspect the structure of our `QFeatures` object:
+
+```{r}
+dia_qf
+```
+
+We can see the column names (sample names):
+
+```{r}
+colnames(dia_qf)[["peptides_fdr_cntrl"]]
+```
+
+And examine the row data (precursor/peptide annotations):
+
+```{r}
+head(rowData(dia_qf[['peptides_fdr_cntrl']]))
+```
+
+## Handling zero values
+
+We have `r sum(assay(dia_qf[['peptides_fdr_cntrl']])==0, na.rm=TRUE)` quantification values which are exactly zero. Where these do exist, they should be replaced with NA, since mass spectrometry is not capable of asserting that the protein had zero abundance in the sample - zeros typically indicate missing values.
+
+```{r}
+dia_qf[['peptides_fdr_cntrl']] <- QFeatures::zeroIsNA(dia_qf[['peptides_fdr_cntrl']])
+```
+
+## Simplifying column names
+
+Our column names include redundant information ('HYE_DIA'):
+
+```{r}
+colnames(dia_qf)[["peptides_fdr_cntrl"]]
+```
+
+Below, we update the column names to remove the redundant information and then update the sample names in the QFeatures:
+
+```{r}
+colnames(dia_qf)[["peptides_fdr_cntrl"]] <- gsub('HYE_DIA_', '', colnames(dia_qf)[["peptides_fdr_cntrl"]])
+dia_qf <- renamePrimary(dia_qf, colnames(dia_qf)[["peptides_fdr_cntrl"]])
+```
+
+## Adding experimental design information
+
+We need to populate the `colData`, which is currently empty:
+
+```{r}
+data.frame(colData(dia_qf))
+```
+
+Here, we can create our `colData` from the sample names. In other cases, you may need to read in a separate experimental design file.
+
+```{r}
+colData(dia_qf) <- data.frame(quantCols=rownames(colData(dia_qf))) %>%
+  separate(quantCols, sep='', into=c(NA, 'condition', 'replicate'), remove = FALSE) %>%
+  tibble::column_to_rownames('quantCols')
+
+data.frame(colData(dia_qf))
+```
+
+Adding the `colData` to the peptide-level data too:
+
+```{r}
+colData(dia_qf[['peptides_fdr_cntrl']]) <- colData(dia_qf)
+```
+
+**Question 2:** Why is it important to include experimental design information in the `colData`?
+
+<details>
+<summary>Click to see answer</summary>
+
+Including experimental design information in `colData` is important because:
+
+1. **Traceability**: It keeps sample metadata linked with the quantification data
+2. **Statistical analysis**: Many downstream statistical tests require knowing which samples belong to which experimental conditions
+3. **Visualization**: Plotting functions can use this information to color/group samples appropriately
+4. **Reproducibility**: The analysis becomes self-contained with all necessary information in one object
+5. **Quality control**: Enables checking whether technical replicates cluster together or if batch effects exist
+
+</details>
+
+# Filter contaminants and non-unique proteins
+
+We perform routine filtering to remove precursors that:
+
+- Could originate from contaminants
+- Don't have a unique master protein
+
+```{r}
+dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(
+  dia_qf[['peptides_fdr_cntrl']], 
+  contaminant_proteins=crap_accessions)
+```
+
+# Check normalisation
+
+Next, we plot the peptide intensity distribution to check they are approximately the same using `biomasslmb::plot_quant`. By default, DIA-NN performs normalisation during the analysis. See the [DIA-NN documentation](https://github.com/vdemichev/DiaNN) for details of the underlying assumptions for the normalisation and use cases where this normalisation approach may not be appropriate (e.g., interactome proteomics, where relative protein abundances are expected to differ substantially between samples).
+
+```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
+# Plot the peptide-level quantification distributions per sample
+biomasslmb::plot_quant(dia_qf[['peptides_filtered']],
+                       log2transform=TRUE,
+                       method='density') +
+  theme_biomasslmb() +
+  xlab('Precursor abundance (log2)')
+```
+
+**Question 3:** What does this plot tell us about the data? What would we be concerned about?
+
+<details>
+<summary>Click to see answer</summary>
+
+This density plot shows the distribution of precursor abundances (after log2 transformation) for each sample. We want to see:
+
+**Good signs:**
+- Distributions that are similar in shape across samples
+- Similar median/peak positions (indicating successful normalisation)
+- Smooth, bell-shaped distributions
+
+**Concerning signs:**
+- Distributions with very different shapes or medians (indicating poor normalisation or sample quality issues)
+- Bimodal distributions (could indicate contamination or technical artifacts)
+- Distributions shifted far left (indicating lower overall intensities, possible sample preparation issues)
+
+If samples show very different distributions after DIA-NN normalisation, additional normalisation might be needed, or the underlying assumption of similar overall protein abundances across samples may be violated.
+
+</details>
+
+## Correlation between samples
+
+We can also check the correlation between samples to ensure replicates are similar:
+
+```{r, fig.width=8, fig.height=7}
+plot_cor_samples(dia_qf, 'peptides_filtered')
+```
+
+# Missing values analysis
+
+Missing values are a key characteristic of proteomics data, particularly for DIA where precursors may not be reliably quantified in all samples.
+
+## Missing values per sample
+
+Below, we inspect the number of missing values per sample:
+
+```{r}
+nNA(dia_qf[['peptides_filtered']])$nNAcols %>%
+  data.frame() %>% 
+  knitr::kable(digits=2)
+```
+
+Here, the samples have between `r round(min(nNA(dia_qf[['peptides_filtered']])$nNAcols$pNA)*100)` - `r round(max(nNA(dia_qf[['peptides_filtered']])$nNAcols$pNA)*100)`% missing values. This is fairly typical of DIA data at the precursor level.
+
+## Missing value patterns
+
+Next, we inspect the most common patterns for the missing values using an UpSet plot:
+
+```{r, fig.height=6, fig.width=8}
+plot_missing_upset(dia_qf, i='peptides_filtered')
+```
+
+**Question 4:** What information does the UpSet plot provide? Why is understanding missing value patterns important?
+
+<details>
+<summary>Click to see answer</summary>
+
+The UpSet plot shows the patterns of missing values across samples. Each bar represents a specific combination of samples where values are missing.
+
+**Key insights from this plot:**
+1. **Complete missingness**: Precursors missing from all replicates of a condition (systematic missingness)
+2. **Random missingness**: Precursors missing from just one or two samples (technical missingness)
+3. **Replicate consistency**: Whether missing values occur consistently across biological replicates
+
+**Why this matters:**
+- **Statistical power**: Complete missingness in a condition makes differential expression impossible to test
+- **Imputation strategy**: Different patterns may require different imputation approaches (or no imputation)
+- **Biological interpretation**: Systematic missingness might indicate true biological absence, while random missingness is more likely technical
+- **Data quality**: High random missingness suggests technical issues
+
+In this plot, we commonly see missingness for all 3 replicates of a single condition, but also frequently for just a single sample, indicating a mix of biological and technical missing values.
+
+</details>
+
+# Summarising to protein-level abundances
+
+Now that we have inspected the peptide-level quantification and filtered the peptides, we can summarise the peptide-level quantification to protein-level abundances.
+
+## Filtering precursors with too many missing values
+
+Since DIA typically has too many missing values to exclude all precursors with any missing values, the `MsCoreUtils::robustSummary` method is preferred for summarisation to protein-level abundance. With `robustSummary`, we do not need to remove all precursors with missing values since the summarisation algorithm deals with them appropriately [@http://zotero.org/users/5634351/items/FZN3QTTZ].
+
+However, we still don't want to retain precursors with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain precursors with at most 4/6 missing values:
+
+```{r}
+dia_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
+  dia_qf[['peptides_filtered']], 4/6)
+
+biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
+                           'Protein.Group',
+                           "Removing peptides with > 4/6 missing values")
+```
+
+**Question 5:** Why use a threshold of 4/6 missing values rather than removing all precursors with any missing values?
+
+<details>
+<summary>Click to see answer</summary>
+
+Using a 4/6 threshold (allowing up to 4 missing values out of 6 samples) rather than requiring complete data has several advantages:
+
+1. **Statistical power**: Removing all precursors with any missing values would dramatically reduce the number of quantified proteins
+2. **Robust summarisation compatibility**: Methods like `robustSummary` can handle missing values appropriately, so we don't need complete data
+3. **Information retention**: A precursor quantified in 2/6 samples still provides some information about the protein
+4. **Biological reality**: Some proteins may be truly absent or below detection in some conditions, and we want to capture this
+
+The threshold of 4/6 (66.7%) ensures we keep precursors that are quantified in at least 2 samples (33.3%), which provides enough information for robust summarisation while filtering out precursors with too few quantifications to be informative.
+
+Different thresholds may be appropriate depending on:
+- Experimental design (more replicates allow stricter thresholds)
+- Expected biological variation
+- Downstream analysis requirements
+
+</details>
+
+## Filtering proteins with too few precursors
+
+Next, we will remove precursors for proteins with fewer than 2 precursors. This is a common filter in proteomics to ensure the protein-level quantifications are derived from at least two independent observations. In some cases (e.g., phosphoproteomics, or where this filter appears too stringent), it may be appropriate to skip it.
+
+```{r}
+min_peptides <- 2
+ 
+dia_qf[['peptides_filtered_forRobust']] <- biomasslmb::filter_features_per_protein(
+  dia_qf[['peptides_filtered_missing']], 
+  min_features = min_peptides, 
+  master_protein_col='Protein.Group')
+
+biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_forRobust']]),
+                           'Protein.Group',
+                           "Removing peptides for proteins with < 2 peptides")
+```
+
+## Perform robust summarisation
+
+Now we can summarise with `robustSummary`:
+
+```{r}
+# Aggregate to protein-level abundances (using QFeatures function)
+dia_qf <- QFeatures::aggregateFeatures(dia_qf, 
+                                       i = "peptides_filtered_forRobust", 
+                                       fcol = "Protein.Group",
+                                       name = "protein",
+                                       fun = MsCoreUtils::robustSummary,
+                                       maxit=10000) # ensure sufficient iterations for convergence
+
+biomasslmb:::message_parse(rowData(dia_qf[['protein']]),
+                           'Protein.Group',
+                           "Summarised to proteins")
+```
+
+**Question 6:** What is `robustSummary` doing and why is it preferred for DIA data?
+
+<details>
+<summary>Click to see answer</summary>
+
+`robustSummary` is a robust summarisation method that estimates protein-level abundance from peptide-level quantification using a linear model that accounts for:
+
+1. **Missing values**: Unlike simple mean/median, it can handle missing values without requiring complete data
+2. **Outliers**: It uses robust regression (M-estimation) that is less sensitive to outlying peptide values
+3. **Peptide-specific effects**: It models systematic differences between peptides for the same protein
+
+**Why it's preferred for DIA:**
+- **High missingness**: DIA data often has 20-40% missing values at the precursor level; `robustSummary` handles this well
+- **Accuracy**: It provides more accurate protein quantification than simple averaging, especially with missing values
+- **Statistical properties**: It provides better variance estimates for downstream differential expression analysis
+
+**Alternative approaches:**
+- `colSums`: Simple sum of peptide intensities (used for TMT where missing values are rare)
+- `colMeans/colMedians`: Simple averaging (less robust to outliers)
+- `MsCoreUtils::medianPolish`: Another robust method (faster but potentially less accurate)
+
+The `maxit=10000` parameter ensures the iterative algorithm has enough iterations to converge to a stable solution.
+
+</details>
+
+## Masking low-quality protein quantifications
+
+Prior to summarisation, we removed precursors from proteins with fewer than 2 precursors. However, since we left in precursors with missing values, it's possible for some protein-level abundances to be derived from just a single precursor. We can use the `get_protein_no_quant_mask` from `biomasslmb` to identify where the protein abundances will be derived from fewer than `n` features (precursors). We can then give this mask to `mask_protein_level_quant` to replace these quantification values with NA.
+
+```{r, fig.height=5, fig.width=5, out.width='50%'}
+# plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
+protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
+  dia_qf[['peptides_filtered_forRobust']], 
+  min_features=2, 
+  plot=TRUE, 
+  master_protein_col='Protein.Group') 
+
+dia_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
+  dia_qf[['protein']], protein_retain_mask)
+```
+
+# Re-inspecting missing values at protein-level
+
+Now that we have protein-level abundances, we should re-inspect the missing values. Overall, we have `r round(nNA(dia_qf[['protein']])$nNA$pNA*100, 3)`% missing values, with at most `r round(max(nNA(dia_qf[['protein']])$nNAcols$pNA)*100, 3)`% missing values in any given sample.
+
+```{r, fig.height=6, fig.width=8}
+nNA(dia_qf[['protein']])$nNAcols %>%
+  data.frame() %>% 
+  knitr::kable(digits=2)
+
+plot_missing_upset(dia_qf, i='protein')
+```
+
+The most common missingness pattern is for the protein to be missing from all 3 samples for a single condition, which likely represents biological absence or protein abundance below the detection limit.
+
+# Visualising the filtering workflow
+
+Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many peptides/proteins were retained at each level of the processing.
+
+## Samples per precursor
+
+First, let's look at the precursor-level data through the processing steps:
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each precursor at each level of processing", out.width='75%'}
+rename_cols <- c('Precursors passing FDR thresholds' = 'peptides_fdr_cntrl',
+                 'Quantified, contaminants removed' = 'peptides_filtered',
+                 '<= 4/6 missing values' = 'peptides_filtered_missing',
+                 '>1 precursors per protein' = 'peptides_filtered_forRobust')
+
+rowvars <- c('Precursor.Id')
+
+samples_present <- get_samples_present(dia_qf[,,unname(rename_cols)], rowvars, rename_cols)
+plot_samples_present(samples_present, rowvars, breaks=seq(2,10,2)) + ylab('Precursor')
+```
+
+## Samples per protein
+
+Next, we'll inspect the number of proteins at each level of processing:
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
+rename_cols_prot <- c(rename_cols, 'Protein'='protein')
+
+rowvars_prot <- c('Protein.Group')
+
+samples_present <- get_samples_present(dia_qf, rowvars_prot, rename_cols_prot)
+plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
+```
+
+From these plots, we can see how many precursors and proteins were removed at each filtering step. The filtering to ensure that all proteins have >1 precursor removed only a few precursors, but more proteins (single-peptide proteins).
+
+**Question 7:** Looking at these plots, what do they tell us about the data quality and filtering stringency?
+
+<details>
+<summary>Click to see answer</summary>
+
+These plots show the cumulative effect of the filtering pipeline:
+
+**Key observations:**
+
+1. **FDR filtering effectiveness**: The initial FDR thresholds retain most precursors/proteins while controlling false discoveries
+
+2. **Contaminant burden**: The number of precursors/proteins removed by contaminant filtering indicates the cleanliness of the sample
+
+3. **Missing value impact**: The drop after missing value filtering shows how many precursors were sparsely quantified
+
+4. **Single-peptide proteins**: The difference between the last two precursor levels and the protein level shows how many proteins were identified by only one peptide
+
+5. **Quantification completeness**: The distribution of bars shows whether most features are quantified in all samples (right side) or only a subset (left side)
+
+**Ideal pattern:**
+- Most proteins/precursors quantified in all or most samples (bars concentrated on the right)
+- Gradual reduction through filtering steps (not dramatic drops)
+- Similar patterns between biological replicates within a condition
+
+**Concerning patterns:**
+- Many proteins quantified in only 1-2 samples (indicates high technical variation)
+- Large drops at any single filtering step (may indicate filter is too stringent or data quality issues)
+- Different patterns between conditions (could indicate batch effects)
+
+</details>
+
+# Principal Component Analysis
+
+Finally, let's perform PCA to visualize the overall structure of the data:
+
+```{r, fig.width=7, fig.height=5}
+plot_pca(dia_qf, i='protein', 
+         colour='condition', 
+         shape='replicate',
+         label=FALSE)
+```
+
+**Question 8:** What should we look for in a PCA plot and what would be concerning?
+
+<details>
+<summary>Click to see answer</summary>
+
+PCA (Principal Component Analysis) reduces the dimensionality of the data to visualize the major sources of variation. 
+
+**What to look for:**
+
+**Good signs:**
+1. **Biological replicates cluster together**: Samples from the same condition should be close to each other
+2. **Conditions separate**: Different experimental conditions should separate (if they're expected to be different)
+3. **% variance explained**: PC1 and PC2 should explain a reasonable amount of variance (e.g., 30-60% combined)
+
+**Concerning signs:**
+1. **Replicates don't cluster**: Technical replicates scattered far apart suggests high technical variation
+2. **Outlier samples**: Individual samples far from their replicates may indicate:
+   - Sample mix-up
+   - Failed sample preparation
+   - MS acquisition issues
+3. **Unexpected separation**: Samples separating by batch, run order, or other technical factors rather than biological condition indicates batch effects
+4. **No separation**: If biological conditions are expected to differ but show no separation, may indicate:
+   - Insufficient biological effect
+   - Too much technical noise
+   - Incorrect experimental design information
+
+**Next steps if concerning patterns are observed:**
+- Investigate individual outlier samples
+- Consider batch correction methods
+- Check for sample label mix-ups
+- Evaluate whether to exclude problematic samples
+
+</details>
+
+# Summary
+
+This vignette has demonstrated a complete workflow for processing DIA-NN data from the raw report file to protein-level quantification. The key steps were:
+
+1. **Data import**: Reading DIA-NN report with FDR filtering
+2. **QC**: Checking normalisation and correlation between samples
+3. **Filtering**: Removing contaminants and low-quality precursors
+4. **Missing values**: Understanding and handling missing value patterns
+5. **Summarisation**: Using robust methods to aggregate precursors to proteins
+6. **Visualization**: Tracking data through the pipeline and examining overall structure
+
+The processed data in `dia_qf[['protein']]` is now ready for downstream analysis such as:
+- Differential expression analysis
+- Pathway enrichment
+- Correlation profiling (see the companion vignette)
+- Integration with other omics data
+
+```{r, include = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(dia_qf, overwrite=TRUE)
+```
+
+# Session Information
+
+```{r}
+sessionInfo()
+```

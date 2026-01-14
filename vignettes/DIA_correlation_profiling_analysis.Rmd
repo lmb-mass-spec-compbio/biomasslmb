@@ -1,0 +1,792 @@
+---
+title: "Correlation Profiling Proteomics with DIA-NN: Part 2 - Correlation Analysis and Localisation"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Correlation Profiling Proteomics with DIA-NN: Part 2 - Correlation Analysis and Localisation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+In the previous notebook, we processed DIA-NN data and performed quality control. In this notebook, we will perform correlation profiling analysis to predict protein subcellular localisations.
+
+Correlation profiling works on the principle that proteins which co-localise to the same subcellular compartment will have similar abundance profiles across biochemical fractionation. By comparing unknown proteins to marker proteins of known localisation, we can predict the localisation of uncharacterised proteins.
+
+## Learning objectives
+
+By the end of this notebook, you will be able to:
+
+- Prepare protein abundance data for correlation analysis
+- Define and use organelle marker proteins
+- Calculate correlation profiles
+- Visualise protein localisation patterns
+- Assess the quality of localisation predictions
+- Understand the limitations and considerations for correlation profiling
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(corrplot)
+```
+
+# Load processed data
+
+We'll use the data processed in the previous notebook. 
+
+```{r}
+# Load the processed DIA data
+data("dia_qf", package = "biomasslmb")
+
+# Check the data structure
+dia_qf
+```
+
+Let's examine the protein-level data:
+
+```{r}
+# Number of proteins
+nrow(dia_qf[['protein']])
+
+# Sample names
+colnames(dia_qf[['protein']])
+```
+
+# Preparing data for correlation profiling
+
+## Extract protein abundance matrix
+
+For correlation profiling, we need a matrix of protein abundances where:
+- Rows = proteins
+- Columns = fractions (samples)
+
+```{r}
+# Extract the protein abundance matrix
+protein_mat <- assay(dia_qf[['protein']])
+
+# Check dimensions
+dim(protein_mat)
+
+# Preview
+head(protein_mat[, 1:4])
+```
+
+## Question 1
+
+**Why do we typically use log-transformed data for correlation profiling? What type of correlation coefficient is most appropriate?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Why log-transform:**
+
+1. **Normalise variance**: Protein abundances typically span several orders of magnitude. Log transformation stabilises variance across the abundance range.
+
+2. **Linearise relationships**: Many biological relationships are multiplicative rather than additive. Log transformation converts multiplicative relationships to additive ones, which are better captured by linear correlations.
+
+3. **Handle dynamic range**: Without log transformation, high-abundance proteins would dominate correlation calculations.
+
+**Choice of correlation coefficient:**
+
+- **Pearson correlation**: Measures linear relationships. Appropriate for log-transformed data where we expect linear relationships between profiles.
+
+- **Spearman correlation**: Measures monotonic relationships (rank-based). More robust to outliers and doesn't require normality assumptions.
+
+For correlation profiling, **Spearman correlation** is often preferred because:
+- It's more robust to outliers from technical artefacts
+- It doesn't assume a specific distributional shape
+- It captures the relative ordering of abundances across fractions, which is the key information for localisation
+
+However, if the data are well-behaved and log-transformed, Pearson correlation can also work well and is sometimes preferred for its sensitivity to the magnitude of abundance differences.
+
+</details>
+
+## Handling missing values for correlation
+
+For correlation analysis, we need to decide how to handle proteins with missing values. Let's first examine the extent of missing values.
+
+```{r}
+# Calculate completeness per protein
+completeness <- rowSums(!is.na(protein_mat)) / ncol(protein_mat)
+
+# Summarise
+summary(completeness)
+
+# How many proteins are complete?
+sum(completeness == 1)
+```
+
+```{r, fig.width=6, fig.height=4, out.width="60%"}
+# Visualise completeness distribution
+data.frame(completeness = completeness) %>%
+  ggplot(aes(x = completeness)) +
+  geom_histogram(bins = 20, fill = "steelblue", colour = "white") +
+  theme_biomasslmb() +
+  xlab("Fraction of samples with values") +
+  ylab("Number of proteins") +
+  ggtitle("Data completeness per protein")
+```
+
+For correlation profiling, we'll be strict and only keep proteins with complete data (or nearly complete).
+
+```{r}
+# Filter to proteins with at least 80% complete data
+min_completeness <- 0.8
+proteins_complete <- names(completeness)[completeness >= min_completeness]
+
+message(sprintf("Proteins with >= %s%% complete data: %d", 
+                min_completeness * 100, length(proteins_complete)))
+
+# Subset the matrix
+protein_mat_filtered <- protein_mat[proteins_complete, ]
+```
+
+## Question 2
+
+**For a correlation profiling experiment with 6 fractions, what is the minimum number of fractions that should have values for a reliable correlation calculation? How would you handle proteins with 1-2 missing values?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Minimum fractions:**
+
+For reliable correlation calculation:
+
+- **Ideal**: All 6 fractions (complete data)
+- **Acceptable**: 4-5 fractions (allows Spearman correlation with reduced power)
+- **Not recommended**: Fewer than 4 fractions (correlation becomes unreliable)
+
+With n=6 fractions:
+- A Spearman correlation with 4 values has limited power to detect true relationships
+- Statistical significance testing becomes questionable with fewer points
+
+**Strategies for 1-2 missing values:**
+
+1. **Pairwise deletion**: Calculate correlations using only fractions where both proteins have values. Simple but reduces sample size and may introduce bias if missingness is not random.
+
+2. **Imputation**: 
+   - Minimum value imputation: Assume missing = below detection, impute with lowest observed value
+   - KNN imputation: Use similar proteins to estimate missing values
+   - Caution: Imputation can create artificial correlation patterns
+
+3. **Fraction-specific analysis**: If certain fractions systematically have more missing values, consider whether these fractions are problematic.
+
+4. **Multiple approaches**: Run the analysis with both complete cases only and imputed data to assess robustness.
+
+**Recommended approach:**
+For correlation profiling, the safest approach is to require at least 5 of 6 fractions, with careful consideration of whether the missing fraction might be biologically meaningful (e.g., a protein truly absent from cytosol shouldn't have that value imputed).
+
+</details>
+
+# Defining organelle markers
+
+Marker proteins are proteins with known, well-established subcellular localisations. They serve as references for assigning unknown proteins to compartments.
+
+In a real analysis, you would use databases like:
+- Gene Ontology (GO) cellular component terms
+- UniProt subcellular location annotations
+- Published marker sets (e.g., from the pRoloc package)
+
+For this example, we'll define some example marker proteins:
+
+```{r}
+# Example marker proteins (these would come from your marker database)
+# In practice, use curated marker sets
+
+# Create example markers - in a real analysis, these would be known marker proteins
+# Here we'll use random proteins as placeholders for demonstration
+
+set.seed(42)
+available_proteins <- rownames(protein_mat_filtered)
+
+# Create example marker lists for different compartments
+# In a real analysis, these would be curated lists of known markers
+markers_example <- list(
+  cytosol = sample(available_proteins, min(10, length(available_proteins)/5)),
+  nucleus = sample(available_proteins, min(8, length(available_proteins)/5)),
+  mitochondria = sample(available_proteins, min(8, length(available_proteins)/5)),
+  ER = sample(available_proteins, min(6, length(available_proteins)/5)),
+  plasma_membrane = sample(available_proteins, min(5, length(available_proteins)/5))
+)
+
+# Remove any overlaps (in real data, proteins would only be markers for one compartment)
+all_markers <- unique(unlist(markers_example))
+message(sprintf("Total marker proteins: %d", length(all_markers)))
+
+# Show counts per compartment
+sapply(markers_example, length)
+```
+
+## Question 3
+
+**What characteristics make a good marker protein for correlation profiling? What are the risks of using poor-quality markers?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Characteristics of good marker proteins:**
+
+1. **Well-established localisation**: Multiple lines of evidence (microscopy, biochemical fractionation, functional studies) supporting the localisation
+
+2. **Primarily single compartment**: The protein should be predominantly in one location, not distributed across multiple compartments
+
+3. **Abundant enough to quantify**: Must be reliably detected and quantified across all fractions
+
+4. **Representative of the compartment**: The marker's fractionation behaviour should be typical for its compartment
+
+5. **Not involved in trafficking**: Proteins that constantly shuttle between compartments make poor markers
+
+**Risks of poor-quality markers:**
+
+1. **Mis-localisation of unknown proteins**: If a marker protein is actually in multiple compartments, proteins correlating with it will be assigned to the wrong location
+
+2. **Reduced classification accuracy**: Noisy or unreliable markers add variance to the correlation signatures
+
+3. **Systematic bias**: If markers for one compartment are better quality than another, predictions will be biased
+
+4. **False confidence**: Using many poor markers doesn't average out the error - it can amplify systematic biases
+
+**Best practices:**
+
+- Use established, curated marker sets when available (e.g., from pRoloc package)
+- Validate markers by checking they cluster together in preliminary analysis
+- Use multiple markers per compartment to reduce individual protein effects
+- Consider using only the most confident markers (subset of curated list)
+
+</details>
+
+# Calculating protein profiles
+
+First, let's normalise the protein abundances to create 'profiles' that represent the relative distribution across fractions.
+
+```{r}
+# Calculate relative abundance profiles
+# Each protein's abundances sum to 1 across fractions
+
+calculate_profiles <- function(mat) {
+  # Row-wise normalisation to sum to 1
+  profiles <- t(apply(mat, 1, function(x) {
+    if(all(is.na(x))) return(x)
+    x_pos <- x - min(x, na.rm = TRUE) + 1  # Make all values positive
+    x_pos / sum(x_pos, na.rm = TRUE)
+  }))
+  return(profiles)
+}
+
+profiles <- calculate_profiles(protein_mat_filtered)
+
+# Check that rows sum to 1
+head(rowSums(profiles, na.rm = TRUE))
+```
+
+```{r, fig.width=8, fig.height=5, out.width="80%"}
+# Visualise some example profiles
+n_examples <- min(10, nrow(profiles))
+example_proteins <- sample(rownames(profiles), n_examples)
+
+profiles[example_proteins, ] %>%
+  data.frame() %>%
+  tibble::rownames_to_column("protein") %>%
+  pivot_longer(cols = -protein, names_to = "fraction", values_to = "relative_abundance") %>%
+  ggplot(aes(x = fraction, y = relative_abundance, 
+             group = protein, colour = protein)) +
+  geom_line() +
+  geom_point() +
+  theme_biomasslmb() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  xlab("Fraction") +
+  ylab("Relative abundance") +
+  ggtitle("Example protein profiles across fractions")
+```
+
+## Question 4
+
+**Why do we normalise proteins to relative abundance (proportion across fractions) rather than using absolute abundances for correlation profiling?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Reasons for using relative abundances:**
+
+1. **Remove abundance effects**: High-abundance and low-abundance proteins can have the same localisation. Using relative abundances ensures that total protein amount doesn't influence the correlation.
+
+2. **Focus on shape, not magnitude**: Localisation is determined by WHERE a protein is (its distribution), not HOW MUCH there is total. Relative abundances capture the shape of the distribution.
+
+3. **Enable comparison across proteins**: A nuclear protein expressed at 1000 copies/cell and one at 100 copies/cell should both show enrichment in nuclear fractions. Absolute abundances would make these look very different; relative abundances show similar patterns.
+
+4. **Reduce technical variation**: Systematic differences in loading or detection efficiency are normalised away when using relative abundances.
+
+5. **Match marker calculation**: If markers are calculated as relative abundances, unknown proteins must also be to enable fair correlation calculation.
+
+**Alternative approaches:**
+
+- Some methods use log-transformed absolute abundances and calculate correlations directly
+- This can work if the goal is to find proteins with similar overall abundance patterns
+- For subcellular localisation specifically, relative abundances are preferred
+
+</details>
+
+# Calculating correlations with markers
+
+Now we'll calculate how each protein correlates with the marker proteins for each compartment.
+
+```{r}
+# Calculate average marker profile for each compartment
+calculate_marker_profiles <- function(profiles, markers_list) {
+  marker_profiles <- lapply(names(markers_list), function(compartment) {
+    marker_prots <- markers_list[[compartment]]
+    # Filter to markers that are in our dataset
+    marker_prots <- marker_prots[marker_prots %in% rownames(profiles)]
+    
+    if(length(marker_prots) == 0) {
+      warning(sprintf("No markers found for %s", compartment))
+      return(NULL)
+    }
+    
+    # Calculate average profile
+    avg_profile <- colMeans(profiles[marker_prots, , drop = FALSE], na.rm = TRUE)
+    return(avg_profile)
+  })
+  names(marker_profiles) <- names(markers_list)
+  
+  # Convert to matrix
+  do.call(rbind, marker_profiles)
+}
+
+marker_profiles <- calculate_marker_profiles(profiles, markers_example)
+print(marker_profiles)
+```
+
+```{r, fig.width=8, fig.height=5, out.width="80%"}
+# Visualise marker profiles
+marker_profiles %>%
+  data.frame() %>%
+  tibble::rownames_to_column("compartment") %>%
+  pivot_longer(cols = -compartment, names_to = "fraction", values_to = "relative_abundance") %>%
+  ggplot(aes(x = fraction, y = relative_abundance, 
+             group = compartment, colour = compartment)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  theme_biomasslmb() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_colour_manual(values = get_cat_palette(5)) +
+  xlab("Fraction") +
+  ylab("Relative abundance") +
+  ggtitle("Average marker profiles per compartment")
+```
+
+Now let's calculate the correlation of each protein with each compartment's marker profile:
+
+```{r}
+# Calculate correlation of each protein with each compartment
+calculate_compartment_correlations <- function(profiles, marker_profiles, method = "spearman") {
+  
+  # For each protein, calculate correlation with each compartment marker profile
+  correlations <- t(apply(profiles, 1, function(prot_profile) {
+    sapply(rownames(marker_profiles), function(comp) {
+      marker_prof <- marker_profiles[comp, ]
+      
+      # Calculate correlation
+      cor(prot_profile, marker_prof, 
+          use = "pairwise.complete.obs", 
+          method = method)
+    })
+  }))
+  
+  return(correlations)
+}
+
+# Calculate correlations
+protein_compartment_cors <- calculate_compartment_correlations(profiles, marker_profiles)
+
+# Preview
+head(protein_compartment_cors)
+```
+
+## Question 5
+
+**A protein shows high correlation with both 'ER' and 'mitochondria' marker profiles. What might this indicate, and how would you interpret this result?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Possible interpretations:**
+
+1. **Similar fractionation behaviour**: ER and mitochondria might co-fractionate in the particular fractionation scheme used. They're both membrane-bound organelles that often pellet at similar centrifugation speeds. This is a limitation of the experimental design rather than the protein.
+
+2. **Dual localisation**: Some proteins genuinely localise to multiple compartments. For example, proteins involved in ER-mitochondria contacts or lipid transfer.
+
+3. **Mis-annotation of markers**: One or more marker proteins might be mis-annotated, causing the compartment profiles to look more similar than they should.
+
+4. **Poor fractionation**: If the sample preparation didn't achieve good separation of these compartments, all proteins in both will look similar.
+
+**How to interpret:**
+
+1. **Check marker profile correlation**: Calculate correlation between compartment marker profiles. If ER and mitochondria profiles correlate highly, the experiment cannot distinguish them.
+
+2. **Consider biological plausibility**: Is dual ER/mitochondria localisation plausible for this protein based on its known function?
+
+3. **Look at confidence**: Calculate the difference between the two highest correlations. If they're very close, the assignment is uncertain.
+
+4. **Check individual markers**: Do all mitochondria markers correlate with ER markers, or just some?
+
+5. **Use orthogonal evidence**: Consult databases (GO, UniProt), microscopy data, or literature.
+
+</details>
+
+# Assigning localisations
+
+We can assign each protein to the compartment with which it correlates most highly.
+
+```{r}
+# Assign proteins to compartments
+assign_localisation <- function(cor_matrix, min_correlation = 0.5) {
+  assignments <- apply(cor_matrix, 1, function(cors) {
+    best_comp <- names(which.max(cors))
+    best_cor <- max(cors, na.rm = TRUE)
+    second_cor <- sort(cors, decreasing = TRUE)[2]
+    
+    # Confidence is the difference between best and second-best correlation
+    confidence <- best_cor - second_cor
+    
+    c(compartment = best_comp, 
+      correlation = best_cor, 
+      confidence = confidence)
+  })
+  
+  results <- data.frame(t(assignments), stringsAsFactors = FALSE)
+  results$correlation <- as.numeric(results$correlation)
+  results$confidence <- as.numeric(results$confidence)
+  results$protein <- rownames(cor_matrix)
+  
+  # Flag low-confidence assignments
+  results$assignment_quality <- ifelse(
+    results$correlation >= min_correlation & results$confidence >= 0.2,
+    "high",
+    ifelse(results$correlation >= min_correlation,
+           "medium",
+           "low")
+  )
+  
+  return(results)
+}
+
+localisation_results <- assign_localisation(protein_compartment_cors)
+
+# Summary of assignments
+table(localisation_results$compartment)
+table(localisation_results$assignment_quality)
+```
+
+```{r, fig.width=7, fig.height=5, out.width="70%"}
+# Visualise localisation assignments
+localisation_results %>%
+  ggplot(aes(x = compartment, fill = assignment_quality)) +
+  geom_bar(position = "stack") +
+  theme_biomasslmb() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("high" = "darkgreen", 
+                               "medium" = "orange", 
+                               "low" = "red")) +
+  xlab("Assigned compartment") +
+  ylab("Number of proteins") +
+  ggtitle("Protein localisation assignments by confidence")
+```
+
+## Question 6
+
+**What criteria would you use to determine whether a localisation assignment is reliable? How would you validate predictions?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Criteria for reliable assignments:**
+
+1. **High correlation with assigned compartment**: e.g., Spearman ρ > 0.7
+
+2. **Large margin over alternatives**: The difference between the best and second-best correlation should be substantial (e.g., > 0.2)
+
+3. **Consistency across replicates**: If you have biological replicates, the protein should assign to the same compartment in each
+
+4. **Agreement with known biology**: Assignment should make sense given the protein's function
+
+5. **Marker behaviour**: The protein should cluster with markers of its assigned compartment in PCA/clustering visualisations
+
+**Validation approaches:**
+
+1. **Cross-validation with markers**: Leave out some markers, predict their localisation, and check accuracy
+
+2. **Literature validation**: Check if predicted localisation matches published studies
+
+3. **GO term enrichment**: Proteins assigned to a compartment should be enriched for relevant GO cellular component terms
+
+4. **Comparison with databases**: Compare predictions to UniProt subcellular location annotations
+
+5. **Orthogonal experiments**: Confirm interesting predictions by microscopy or biochemistry
+
+6. **Comparison with other methods**: Run multiple prediction methods and look for agreement
+
+</details>
+
+# Visualising results
+
+## PCA of protein profiles
+
+```{r, fig.width=8, fig.height=6, out.width="80%"}
+# PCA of protein profiles coloured by localisation
+pca_result <- prcomp(profiles[complete.cases(profiles), ], scale. = FALSE)
+
+pca_df <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2],
+  protein = rownames(pca_result$x)
+) %>%
+  left_join(localisation_results, by = "protein")
+
+pca_df %>%
+  ggplot(aes(x = PC1, y = PC2, colour = compartment)) +
+  geom_point(alpha = 0.6) +
+  theme_biomasslmb() +
+  scale_colour_manual(values = get_cat_palette(5)) +
+  ggtitle("PCA of protein profiles by assigned compartment")
+```
+
+## Heatmap of top correlations
+
+```{r, fig.width=8, fig.height=6, out.width="80%"}
+# Select proteins with high-confidence assignments
+high_conf_proteins <- localisation_results %>%
+  filter(assignment_quality == "high") %>%
+  pull(protein)
+
+if(length(high_conf_proteins) > 20) {
+  # Sample if too many
+  high_conf_proteins <- sample(high_conf_proteins, 20)
+}
+
+# Plot correlation heatmap for these proteins
+if(length(high_conf_proteins) > 0) {
+  corrplot(protein_compartment_cors[high_conf_proteins, ],
+           method = 'color',
+           tl.col = 'black',
+           tl.cex = 0.7,
+           title = "Compartment correlations for high-confidence proteins",
+           mar = c(0, 0, 2, 0))
+}
+```
+
+## Question 7
+
+**Looking at the PCA plot, do proteins assigned to the same compartment cluster together? What would it mean if they didn't?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Expected behaviour:**
+
+Proteins assigned to the same compartment should form recognisable clusters or groups in PCA space because they have similar abundance profiles across fractions.
+
+**If proteins don't cluster by compartment:**
+
+1. **Poor separation in the experiment**: The fractionation may not have effectively separated the compartments. This is a fundamental limitation that can't be fixed by analysis.
+
+2. **Too few fractions**: With few fractions, the profiles don't have enough dimensions to distinguish compartments.
+
+3. **Similar compartment profiles**: Some compartments may have similar fractionation behaviour (e.g., ER and Golgi), making them hard to separate.
+
+4. **Assignment errors**: The correlation-based assignment may be making errors, especially for proteins with intermediate profiles.
+
+5. **Protein heterogeneity within compartments**: Not all proteins in a compartment behave identically. Membrane vs lumenal proteins, for example, might fractionate differently.
+
+**What to do:**
+
+- Check marker protein clustering: Do the known markers cluster as expected?
+- Examine the compartment marker profiles: Are they distinct?
+- Consider if the experimental design is appropriate for the biological question
+- Use more sophisticated classification methods (SVM, Bayesian approaches) which may handle overlapping profiles better
+
+</details>
+
+# Assessing classification quality
+
+## Leave-one-out cross-validation with markers
+
+We can assess how well our approach works by performing cross-validation with marker proteins.
+
+```{r}
+# Cross-validation: remove each marker, predict its localisation
+cross_validate_markers <- function(profiles, markers_list, method = "spearman") {
+  
+  results <- list()
+  
+  for(compartment in names(markers_list)) {
+    markers <- markers_list[[compartment]]
+    markers_in_data <- markers[markers %in% rownames(profiles)]
+    
+    for(marker in markers_in_data) {
+      # Remove this marker and recalculate marker profiles
+      temp_markers <- markers_list
+      temp_markers[[compartment]] <- setdiff(temp_markers[[compartment]], marker)
+      
+      # Skip if no markers left
+      if(length(temp_markers[[compartment]]) == 0) next
+      
+      # Calculate marker profiles without this protein
+      temp_marker_profiles <- calculate_marker_profiles(profiles, temp_markers)
+      
+      # Get this protein's profile
+      prot_profile <- profiles[marker, ]
+      
+      # Calculate correlations
+      cors <- sapply(rownames(temp_marker_profiles), function(comp) {
+        cor(prot_profile, temp_marker_profiles[comp, ],
+            use = "pairwise.complete.obs",
+            method = method)
+      })
+      
+      predicted <- names(which.max(cors))
+      
+      results[[marker]] <- data.frame(
+        protein = marker,
+        true_compartment = compartment,
+        predicted_compartment = predicted,
+        correct = compartment == predicted,
+        best_correlation = max(cors)
+      )
+    }
+  }
+  
+  do.call(rbind, results)
+}
+
+cv_results <- cross_validate_markers(profiles, markers_example)
+
+# Calculate accuracy
+cv_accuracy <- mean(cv_results$correct) * 100
+message(sprintf("Leave-one-out cross-validation accuracy: %.1f%%", cv_accuracy))
+```
+
+```{r}
+# Confusion matrix
+table(True = cv_results$true_compartment, 
+      Predicted = cv_results$predicted_compartment)
+```
+
+## Question 8
+
+**The cross-validation accuracy is shown above. What accuracy would you consider acceptable for a correlation profiling experiment? What factors affect accuracy?**
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Acceptable accuracy:**
+
+- **>80% accuracy**: Good - the experiment and analysis are working well
+- **60-80% accuracy**: Moderate - useful for exploratory analysis but predictions need validation
+- **<60% accuracy**: Poor - may indicate problems with the experiment or analysis
+
+Note: Random chance would give ~20% accuracy with 5 compartments.
+
+**Factors affecting accuracy:**
+
+1. **Fractionation quality**: Better separation = better discrimination between compartments
+
+2. **Number and quality of markers**: More high-quality markers give more robust reference profiles
+
+3. **Number of fractions**: More fractions provide more information for discrimination
+
+4. **Compartment overlap**: Some compartments naturally co-fractionate and are hard to distinguish
+
+5. **Correlation method**: Spearman vs Pearson may perform differently depending on data properties
+
+6. **Handling of dual-localised proteins**: Proteins in multiple compartments will often be misclassified
+
+7. **Data quality**: Missing values, technical noise, and batch effects all reduce accuracy
+
+8. **Biological complexity**: Some proteins have dynamic localisation or exist in sub-compartments
+
+**How to improve accuracy:**
+
+- Use more fractions or different fractionation methods
+- Curate better marker sets
+- Use machine learning methods (SVM, neural networks)
+- Apply quality filters to only make predictions for proteins with clear profiles
+
+</details>
+
+# Advanced topic: Handling replicates
+
+In a real correlation profiling experiment with biological replicates, you might:
+
+1. **Calculate correlations per replicate**: Get independent predictions, then look for consistency
+2. **Average profiles across replicates**: Reduce noise by averaging before correlation calculation
+3. **Use replicate information in classification**: Some methods explicitly model replicate structure
+
+```{r}
+# Example: averaging profiles across replicates (if data had replicates)
+# This is pseudocode showing the concept
+
+average_profiles_across_replicates <- function(profiles, replicate_info) {
+  # Group samples by fraction (not replicate)
+  # Calculate average profile per protein per fraction
+  # This reduces noise while preserving the fraction profile
+  
+  # Implementation would depend on your experimental design
+  return(profiles)  # placeholder
+}
+```
+
+# Summary
+
+In this notebook, we have:
+
+1. **Prepared protein abundance data** for correlation profiling by normalising to relative abundances
+
+2. **Defined marker proteins** for different subcellular compartments
+
+3. **Calculated correlation profiles** between each protein and the compartment markers
+
+4. **Assigned localisations** based on highest correlation
+
+5. **Assessed prediction quality** using cross-validation
+
+6. **Visualised results** using PCA and heatmaps
+
+## Key considerations for correlation profiling
+
+1. **Marker quality is crucial**: Predictions are only as good as your markers
+2. **Not all compartments can be distinguished**: Similar fractionation behaviour limits resolution
+3. **Missing values matter**: They can bias correlations and should be handled carefully
+4. **Validation is essential**: Use multiple lines of evidence to support predictions
+5. **Consider using established tools**: Packages like `pRoloc` provide sophisticated methods for spatial proteomics
+
+## Next steps
+
+For production-quality correlation profiling, consider:
+
+- Using the `pRoloc` Bioconductor package for sophisticated classification methods
+- Applying machine learning approaches (SVM, neural networks)
+- Integrating multiple data sources (orthogonal experiments, databases)
+- Using Bayesian methods that provide probability estimates rather than hard assignments
+
+# Session info
+
+```{r}
+sessionInfo()
+```

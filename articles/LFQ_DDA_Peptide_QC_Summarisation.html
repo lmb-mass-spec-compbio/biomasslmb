@@ -61,7 +61,7 @@
       <h1>LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</h1>
                         <h4 data-toc-skip class="author">Tom Smith</h4>
             
-            <h4 data-toc-skip class="date">2025-10-29</h4>
+            <h4 data-toc-skip class="date">2026-01-15</h4>
       
 
       <div class="d-none name"><code>LFQ_DDA_Peptide_QC_Summarisation.Rmd</code></div>
@@ -236,7 +236,7 @@ looks OK here.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_rt_dist.html">plot_rt_dist</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_rt_vs_delta.html">plot_rt_vs_delta</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-1.png" width="50%"><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-2.png" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="50%"><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-2.png" class="r-plt" alt="" width="50%"></p>
 </div>
 <div class="section level2">
 <h2 id="filter-peptides">Filter peptides<a class="anchor" aria-label="anchor" href="#filter-peptides"></a>
@@ -275,7 +275,7 @@ search engine</p>
 <span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="va">lfq_qf</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/filterFeatures.html" class="external-link">filterFeatures</a></span><span class="op">(</span><span class="op">~</span> <span class="va">Search.Engine.Rank.by.Search.Engine.Sequest.HT</span> <span class="op">==</span> <span class="fl">1</span>,</span>
 <span>               i <span class="op">=</span> <span class="st">"peptides_filtered"</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; 'Search.Engine.Rank.by.Search.Engine.Sequest.HT' found in 2 out of 2 assay(s).</span></span>
+<span><span class="co">#&gt; 'Search.Engine.Rank.by.Search.Engine.Sequest.HT' found in 2 out of 2 assay(s)</span></span>
 <span></span>
 <span><span class="fu">biomasslmb</span><span class="fu">:::</span><span class="fu">message_parse</span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>                           <span class="st">'Master.Protein.Accessions'</span>,</span>
@@ -295,7 +295,7 @@ values to be on a log-scale, so we log-transform below</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_linetype_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">'Peptide abundance (log2)'</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-14-1.png" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="50%"></p>
 <div class="section level3">
 <h3 id="normalise">Normalise<a class="anchor" aria-label="anchor" href="#normalise"></a>
 </h3>
@@ -314,7 +314,7 @@ abundances. We will thus perform ‘diff.median’ normalisation with
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_linetype_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">'Peptide abundance (log2)'</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-16-1.png" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="50%"></p>
 </div>
 <div class="section level3">
 <h3 id="summarising-to-protein-level-abundances">Summarising to protein-level abundances<a class="anchor" aria-label="anchor" href="#summarising-to-protein-level-abundances"></a>
@@ -337,24 +337,24 @@ missing due to falling below detection limits.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> See also `vignette("ggplot2-in-packages")` for more information.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
 <span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
 <span><span class="co">#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use `linewidth` instead.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
 <span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
 <span><span class="co">#&gt; Warning: The `size` argument of `element_line()` is deprecated as of ggplot2 3.4.0.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use the `linewidth` argument instead.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
 <span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-17-1.png" width="768"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="768"></p>
 <p>Since DDA LFQ typically has too many missing values to exclude
 peptides with missing values, the
 <code><a href="https://rdrr.io/pkg/MsCoreUtils/man/robustSummary.html" class="external-link">MsCoreUtils::robustSummary</a></code> method should preferred for
@@ -415,7 +415,7 @@ replace these quantification values with NA.</p>
 <span></span>
 <span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">biomasslmb</span><span class="fu">::</span><span class="fu"><a href="../reference/mask_protein_level_quant.html">mask_protein_level_quant</a></span><span class="op">(</span></span>
 <span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span>, <span class="va">protein_retain_mask</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-21-1.png" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="50%"></p>
 </div>
 <div class="section level3">
 <h3 id="re-inspecting-missing-values-at-protein-level">Re-inspecting missing values at protein-level<a class="anchor" aria-label="anchor" href="#re-inspecting-missing-values-at-protein-level"></a>
@@ -429,7 +429,7 @@ is missing due to detection limits.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/plot_missing_upset.html">plot_missing_upset</a></span><span class="op">(</span><span class="va">lfq_qf</span>, i<span class="op">=</span><span class="st">'protein'</span> <span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-22-1.png" width="768"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="inspecting-the-number-of-peptides-and-proteins-through-the-processing-steps">Inspecting the number of peptides and proteins through the
@@ -476,14 +476,11 @@ peptides.</p>
 <span><span class="co">#&gt; Warning: 'experiments' dropped; see 'drops()'</span></span>
 <span><span class="co">#&gt; harmonizing input:</span></span>
 <span><span class="co">#&gt;   removing 12 sampleMap rows not in names(experiments)</span></span>
-<span><span class="co">#&gt; Warning in lifeCycle("longForm", package = "MultiAssayExperiment", title = "longFormat"): 'longFormat' is deprecated.</span></span>
-<span><span class="co">#&gt;   Use 'longForm' instead.</span></span>
-<span><span class="co">#&gt;   See help('longFormat-deprecated').</span></span>
 <span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">10</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">'PSM'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
 <div class="figure">
-<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-24-1.png" alt="Samples quantified for each PSM at each level of processing" width="75%"><p class="caption">
+<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" alt="Samples quantified for each PSM at each level of processing" width="75%"><p class="caption">
 Samples quantified for each PSM at each level of processing
 </p>
 </div>
@@ -503,14 +500,11 @@ column.</p>
 <span><span class="va">rowvars_prot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Master.Protein.Accessions'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">samples_present</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_samples_present.html">get_samples_present</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="va">rowvars_prot</span>, <span class="va">rename_cols_prot</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in lifeCycle("longForm", package = "MultiAssayExperiment", title = "longFormat"): 'longFormat' is deprecated.</span></span>
-<span><span class="co">#&gt;   Use 'longForm' instead.</span></span>
-<span><span class="co">#&gt;   See help('longFormat-deprecated').</span></span>
 <span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars_prot</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">10</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
 <div class="figure">
-<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-25-1.png" alt="Samples quantified for each protein at each level of processing" width="75%"><p class="caption">
+<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="Samples quantified for each protein at each level of processing" width="75%"><p class="caption">
 Samples quantified for each protein at each level of processing
 </p>
 </div>
@@ -520,7 +514,7 @@ proteins. Whether this is appropriate will depend on your data in
 hand.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.1 (2025-06-13)</span></span>
+<span><span class="co">#&gt; R version 4.4.3 (2025-02-28)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -542,48 +536,49 @@ hand.</p>
 <span><span class="co">#&gt; [8] base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt;  [1] dplyr_1.1.4                 tidyr_1.3.1                </span></span>
-<span><span class="co">#&gt;  [3] ggplot2_4.0.0               biomasslmb_0.0.4           </span></span>
-<span><span class="co">#&gt;  [5] QFeatures_1.18.0            MultiAssayExperiment_1.34.0</span></span>
-<span><span class="co">#&gt;  [7] SummarizedExperiment_1.38.1 Biobase_2.68.0             </span></span>
-<span><span class="co">#&gt;  [9] GenomicRanges_1.60.0        GenomeInfoDb_1.44.3        </span></span>
-<span><span class="co">#&gt; [11] IRanges_2.42.0              S4Vectors_0.46.0           </span></span>
-<span><span class="co">#&gt; [13] BiocGenerics_0.54.1         generics_0.1.4             </span></span>
-<span><span class="co">#&gt; [15] MatrixGenerics_1.20.0       matrixStats_1.5.0          </span></span>
+<span><span class="co">#&gt;  [1] dplyr_1.1.4                 tidyr_1.3.2                </span></span>
+<span><span class="co">#&gt;  [3] ggplot2_4.0.1               biomasslmb_0.0.4           </span></span>
+<span><span class="co">#&gt;  [5] QFeatures_1.16.0            MultiAssayExperiment_1.32.0</span></span>
+<span><span class="co">#&gt;  [7] SummarizedExperiment_1.36.0 Biobase_2.66.0             </span></span>
+<span><span class="co">#&gt;  [9] GenomicRanges_1.58.0        GenomeInfoDb_1.42.3        </span></span>
+<span><span class="co">#&gt; [11] IRanges_2.40.1              S4Vectors_0.44.0           </span></span>
+<span><span class="co">#&gt; [13] BiocGenerics_0.52.0         MatrixGenerics_1.18.1      </span></span>
+<span><span class="co">#&gt; [15] matrixStats_1.5.0          </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] DBI_1.2.3               gridExtra_2.3           rlang_1.1.6            </span></span>
-<span><span class="co">#&gt;  [4] magrittr_2.0.4          clue_0.3-66             compiler_4.5.1         </span></span>
-<span><span class="co">#&gt;  [7] RSQLite_2.4.3           png_0.1-8               systemfonts_1.3.1      </span></span>
-<span><span class="co">#&gt; [10] vctrs_0.6.5             reshape2_1.4.4          stringr_1.5.2          </span></span>
-<span><span class="co">#&gt; [13] ProtGenerics_1.40.0     pkgconfig_2.0.3         crayon_1.5.3           </span></span>
-<span><span class="co">#&gt; [16] fastmap_1.2.0           backports_1.5.0         XVector_0.48.0         </span></span>
-<span><span class="co">#&gt; [19] labeling_0.4.3          rmarkdown_2.30          UCSC.utils_1.4.0       </span></span>
-<span><span class="co">#&gt; [22] UpSetR_1.4.0            visdat_0.6.0            ragg_1.5.0             </span></span>
-<span><span class="co">#&gt; [25] purrr_1.1.0             bit_4.6.0               xfun_0.53              </span></span>
-<span><span class="co">#&gt; [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.2.4             </span></span>
-<span><span class="co">#&gt; [31] DelayedArray_0.34.1     cluster_2.1.8.1         R6_2.6.1               </span></span>
-<span><span class="co">#&gt; [34] bslib_0.9.0             stringi_1.8.7           RColorBrewer_1.1-3     </span></span>
-<span><span class="co">#&gt; [37] genefilter_1.90.0       jquerylib_0.1.4         Rcpp_1.1.0             </span></span>
-<span><span class="co">#&gt; [40] knitr_1.50              usethis_3.2.1           BiocBaseUtils_1.10.0   </span></span>
-<span><span class="co">#&gt; [43] Matrix_1.7-3            splines_4.5.1           igraph_2.2.1           </span></span>
-<span><span class="co">#&gt; [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.10            </span></span>
-<span><span class="co">#&gt; [49] lattice_0.22-7          tibble_3.3.0            plyr_1.8.9             </span></span>
-<span><span class="co">#&gt; [52] withr_3.0.2             KEGGREST_1.48.1         S7_0.2.0               </span></span>
-<span><span class="co">#&gt; [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             </span></span>
-<span><span class="co">#&gt; [58] survival_3.8-3          Biostrings_2.76.0       pillar_1.11.1          </span></span>
-<span><span class="co">#&gt; [61] corrplot_0.95           checkmate_2.3.3         rprojroot_2.1.1        </span></span>
-<span><span class="co">#&gt; [64] scales_1.4.0            xtable_1.8-4            glue_1.8.0             </span></span>
-<span><span class="co">#&gt; [67] lazyeval_0.2.2          tools_4.5.1             robustbase_0.99-6      </span></span>
-<span><span class="co">#&gt; [70] annotate_1.86.1         fs_1.6.6                XML_3.99-0.19          </span></span>
-<span><span class="co">#&gt; [73] grid_4.5.1              MsCoreUtils_1.20.0      AnnotationDbi_1.70.0   </span></span>
-<span><span class="co">#&gt; [76] GenomeInfoDbData_1.2.14 naniar_1.1.0            cli_3.6.5              </span></span>
-<span><span class="co">#&gt; [79] textshaping_1.0.4       S4Arrays_1.8.1          AnnotationFilter_1.32.0</span></span>
-<span><span class="co">#&gt; [82] gtable_0.3.6            DEoptimR_1.1-4          sass_0.4.10            </span></span>
-<span><span class="co">#&gt; [85] digest_0.6.37           SparseArray_1.8.1       htmlwidgets_1.6.4      </span></span>
-<span><span class="co">#&gt; [88] farver_2.1.2            memoise_2.0.1           htmltools_0.5.8.1      </span></span>
-<span><span class="co">#&gt; [91] pkgdown_2.1.3           lifecycle_1.0.4         httr_1.4.7             </span></span>
-<span><span class="co">#&gt; [94] bit64_4.6.0-1           MASS_7.3-65</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] DBI_1.2.3               gridExtra_2.3           rlang_1.1.7            </span></span>
+<span><span class="co">#&gt;  [4] magrittr_2.0.4          clue_0.3-66             otel_0.2.0             </span></span>
+<span><span class="co">#&gt;  [7] compiler_4.4.3          RSQLite_2.4.5           png_0.1-8              </span></span>
+<span><span class="co">#&gt; [10] systemfonts_1.3.1       vctrs_0.6.5             reshape2_1.4.5         </span></span>
+<span><span class="co">#&gt; [13] stringr_1.6.0           ProtGenerics_1.38.0     pkgconfig_2.0.3        </span></span>
+<span><span class="co">#&gt; [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        </span></span>
+<span><span class="co">#&gt; [19] XVector_0.46.0          labeling_0.4.3          rmarkdown_2.30         </span></span>
+<span><span class="co">#&gt; [22] UCSC.utils_1.2.0        UpSetR_1.4.0            visdat_0.6.0           </span></span>
+<span><span class="co">#&gt; [25] ragg_1.5.0              purrr_1.2.1             bit_4.6.0              </span></span>
+<span><span class="co">#&gt; [28] xfun_0.55               zlibbioc_1.52.0         cachem_1.1.0           </span></span>
+<span><span class="co">#&gt; [31] jsonlite_2.0.0          blob_1.2.4              DelayedArray_0.32.0    </span></span>
+<span><span class="co">#&gt; [34] cluster_2.1.8           R6_2.6.1                bslib_0.9.0            </span></span>
+<span><span class="co">#&gt; [37] stringi_1.8.7           RColorBrewer_1.1-3      genefilter_1.88.0      </span></span>
+<span><span class="co">#&gt; [40] jquerylib_0.1.4         Rcpp_1.1.1              knitr_1.51             </span></span>
+<span><span class="co">#&gt; [43] usethis_3.2.1           BiocBaseUtils_1.8.0     Matrix_1.7-2           </span></span>
+<span><span class="co">#&gt; [46] splines_4.4.3           igraph_2.2.1            tidyselect_1.2.1       </span></span>
+<span><span class="co">#&gt; [49] abind_1.4-8             yaml_2.3.12             lattice_0.22-6         </span></span>
+<span><span class="co">#&gt; [52] tibble_3.3.1            plyr_1.8.9              withr_3.0.2            </span></span>
+<span><span class="co">#&gt; [55] KEGGREST_1.46.0         S7_0.2.1                evaluate_1.0.5         </span></span>
+<span><span class="co">#&gt; [58] uniprotREST_1.0.0       desc_1.4.3              survival_3.8-3         </span></span>
+<span><span class="co">#&gt; [61] Biostrings_2.74.1       pillar_1.11.1           corrplot_0.95          </span></span>
+<span><span class="co">#&gt; [64] checkmate_2.3.3         generics_0.1.4          rprojroot_2.1.1        </span></span>
+<span><span class="co">#&gt; [67] scales_1.4.0            xtable_1.8-4            glue_1.8.0             </span></span>
+<span><span class="co">#&gt; [70] lazyeval_0.2.2          tools_4.4.3             robustbase_0.99-6      </span></span>
+<span><span class="co">#&gt; [73] annotate_1.84.0         fs_1.6.6                XML_3.99-0.20          </span></span>
+<span><span class="co">#&gt; [76] grid_4.4.3              MsCoreUtils_1.18.0      AnnotationDbi_1.68.0   </span></span>
+<span><span class="co">#&gt; [79] GenomeInfoDbData_1.2.13 naniar_1.1.0            cli_3.6.5              </span></span>
+<span><span class="co">#&gt; [82] textshaping_1.0.4       S4Arrays_1.6.0          AnnotationFilter_1.30.0</span></span>
+<span><span class="co">#&gt; [85] gtable_0.3.6            DEoptimR_1.1-4          sass_0.4.10            </span></span>
+<span><span class="co">#&gt; [88] digest_0.6.39           SparseArray_1.6.2       htmlwidgets_1.6.4      </span></span>
+<span><span class="co">#&gt; [91] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        </span></span>
+<span><span class="co">#&gt; [94] pkgdown_2.2.0           lifecycle_1.0.5         httr_1.4.7             </span></span>
+<span><span class="co">#&gt; [97] bit64_4.6.0-1           MASS_7.3-64</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-http://zotero.org/users/5634351/items/FZN3QTTZ" class="csl-entry">
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.
@@ -606,7 +601,7 @@ proteomics: MCP</em> 19 (7): 1209–19. <a href="https://doi.org/10.1074/mcp.RA1
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

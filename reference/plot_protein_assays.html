@@ -57,6 +57,7 @@ This function plots the quantitative data at multiple levels (assays) for a give
 <span>  experiments_to_plot <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  protein_id_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span>
 <span>  label_col <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span>
+<span>  row_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rename_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  log2transform_cols <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  norm_quant <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -88,6 +89,10 @@ This function plots the quantitative data at multiple levels (assays) for a give
 
 <dt id="arg-label-col">label_col<a class="anchor" aria-label="anchor" href="#arg-label-col"></a></dt>
 <dd><p><code>string</code>. Column with labels to use for proteins in plot</p></dd>
+
+
+<dt id="arg-row-vars">row_vars<a class="anchor" aria-label="anchor" href="#arg-row-vars"></a></dt>
+<dd><p><code>character vector</code>. Additional row variables to include in the plot data (e.g peptide sequence)</p></dd>
 
 
 <dt id="arg-rename-labels">rename_labels<a class="anchor" aria-label="anchor" href="#arg-rename-labels"></a></dt>
@@ -128,7 +133,7 @@ This function plots the quantitative data at multiple levels (assays) for a give
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

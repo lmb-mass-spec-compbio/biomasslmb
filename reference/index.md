@@ -1,0 +1,165 @@
+# Package index
+
+## All functions
+
+- [`add_filter_ptm_pos_rowdata_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_filter_ptm_pos_rowdata_mq.md)
+  : Add rowData columns with positions of PTMs with respect to peptide
+  sequence
+- [`add_gene_long_protein_name_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_gene_long_protein_name_pd.md)
+  : Extract the gene name and long-form protein name from the master
+  protein descriptions column
+- [`add_independent_filtering_padj()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_independent_filtering_padj.md)
+  : Perform independent filtering to threshold the over-representation
+  testing on the number of features in each category to limit the
+  multiple testing burden
+- [`add_peptide_positions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_peptide_positions.md)
+  : Add a column describing the position of the peptide sequence with
+  respect to the protein
+- [`add_peptide_positions_from_cleavage()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_peptide_positions_from_cleavage.md)
+  : Add peptide positions with respect to the protein
+- [`add_ptm_pos_rowdata_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ptm_pos_rowdata_mq.md)
+  : Add rowData columns with positions of PTMs with respect to peptide
+  sequence
+- [`add_ptm_positions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ptm_positions.md)
+  : Add rowData columns with details of PTMs positions
+- [`add_site_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_site_sequence.md)
+  : Add a column with amino acid sequence around a PTM
+- [`add_tm_info()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_tm_info.md)
+  : Add transmembrane domain details
+- [`add_topology_info()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_topology_info.md)
+  : Add topology details
+- [`append_fasta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/append_fasta.md)
+  : Append sequences to end of a FASTA
+- [`bb2014()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/bb2014.md)
+  : Benjamini & Bogomolov (2014) selective-inference adjustment using
+  external screening p-values (e.g., F-test p-values)
+- [`center_normalise_to_ref()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/center_normalise_to_ref.md)
+  : Center-median normalise the expression matrix in an MSnSet using
+  medians from a reference dataset
+- [`check_uniprot_release()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/check_uniprot_release.md)
+  : Check the current UniProt release
+- [`create_long_form_imputed_data()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/create_long_form_imputed_data.md)
+  : Create long format data with column defining if quantification value
+  is imputed
+- [`dia_qf`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/dia_qf.md)
+  : DIA data
+- [`estimate_overrep()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/estimate_overrep.md)
+  : Estimate effect size of over-representation
+- [`filter_TMT_PSMs()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.md)
+  : Filter a PSM-level summarizedExperiment to remove low quality PSMs
+- [`filter_by_protein_fdr()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.md)
+  : Filter to remove peptides from proteins failing the protein FDR
+  threshold
+- [`filter_features_diann()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.md)
+  : Filter DIA-NN output
+- [`filter_features_mq_dda()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_mq_dda.md)
+  : Filter MaxQuant DDA output
+- [`filter_features_pd_dda()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_pd_dda.md)
+  : Filter Proteome Discoverer DDA output
+- [`filter_features_per_protein()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_per_protein.md)
+  : Remove features which are assigned to a protein with too few
+  supporting features in total
+- [`filter_features_sn()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_sn.md)
+  : Filter Spectronaut output
+- [`filter_maxquant_ptm()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_maxquant_ptm.md)
+  : Filter PTM data from MaxQuant to retain those with a given PTM
+- [`get_ancestor_go()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_ancestor_go.md)
+  : Get all ancestor GO terms
+- [`get_cat_palette()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_cat_palette.md)
+  : Generate a colour-blind friendly palette for categorical colour
+  encoding
+- [`get_crap_fasta_accessions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_crap_fasta_accessions.md)
+  : Extract the contaminants protein accessions from a cRAP fasta file
+- [`get_enriched_go()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_enriched_go.md)
+  : GO term enrichment using goseq
+- [`get_go_terms()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_go_terms.md)
+  : Obtain GO term annotations for proteins
+- [`get_maxquant_cont_accessions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_maxquant_cont_accessions.md)
+  : Extract the contaminants protein accessions from a MaxQuant
+  contaminants fasta file
+- [`get_medians()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_medians.md)
+  : Extract the assay column medians from an MSnSet
+- [`get_n_feature_per_prot()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_n_feature_per_prot.md)
+  : Identify how many features (PSMs/Peptides) are quantified for each
+  protein
+- [`get_protein_no_quant_mask()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_protein_no_quant_mask.md)
+  : Identify proteins which have too few features to quantify protein
+  abundance in each sample
+- [`get_protein_tm_topology()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_protein_tm_topology.md)
+  : Obtain protein transmembrane-domains and topology information
+- [`get_samples_present()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_samples_present.md)
+  : Extract the number of samples each feature was detected in for each
+  experiment in a Qfeatures object
+- [`get_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_sequence.md)
+  : Get the amino acid sequence around a PTM
+- [`make_fasta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_fasta.md)
+  : Make a FASTA using UniProt accessions
+- [`make_unique_all()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_unique_all.md)
+  : Make Elements of a Character Vector Unique (Numbering From 1)
+- [`mask_protein_level_quant()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mask_protein_level_quant.md)
+  : Replace protein-level quantifications with NA if they derive from
+  too few lower feature level quantifications
+- [`maxlfq_wrapper()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/maxlfq_wrapper.md)
+  : Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures
+- [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
+  : Parse the PTM probabilities from Proteome Discoverer and add new
+  columns with PTM information
+- [`plot_cor_samples()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_cor_samples.md)
+  : Plot the correlation between sample
+- [`plot_go()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_go.md)
+  : Plot selected GO terms
+- [`plot_go_terms_upset()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_go_terms_upset.md)
+  : Plot selected GO terms
+- [`plot_missing_SN()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_missing_SN.md)
+  : Plot the missing values vs signal:noise
+- [`plot_missing_SN_per_sample()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_missing_SN_per_sample.md)
+  : Plot the missing values vs signal:noise for each sample
+- [`plot_missing_upset()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_missing_upset.md)
+  : Plot the most common missing value patterns
+- [`plot_pca()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_pca.md)
+  : Create a Principle Component plot from the feature quantification
+- [`plot_protein_assays()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_protein_assays.md)
+  : Plot quantification at multiple levels
+- [`plot_quant()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_quant.md)
+  : Plot distributions for feature intensities per sample.
+- [`plot_rt_dist()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_rt_dist.md)
+  : Plot the retention time distribution
+- [`plot_rt_vs_delta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_rt_vs_delta.md)
+  : Plot the retention time vs delta precursor mass
+- [`plot_samples_present()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_samples_present.md)
+  : Plots the number of samples each feature was detected in for each
+  experiment in a Qfeatures object
+- [`plot_volcano()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_volcano.md)
+  : Volcano plot for differential abundance testing
+- [`predict(`*`<tls_model>`*`)`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/predict.tls_model.md)
+  : Predict method for tls_model
+- [`psm_tmt_total`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_total.md)
+  : PSM-level PD output for total proteome TMT10-plex data
+- [`query_protein_tm_topology()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/query_protein_tm_topology.md)
+  : Query UniProt to determine protein transmembrane-domains and
+  topology
+- [`readDIANNFilterQJoin()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/readDIANNFilterQJoin.md)
+  : Read in data from DIA-NN
+- [`remove_dots()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_dots.md)
+  : Remove duplicated full stops
+- [`remove_redundant_go()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_redundant_go.md)
+  : Remove redundant GO terms
+- [`remove_redundant_psm_quant()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_redundant_psm_quant.md)
+  : Remove redundant Peptide Spectrum Matches
+- [`remove_x()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_x.md)
+  : Remove leading X
+- [`restrict_imputation()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/restrict_imputation.md)
+  : Restrict imputed values to specific conditions
+- [`sub_crap()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/sub_crap.md)
+  : Insert cRAP numbers into a character vector
+- [`theme_biomasslmb()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/theme_biomasslmb.md)
+  : A ggplot2 theme for the package
+- [`tls()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/tls.md)
+  : Total least squares regression (for use with geom_smooth)
+- [`tmt_qf`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/tmt_qf.md)
+  : TMT data
+- [`update_average_sn()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/update_average_sn.md)
+  : Adds new feature describing the average reporter Signal/Noise ratio.
+- [`update_peptide_assignments()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/update_peptide_assignments.md)
+  : Update PSM level protein/master protein assignments using
+  peptide-level assignments

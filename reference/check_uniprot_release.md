@@ -21,11 +21,11 @@ etc.
 ``` r
 # print release number to console
 check_uniprot_release()
-#> [1] "2025_04"
+#> [1] "2026_01"
 
 # save release number and use in e.g. a file name
 rls <- check_uniprot_release()
 
 paste0("folder/filename_", rls, ".fasta")
-#> [1] "folder/filename_2025_04.fasta"
+#> [1] "folder/filename_2026_01.fasta"
 ```

@@ -4,33 +4,43 @@
 \alias{qfeatures_long}
 \title{Compatibility wrapper for QFeatures long-format extraction}
 \usage{
-qfeatures_long(...)
+qfeatures_long(object, ...)
 }
 \arguments{
-\item{...}{Arguments passed directly to
-\code{QFeatures::longForm()} or \code{QFeatures::longFormat()}.}
+\item{object}{A QFeatures object (or object class supported by longForm/longFormat)}
+
+\item{...}{Additional arguments passed to the underlying long-format function,
+typically including \code{colvars} and \code{rowvars}.}
 }
 \value{
-A data structure identical to the return value of the underlying
-QFeatures long-format function (typically a \code{LongTable}
-or \code{DataFrame}).
+A data structure identical to the output of the underlying
+long-format function (usually a \code{LongTable} or \code{DataFrame}).
 }
 \description{
-Dispatches to \code{longForm()} or
-\code{longFormat()}, depending on which
-function is available in the QFeatures namespace.
+Dispatches to the appropriate QFeatures long-format function
+depending on the Bioconductor version and object class.
 }
 \details{
-This helper exists to maintain compatibility across QFeatures
-releases without relying on Bioconductor version checks.
-The function is evaluated at runtime and works regardless of
-whether \pkg{QFeatures} is attached.
+Specifically, this function:
+\itemize{
+\item Uses \code{longForm()} (BiocGenerics generic) if a method exists
+for the input object,
+\item Falls back to \code{QFeatures::longFormat()}
+otherwise.
+}
 
-If both functions were to exist, \code{longForm()} is preferred.
-An error is raised if neither function is found.
+This allows package or script code to remain compatible across
+QFeatures releases without explicitly checking Bioconductor versions.
+
+The function first checks whether \code{longForm()} is a generic and
+whether there is a registered method for the input object class.
+If so, it calls \code{longForm()}. Otherwise, it falls back to the legacy
+\code{longFormat()} function. An error is thrown if neither is available.
 }
 \seealso{
+\code{\link[QFeatures]{longFormat}},
 \code{\link[QFeatures]{longForm}},
-\code{\link[QFeatures]{longFormat}}
+\code{\link[methods]{isGeneric}},
+\code{\link[methods]{findMethods}}
 }
 \keyword{internal}

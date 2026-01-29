@@ -1,43 +1,49 @@
 #' Compatibility wrapper for QFeatures long-format extraction
 #'
-#' Dispatches to \code{longForm()} or
-#' \code{longFormat()}, depending on which
-#' function is available in the QFeatures namespace.
+#' Dispatches to the appropriate QFeatures long-format function
+#' depending on the Bioconductor version and object class.
 #'
-#' This helper exists to maintain compatibility across QFeatures
-#' releases without relying on Bioconductor version checks.
-#' The function is evaluated at runtime and works regardless of
-#' whether \pkg{QFeatures} is attached.
+#' Specifically, this function:
+#' * Uses \code{longForm()} (BiocGenerics generic) if a method exists
+#'   for the input object,
+#' * Falls back to \code{QFeatures::longFormat()}
+#'   otherwise.
 #'
-#' @param ... Arguments passed directly to
-#'   \code{QFeatures::longForm()} or \code{QFeatures::longFormat()}.
+#' This allows package or script code to remain compatible across
+#' QFeatures releases without explicitly checking Bioconductor versions.
 #'
-#' @return
-#' A data structure identical to the return value of the underlying
-#' QFeatures long-format function (typically a \code{LongTable}
-#' or \code{DataFrame}).
+#' @param object A QFeatures object (or object class supported by longForm/longFormat)
+#' @param ... Additional arguments passed to the underlying long-format function,
+#'   typically including \code{colvars} and \code{rowvars}.
+#'
+#' @return A data structure identical to the output of the underlying
+#'   long-format function (usually a \code{LongTable} or \code{DataFrame}).
 #'
 #' @details
-#' If both functions were to exist, \code{longForm()} is preferred.
-#' An error is raised if neither function is found.
+#' The function first checks whether \code{longForm()} is a generic and
+#' whether there is a registered method for the input object class.
+#' If so, it calls \code{longForm()}. Otherwise, it falls back to the legacy
+#' \code{longFormat()} function. An error is thrown if neither is available.
 #'
 #' @seealso
+#' \code{\link[QFeatures]{longFormat}},
 #' \code{\link[QFeatures]{longForm}},
-#' \code{\link[QFeatures]{longFormat}}
+#' \code{\link[methods]{isGeneric}},
+#' \code{\link[methods]{findMethods}}
 #'
 #' @keywords internal
-qfeatures_long <- function(...) {
-  ns <- asNamespace("QFeatures")
+qfeatures_long <- function(object, ...) {
 
-  if (exists("longForm", envir = ns, inherits = FALSE)) {
-    return(ns$longForm(...))
+  if (methods::isGeneric("longForm") &&
+      length(methods::findMethods("longForm", classes = class(object))) > 0) {
+    return(longForm(object, ...))
   }
 
-  if (exists("longFormat", envir = ns, inherits = FALSE)) {
-    return(ns$longFormat(...))
+  if (exists("longFormat", where = asNamespace("QFeatures"), inherits = FALSE)) {
+    return(QFeatures::longFormat(object, ...))
   }
 
   stop(
-    "Neither 'longForm' nor 'longFormat' is available in the QFeatures namespace."
+    "Neither a longForm() method nor longFormat() is available for this object."
   )
 }

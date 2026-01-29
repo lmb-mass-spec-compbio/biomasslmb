@@ -22,8 +22,13 @@ plot_quant <- function(obj,
   e_data <- data.frame(assay(obj))
 
   e_data[e_data==""] <- NA
-  e_data <- e_data %>% gather(key='sample', value='intensity') %>%
-    mutate(sample = factor(remove_x(sample), levels = remove_x(colnames(e_data))))
+  e_data <- e_data %>%
+    tibble::rownames_to_column('feature') %>%
+    pivot_longer(cols=-feature,
+                 names_to='sample', values_to='intensity') %>%
+    mutate(sample = factor(remove_x(sample), levels = remove_x(colnames(e_data)))) %>%
+    merge(data.frame(colData(obj)), by.x='sample', by.y='row.names')
+
 
   if(log2transform){
     e_data$intensity <- log2(e_data$intensity)
@@ -36,20 +41,23 @@ plot_quant <- function(obj,
 
   if(method=='box'){
     p <- p +
-      geom_boxplot(aes(sample, intensity)) +
+      aes(sample, intensity) +
+      geom_boxplot() +
       theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1)) +
       ylab(intensity_label) +
       xlab("")
   }
   else if(method=='density'){
     p <- p +
-      stat_density(aes(intensity, col=sample), geom="line",position="identity") +
+      aes(intensity, col=sample) +
+      stat_density(geom="line",position="identity") +
       xlab(intensity_label) +
       ylab("Density")
   }
   else if(method=='histogram'){
     p <- p +
-      geom_histogram(aes(intensity), bins=100) +
+      aes(intensity) +
+      geom_histogram(bins=100) +
       scale_y_continuous(expand = c(0, 0)) +
       xlab(intensity_label) +
       ylab("Count")

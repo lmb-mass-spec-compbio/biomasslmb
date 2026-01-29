@@ -39,7 +39,7 @@ plot_protein_assays <- function(obj,
   }
 
   to_plot <- obj[, , experiments_to_plot] %>%
-    longFormat(rowvars=c(protein_id_col, label_col, row_vars))  %>%
+    qfeatures_long(rowvars=c(protein_id_col, label_col, row_vars))  %>%
     as_tibble() %>%
     filter(!!sym(protein_id_col) %in% poi) %>%
     mutate(label=!!sym(label_col)) %>%

@@ -1,3 +1,7 @@
+
+
+
+
 #' Restrict imputed values to specific conditions
 #'
 #' @description This function takes a `Qfeatures` object with unimputed data and
@@ -112,7 +116,7 @@ create_long_form_imputed_data <- function(obj,
 
   check_q(obj)
 
-  long_format_protein <- longFormat(
+  long_format_protein <- qfeatures_long(
     obj[,,c(i_imputed, i_unimputed)],
     colvars=column_variables,
     rowvars=row_variables) %>%

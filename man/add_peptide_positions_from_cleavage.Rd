@@ -10,28 +10,34 @@ add_peptide_positions_from_cleavage(
   digest_enzyme = "trypsin-simple",
   missed_cleavages = c(0, 1, 2),
   master_protein_col = "Leading.razor.protein",
-  sequence_col = "Sequence"
+  sequence_col = "Sequence",
+  start_col = "start",
+  end_col = "end"
 )
 }
 \arguments{
-\item{obj}{\code{SummarizedExperiment}. Proteomics dataset}
+\item{obj}{SummarizedExperiment. Proteomics dataset}
 
-\item{proteome_fasta}{\code{character} filepath to fasta with protein sequences
-digest_enzyme = "trypsin-simple",}
+\item{proteome_fasta}{character filepath to fasta with protein sequences}
 
-\item{digest_enzyme}{\code{character}. Enzyme used. See \code{?cleaver::cleave}}
+\item{digest_enzyme}{character. Enzyme used. See ?cleaver::cleave}
 
-\item{missed_cleavages}{\code{numeric}. Vector of allowed number of missed cleavages}
+\item{missed_cleavages}{numeric. Vector of allowed number of missed cleavages}
 
-\item{master_protein_col}{\code{character}. Name of column containing master proteins}
+\item{master_protein_col}{character. Name of column containing master proteins}
 
-\item{sequence_col}{\code{character}. Name of column containing peptide sequences}
+\item{sequence_col}{character. Name of column containing peptide sequences}
+
+\item{start_col}{character. Name of output column containing peptide start positions}
+
+\item{end_col}{character. Name of output column containing peptide end positions}
 }
 \value{
-Returns a \code{SummarizedExperiment} with an additional column in the RowData describing the position of the PTMs with respect to the protein
+Returns a SummarizedExperiment with additional rowData columns describing
+peptide start and end positions with respect to the protein
 }
 \description{
-This function takes a \code{SummarizedExperiment} object and adds rowData
+This function takes a SummarizedExperiment object and adds rowData
 columns to describe the positions of the peptides within the proteins', taking
 into account the possible peptides according to the digestion enzyme used.
 }

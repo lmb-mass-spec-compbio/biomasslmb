@@ -207,25 +207,29 @@ add_filter_ptm_pos_rowdata_mq <- function(obj,
 
 #' Add peptide positions with respect to the protein
 #'
-#' @description This function takes a `SummarizedExperiment` object and adds rowData
+#' @description This function takes a SummarizedExperiment object and adds rowData
 #' columns to describe the positions of the peptides within the proteins', taking
 #' into account the possible peptides according to the digestion enzyme used.
 #'
-#' @param obj `SummarizedExperiment`. Proteomics dataset
-#' @param proteome_fasta `character` filepath to fasta with protein sequences
-#' digest_enzyme = "trypsin-simple",
-#' @param digest_enzyme `character`. Enzyme used. See `?cleaver::cleave`
-#' @param missed_cleavages `numeric`. Vector of allowed number of missed cleavages
-#' @param master_protein_col `character`. Name of column containing master proteins
-#' @param sequence_col `character`. Name of column containing peptide sequences
-#' @return Returns a `SummarizedExperiment` with an additional column in the RowData describing the position of the PTMs with respect to the protein
+#' @param obj SummarizedExperiment. Proteomics dataset
+#' @param proteome_fasta character filepath to fasta with protein sequences
+#' @param digest_enzyme character. Enzyme used. See ?cleaver::cleave
+#' @param missed_cleavages numeric. Vector of allowed number of missed cleavages
+#' @param master_protein_col character. Name of column containing master proteins
+#' @param sequence_col character. Name of column containing peptide sequences
+#' @param start_col character. Name of output column containing peptide start positions
+#' @param end_col character. Name of output column containing peptide end positions
+#' @return Returns a SummarizedExperiment with additional rowData columns describing
+#' peptide start and end positions with respect to the protein
 #' @export
 add_peptide_positions_from_cleavage <- function(obj,
                                                 proteome_fasta,
                                                 digest_enzyme = "trypsin-simple",
                                                 missed_cleavages = c(0,1,2),
                                                 master_protein_col = "Leading.razor.protein",
-                                                sequence_col = "Sequence") {
+                                                sequence_col = "Sequence",
+                                                start_col = "start",
+                                                end_col = "end") {
   check_se(obj)
 
   proteins <- Biostrings::readAAStringSet(proteome_fasta)
@@ -233,45 +237,83 @@ add_peptide_positions_from_cleavage <- function(obj,
   # Update name to be just UniprotID
   names(proteins) <- gsub('(sp|tr)\\|(\\S*)\\|.*', '\\2', names(proteins))
 
-  digest_pep <- cleaver::cleave(proteins, enzym=digest_enzyme, unique=FALSE, missedCleavages = missed_cleavages)
+  digest_pep <- cleaver::cleave(
+    proteins,
+    enzym = digest_enzyme,
+    unique = FALSE,
+    missedCleavages = missed_cleavages
+  )
 
-  pep_ranges <- cleaver::cleavageRanges(proteins, enzym=digest_enzyme, missedCleavages = missed_cleavages)
+  pep_ranges <- cleaver::cleavageRanges(
+    proteins,
+    enzym = digest_enzyme,
+    missedCleavages = missed_cleavages
+  )
 
-  pep_loc <- unique(names(pep_ranges)) %>% lapply(function(x){
-    .df <- data.frame(pep_ranges[[x]]) %>%
-      mutate(sequence=as.character(digest_pep[[x]]),
-             width=width(digest_pep[[x]]))
+  pep_loc <- unique(names(pep_ranges)) %>%
+    lapply(function(x) {
 
-    if(nrow(filter(.df, width!=(end+1)-start))!=0){
+      .df <- data.frame(pep_ranges[[x]]) %>%
+        dplyr::mutate(
+          sequence = as.character(digest_pep[[x]]),
+          width = width(digest_pep[[x]])
+        )
 
-      print(filter(.df, width!=(end+1)-start))
-      stop(sprintf('Widths do not agree with start and end positions for protein: %s', x))
-    }
+      if (nrow(dplyr::filter(.df, width != (end + 1) - start)) != 0) {
+        print(dplyr::filter(.df, width != (end + 1) - start))
+        stop(sprintf(
+          "Widths do not agree with start and end positions for protein: %s", x
+        ))
+      }
 
-    .df_trim_leading_M <- .df %>%
-      filter(start==1, grepl('^M', sequence)) %>%
-      mutate(sequence=gsub('^M', '', sequence), start=2, width=width-1)
+      .df_trim_leading_M <- .df %>%
+        dplyr::filter(start == 1, grepl("^M", sequence)) %>%
+        dplyr::mutate(
+          sequence = gsub("^M", "", sequence),
+          start = 2,
+          width = width - 1
+        )
 
-    .df <- bind_rows(.df, .df_trim_leading_M)
+      .df <- dplyr::bind_rows(.df, .df_trim_leading_M)
 
-    .df <- .df %>% group_by(sequence) %>%
-      summarise(start=paste(start, collapse=';'),
-                end=paste(end, collapse=';')) %>%
-      mutate(protein=x)
-    return(.df)
-  }) %>% bind_rows()
+      .df <- .df %>%
+        dplyr::group_by(sequence) %>%
+        dplyr::summarise(
+          !!start_col := paste(start, collapse = ";"),
+          !!end_col   := paste(end, collapse = ";"),
+          .groups = "drop"
+        ) %>%
+        dplyr::mutate(protein = x)
 
-  rowData(obj) <- rowData(obj) %>%
-    data.frame() %>%
-    mutate(original_order=1:nrow((rowData(obj)))) %>%
-    merge(pep_loc,
-          by.x=c(master_protein_col, sequence_col),
-          by.y=c('protein', 'sequence'),
-          all.x=TRUE) %>%
-    arrange(original_order) %>%
-    select(-original_order)
+      return(.df)
+    }) %>%
+    dplyr::bind_rows()
 
-  return(obj)
+  rd <- as.data.frame(SummarizedExperiment::rowData(obj))
+
+  # remove existing output columns before merge ----
+  cols_to_remove <- intersect(colnames(rd), c(start_col, end_col))
+  if (length(cols_to_remove) > 0) {
+    rd <- rd[, !colnames(rd) %in% cols_to_remove, drop = FALSE]
+  }
+
+  rd$original_order <- seq_len(nrow(rd))
+
+  rd <- merge(
+    rd,
+    pep_loc,
+    by.x = c(master_protein_col, sequence_col),
+    by.y = c("protein", "sequence"),
+    all.x = TRUE,
+    sort = FALSE
+  )
+
+  rd <- rd[order(rd$original_order), ]
+  rd$original_order <- NULL
+
+  SummarizedExperiment::rowData(obj) <- S4Vectors::DataFrame(rd)
+
+  obj
 }
 
 #' Add rowData columns with details of PTMs positions

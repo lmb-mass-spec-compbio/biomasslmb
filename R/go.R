@@ -222,7 +222,7 @@ get_ancestor_go <- function(go_df, feature_col = "UNIPROTKB", go_col = "GO.ID",
   full_go_df <- go_df %>%
     filter(!is.na(all_of(go_col))) %>%
     group_by(.data[[feature_col]]) %>%
-    summarise(expand_terms(across(), go_col, go2Ancestor), .groups = "drop_last")
+    reframe(expand_terms(across(everything()), go_col, go2Ancestor), .groups = "drop_last")
 
   full_go_details <- AnnotationDbi::select(
     GO.db::GO.db,

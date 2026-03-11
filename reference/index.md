@@ -28,6 +28,8 @@
   : Add transmembrane domain details
 - [`add_topology_info()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_topology_info.md)
   : Add topology details
+- [`add_tryptic_termini_flags()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_tryptic_termini_flags.md)
+  : Evaluate peptide termini against theoretical cleavage positions
 - [`append_fasta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/append_fasta.md)
   : Append sequences to end of a FASTA
 - [`bb2014()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/bb2014.md)
@@ -45,6 +47,9 @@
   : DIA data
 - [`estimate_overrep()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/estimate_overrep.md)
   : Estimate effect size of over-representation
+- [`extract_peptide_positions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/extract_peptide_positions.md)
+  : Extract Peptide Position Start and End Columns from a QFeatures
+  Object
 - [`filter_TMT_PSMs()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.md)
   : Filter a PSM-level summarizedExperiment to remove low quality PSMs
 - [`filter_by_protein_fdr()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.md)

@@ -35,7 +35,7 @@ filter_features_diann(
 - obj:
 
   `SummarisedExperiment` containing output from Proteome Discoverer. Use
-  [`readQFeatures`](https://rdrr.io/pkg/QFeatures/man/readQFeatures.html)
+  [`readQFeatures`](https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html)
   to read in .txt file
 
 - master_protein_col:

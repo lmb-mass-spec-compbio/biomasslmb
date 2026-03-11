@@ -19,6 +19,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_site_sequence.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_tm_info.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_topology_info.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_tryptic_termini_flags.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/append_fasta.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/bb2014.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/biomasslmb-package.html</loc></url>
@@ -30,6 +31,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/dia_qf.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/estimate_overrep.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/expand_terms.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/extract_peptide_positions.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.html</loc></url>
@@ -72,6 +74,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_volcano.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/predict.tls_model.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_total.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/qfeatures_long.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/query_protein_tm_topology.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/readDIANNFilterQJoin.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_dots.html</loc></url>

@@ -79,7 +79,7 @@ experiment with 10 samples (each one being a separate TMT tags). It is a
 truncated file containing the first 5,000 PSMs only. Here, we will not
 include any details about the experimental design. Usually, these would
 be included by providing a `data.frame` to the `colData` argument. See
-[`?readQFeatures`](https://rdrr.io/pkg/QFeatures/man/readQFeatures.html)
+[`?readQFeatures`](https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html)
 for full details on how to read the quantification data in a `QFeatures`
 object.
 
@@ -245,7 +245,7 @@ tmt_qf[['psms_filtered_rank']] <- tmt_qf[['psms_filtered_sn']]
 
 tmt_qf <- tmt_qf %>%
   filterFeatures(~ Rank == 1, i = 'psms_filtered_rank')
-#> 'Rank' found in 5 out of 5 assay(s)
+#> 'Rank' found in 5 out of 5 assay(s).
 
 biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
                          'Master.Protein.Accessions',
@@ -302,6 +302,7 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein",
                                        fun = base::colSums)
+#> Aggregated: 1/1
 ```
 
 ``` r
@@ -421,7 +422,7 @@ outliers with very low abundance.
 
 ``` r
 sessionInfo()
-#> R version 4.4.3 (2025-02-28)
+#> R version 4.5.2 (2025-10-31)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -443,52 +444,51 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.1.4                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.1               biomasslmb_0.0.4           
-#>  [5] QFeatures_1.16.0            MultiAssayExperiment_1.32.0
-#>  [7] SummarizedExperiment_1.36.0 Biobase_2.66.0             
-#>  [9] GenomicRanges_1.58.0        GenomeInfoDb_1.42.3        
-#> [11] IRanges_2.40.1              S4Vectors_0.44.0           
-#> [13] BiocGenerics_0.52.0         MatrixGenerics_1.18.1      
-#> [15] matrixStats_1.5.0          
+#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.2               biomasslmb_0.0.4           
+#>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.1
+#>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
+#>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
+#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [13] BiocGenerics_0.56.0         generics_0.1.4             
+#> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] DBI_1.2.3               gridExtra_2.3           rlang_1.1.7            
-#>   [4] magrittr_2.0.4          clue_0.3-66             otel_0.2.0             
-#>   [7] compiler_4.4.3          RSQLite_2.4.5           png_0.1-8              
-#>  [10] systemfonts_1.3.1       vctrs_0.7.1             reshape2_1.4.5         
-#>  [13] stringr_1.6.0           ProtGenerics_1.38.0     pkgconfig_2.0.3        
+#>   [1] DBI_1.3.0               gridExtra_2.3           rlang_1.1.7            
+#>   [4] magrittr_2.0.4          clue_0.3-67             otel_0.2.0             
+#>   [7] compiler_4.5.2          RSQLite_2.4.6           png_0.1-8              
+#>  [10] systemfonts_1.3.2       vctrs_0.7.1             reshape2_1.4.5         
+#>  [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #>  [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
-#>  [19] XVector_0.46.0          labeling_0.4.3          rmarkdown_2.30         
-#>  [22] UCSC.utils_1.2.0        visdat_0.6.0            ragg_1.5.0             
-#>  [25] purrr_1.2.1             bit_4.6.0               xfun_0.56              
-#>  [28] zlibbioc_1.52.0         cachem_1.1.0            jsonlite_2.0.0         
-#>  [31] blob_1.3.0              DelayedArray_0.32.0     cluster_2.1.8          
-#>  [34] R6_2.6.1                bslib_0.10.0            stringi_1.8.7          
-#>  [37] RColorBrewer_1.1-3      genefilter_1.88.0       rpart_4.1.24           
-#>  [40] jquerylib_0.1.4         Rcpp_1.1.1              knitr_1.51             
-#>  [43] usethis_3.2.1           base64enc_0.1-3         BiocBaseUtils_1.8.0    
-#>  [46] nnet_7.3-20             Matrix_1.7-2            splines_4.4.3          
-#>  [49] igraph_2.2.1            tidyselect_1.2.1        rstudioapi_0.18.0      
-#>  [52] abind_1.4-8             yaml_2.3.12             lattice_0.22-6         
-#>  [55] tibble_3.3.1            plyr_1.8.9              withr_3.0.2            
-#>  [58] KEGGREST_1.46.0         S7_0.2.1                evaluate_1.0.5         
-#>  [61] uniprotREST_1.0.0       foreign_0.8-88          desc_1.4.3             
-#>  [64] survival_3.8-3          Biostrings_2.74.1       pillar_1.11.1          
-#>  [67] corrplot_0.95           checkmate_2.3.3         generics_0.1.4         
-#>  [70] rprojroot_2.1.1         scales_1.4.0            xtable_1.8-4           
-#>  [73] glue_1.8.0              Hmisc_5.2-5             lazyeval_0.2.2         
-#>  [76] tools_4.4.3             data.table_1.18.2.1     robustbase_0.99-6      
-#>  [79] annotate_1.84.0         fs_1.6.6                XML_3.99-0.20          
-#>  [82] grid_4.4.3              cutr_0.0.0.9000         colorspace_2.1-2       
-#>  [85] MsCoreUtils_1.18.0      AnnotationDbi_1.68.0    GenomeInfoDbData_1.2.13
-#>  [88] htmlTable_2.4.3         Formula_1.2-5           naniar_1.1.0           
-#>  [91] cli_3.6.5               textshaping_1.0.4       S4Arrays_1.6.0         
-#>  [94] AnnotationFilter_1.30.0 gtable_0.3.6            DEoptimR_1.1-4         
-#>  [97] sass_0.4.10             digest_0.6.39           SparseArray_1.6.2      
-#> [100] htmlwidgets_1.6.4       farver_2.1.2            memoise_2.0.1          
-#> [103] htmltools_0.5.9         pkgdown_2.2.0           lifecycle_1.0.5        
-#> [106] httr_1.4.7              bit64_4.6.0-1           MASS_7.3-64
+#>  [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.30         
+#>  [22] visdat_0.6.0            ragg_1.5.1              purrr_1.2.1            
+#>  [25] bit_4.6.0               xfun_0.56               cachem_1.1.0           
+#>  [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.0    
+#>  [31] cluster_2.1.8.1         R6_2.6.1                bslib_0.10.0           
+#>  [34] stringi_1.8.7           RColorBrewer_1.1-3      genefilter_1.92.0      
+#>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.1             
+#>  [40] knitr_1.51              usethis_3.2.1           base64enc_0.1-6        
+#>  [43] BiocBaseUtils_1.12.0    nnet_7.3-20             Matrix_1.7-4           
+#>  [46] splines_4.5.2           igraph_2.2.2            tidyselect_1.2.1       
+#>  [49] rstudioapi_0.18.0       abind_1.4-8             yaml_2.3.12            
+#>  [52] lattice_0.22-7          tibble_3.3.1            plyr_1.8.9             
+#>  [55] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.1               
+#>  [58] evaluate_1.0.5          uniprotREST_1.0.0       foreign_0.8-90         
+#>  [61] desc_1.4.3              survival_3.8-3          Biostrings_2.78.0      
+#>  [64] pillar_1.11.1           corrplot_0.95           checkmate_2.3.4        
+#>  [67] rprojroot_2.1.1         scales_1.4.0            xtable_1.8-8           
+#>  [70] glue_1.8.0              Hmisc_5.2-5             lazyeval_0.2.2         
+#>  [73] tools_4.5.2             data.table_1.18.2.1     robustbase_0.99-7      
+#>  [76] annotate_1.88.0         fs_1.6.7                XML_3.99-0.22          
+#>  [79] grid_4.5.2              cutr_0.0.0.9000         colorspace_2.1-2       
+#>  [82] MsCoreUtils_1.22.1      AnnotationDbi_1.72.0    htmlTable_2.4.3        
+#>  [85] Formula_1.2-5           naniar_1.1.0            cli_3.6.5              
+#>  [88] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
+#>  [91] gtable_0.3.6            DEoptimR_1.1-4          sass_0.4.10            
+#>  [94] digest_0.6.39           SparseArray_1.10.9      htmlwidgets_1.6.4      
+#>  [97] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
+#> [100] pkgdown_2.2.0           lifecycle_1.0.5         httr_1.4.8             
+#> [103] bit64_4.6.0-1           MASS_7.3-65
 ```
 
 McAlister, Graeme C., David P. Nusinow, Mark P. Jedrychowski, Martin

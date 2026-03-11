@@ -81,6 +81,7 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
 #> Your quantitative data contain missing values. Please read the relevant
 #> section(s) in the aggregateFeatures manual page regarding the effects
 #> of missing values on data aggregation.
+#> Aggregated: 1/1
 ```
 
 Prior to summaristaion, we removed PSMs from proteins with fewer than 2
@@ -123,12 +124,14 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein_mean",
                                        fun = base::colMeans, na.rm=TRUE)
+#> Aggregated: 1/1
 
 tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
                                        i = "psms_filtered_forSum", 
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein_median",
                                        fun = matrixStats::colMedians, na.rm=TRUE)
+#> Aggregated: 1/1
 
 tmt_qf[['protein_mean']] <- QFeatures::logTransform(
   tmt_qf[['protein_mean']], base=2)
@@ -155,7 +158,7 @@ However, with sum summarisation, we have complete quantification data
 missing values in some samples. In this case, the protein-level data is
 99.48 % complete, so the impact of the missing values on the downstream
 analysis will be minimal. We can inspect missing values using the
-[`QFeatures::nNA`](https://rdrr.io/pkg/QFeatures/man/QFeatures-missing-data.html)
+[`QFeatures::nNA`](https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html)
 function, or just `is.na` on the quantitative data matrix.
 
 ``` r
@@ -238,33 +241,20 @@ We can directly compare the protein-level abundance estimates to explore
 where these two summarisation methods differ in their estimates.
 
 ``` r
-# Define a function to extract the protein abundances in long form and
-# add a column annotating the method
-get_long_form_prot_exp <- function(obj, method_name) {
-  assay(obj) %>%
-    data.frame() %>%
-    tibble::rownames_to_column('protein') %>%
-    pivot_longer(cols=-protein) %>%
-    mutate(method = method_name)
-}
 
 # Single object with protein inference from both methods 
-compare_protein_abundances <- rbind(
-  mutate(longFormat(tmt_qf[['protein']]), method='Sum'),
-  mutate(longFormat(tmt_qf[['protein_robust']]), method='Robust'),
-  mutate(longFormat(tmt_qf[['protein_median']]), method='Median'),
-  mutate(longFormat(tmt_qf[['protein_mean']]), method='Mean')
-)
-
-
-print(head(compare_protein_abundances))
-#>   rowname       colname     value method
-#> 1  A1L0T0 Abundance.126  8.340996    Sum
-#> 2  A4D1E9 Abundance.126  9.674770    Sum
-#> 3  A6NHR9 Abundance.126 10.319013    Sum
-#> 4  O00116 Abundance.126  6.884527    Sum
-#> 5  O00154 Abundance.126  5.597842    Sum
-#> 6  O00159 Abundance.126 10.410898    Sum
+compare_protein_abundances <- biomasslmb:::qfeatures_long(
+  tmt_qf[,,c('protein', 'protein_robust', 'protein_median', 'protein_mean')]) %>%
+  data.frame() %>%
+  mutate(method=recode_values(
+    assay,
+    'protein'~'Sum',
+    'protein_robust'~'Robust',
+    'protein_median'~'Median',
+    'protein_mean'~'Mean'))
+#> Warning: 'experiments' dropped; see 'drops()'
+#> harmonizing input:
+#>   removing 80 sampleMap rows not in names(experiments)
 ```
 
 We want to identify the proteins with the lowest correlation for
@@ -273,6 +263,7 @@ inspect the difference between them.
 
 ``` r
 proteins_of_interest <- compare_protein_abundances %>%
+    select(method, value, rowname,colname) %>%
   pivot_wider(names_from = method, values_from = value) %>%
   group_by(rowname) %>%
   summarise(cor_sum_median=cor(Sum, Median),
@@ -298,7 +289,7 @@ plot_pep_and_protein <- function(protein_of_interest) {
     VariableFilter("Master.Protein.Accessions",
                    protein_of_interest,
                    condition = "=="))[['psms_filtered_sn']] %>%
-    longFormat() %>%
+    biomasslmb:::qfeatures_long() %>%
     ggplot(aes(x = colname, y = log2(value))) +
     geom_line(aes(group = rowname), colour = 'grey') +
     geom_point(colour = 'grey') +
@@ -376,7 +367,7 @@ missing values, consider using `robust` instead.
 
 ``` r
 sessionInfo()
-#> R version 4.4.3 (2025-02-28)
+#> R version 4.5.2 (2025-10-31)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -398,48 +389,46 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.1.4                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.1               biomasslmb_0.0.4           
-#>  [5] QFeatures_1.16.0            MultiAssayExperiment_1.32.0
-#>  [7] SummarizedExperiment_1.36.0 Biobase_2.66.0             
-#>  [9] GenomicRanges_1.58.0        GenomeInfoDb_1.42.3        
-#> [11] IRanges_2.40.1              S4Vectors_0.44.0           
-#> [13] BiocGenerics_0.52.0         MatrixGenerics_1.18.1      
-#> [15] matrixStats_1.5.0          
+#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.2               biomasslmb_0.0.4           
+#>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.1
+#>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
+#>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
+#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [13] BiocGenerics_0.56.0         generics_0.1.4             
+#> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] DBI_1.2.3               rlang_1.1.7             magrittr_2.0.4         
-#>  [4] clue_0.3-66             otel_0.2.0              compiler_4.4.3         
-#>  [7] RSQLite_2.4.5           png_0.1-8               systemfonts_1.3.1      
-#> [10] vctrs_0.7.1             reshape2_1.4.5          stringr_1.6.0          
-#> [13] ProtGenerics_1.38.0     pkgconfig_2.0.3         crayon_1.5.3           
-#> [16] fastmap_1.2.0           backports_1.5.0         XVector_0.46.0         
-#> [19] labeling_0.4.3          rmarkdown_2.30          UCSC.utils_1.2.0       
-#> [22] visdat_0.6.0            ragg_1.5.0              purrr_1.2.1            
-#> [25] bit_4.6.0               xfun_0.56               zlibbioc_1.52.0        
-#> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
-#> [31] DelayedArray_0.32.0     cluster_2.1.8           R6_2.6.1               
-#> [34] bslib_0.10.0            stringi_1.8.7           RColorBrewer_1.1-3     
-#> [37] genefilter_1.88.0       jquerylib_0.1.4         Rcpp_1.1.1             
-#> [40] knitr_1.51              BiocBaseUtils_1.8.0     Matrix_1.7-2           
-#> [43] splines_4.4.3           igraph_2.2.1            tidyselect_1.2.1       
-#> [46] abind_1.4-8             yaml_2.3.12             lattice_0.22-6         
-#> [49] tibble_3.3.1            plyr_1.8.9              withr_3.0.2            
-#> [52] KEGGREST_1.46.0         S7_0.2.1                evaluate_1.0.5         
-#> [55] uniprotREST_1.0.0       desc_1.4.3              survival_3.8-3         
-#> [58] Biostrings_2.74.1       pillar_1.11.1           corrplot_0.95          
-#> [61] checkmate_2.3.3         generics_0.1.4          scales_1.4.0           
-#> [64] xtable_1.8-4            glue_1.8.0              lazyeval_0.2.2         
-#> [67] tools_4.4.3             robustbase_0.99-6       annotate_1.84.0        
-#> [70] fs_1.6.6                XML_3.99-0.20           grid_4.4.3             
-#> [73] MsCoreUtils_1.18.0      AnnotationDbi_1.68.0    GenomeInfoDbData_1.2.13
-#> [76] naniar_1.1.0            cli_3.6.5               textshaping_1.0.4      
-#> [79] S4Arrays_1.6.0          AnnotationFilter_1.30.0 gtable_0.3.6           
-#> [82] DEoptimR_1.1-4          sass_0.4.10             digest_0.6.39          
-#> [85] SparseArray_1.6.2       htmlwidgets_1.6.4       farver_2.1.2           
-#> [88] memoise_2.0.1           htmltools_0.5.9         pkgdown_2.2.0          
-#> [91] lifecycle_1.0.5         httr_1.4.7              bit64_4.6.0-1          
-#> [94] MASS_7.3-64
+#>  [1] tidyselect_1.2.1        farver_2.1.2            blob_1.3.0             
+#>  [4] Biostrings_2.78.0       S7_0.2.1                fastmap_1.2.0          
+#>  [7] lazyeval_0.2.2          XML_3.99-0.22           digest_0.6.39          
+#> [10] lifecycle_1.0.5         cluster_2.1.8.1         ProtGenerics_1.42.0    
+#> [13] survival_3.8-3          KEGGREST_1.50.0         RSQLite_2.4.6          
+#> [16] magrittr_2.0.4          genefilter_1.92.0       compiler_4.5.2         
+#> [19] rlang_1.1.7             sass_0.4.10             tools_4.5.2            
+#> [22] igraph_2.2.2            yaml_2.3.12             corrplot_0.95          
+#> [25] knitr_1.51              labeling_0.4.3          S4Arrays_1.10.1        
+#> [28] htmlwidgets_1.6.4       bit_4.6.0               DelayedArray_0.36.0    
+#> [31] plyr_1.8.9              RColorBrewer_1.1-3      abind_1.4-8            
+#> [34] withr_3.0.2             purrr_1.2.1             desc_1.4.3             
+#> [37] grid_4.5.2              xtable_1.8-8            scales_1.4.0           
+#> [40] MASS_7.3-65             cli_3.6.5               rmarkdown_2.30         
+#> [43] crayon_1.5.3            ragg_1.5.1              otel_0.2.0             
+#> [46] robustbase_0.99-7       httr_1.4.8              reshape2_1.4.5         
+#> [49] BiocBaseUtils_1.12.0    DBI_1.3.0               cachem_1.1.0           
+#> [52] stringr_1.6.0           splines_4.5.2           AnnotationDbi_1.72.0   
+#> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.1            
+#> [58] Matrix_1.7-4            jsonlite_2.0.0          naniar_1.1.0           
+#> [61] visdat_0.6.0            bit64_4.6.0-1           clue_0.3-67            
+#> [64] systemfonts_1.3.2       jquerylib_0.1.4         annotate_1.88.0        
+#> [67] glue_1.8.0              DEoptimR_1.1-4          pkgdown_2.2.0          
+#> [70] uniprotREST_1.0.0       stringi_1.8.7           gtable_0.3.6           
+#> [73] tibble_3.3.1            pillar_1.11.1           htmltools_0.5.9        
+#> [76] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
+#> [79] lattice_0.22-7          backports_1.5.0         png_0.1-8              
+#> [82] memoise_2.0.1           bslib_0.10.0            Rcpp_1.1.1             
+#> [85] checkmate_2.3.4         SparseArray_1.10.9      xfun_0.56              
+#> [88] MsCoreUtils_1.22.1      fs_1.6.7                pkgconfig_2.0.3
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

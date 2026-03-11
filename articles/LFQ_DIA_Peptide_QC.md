@@ -62,7 +62,7 @@ allows us to control the FDR thresholds for the precursor and protein
 from DIA-NN. If you are happy with the filtering settings in DIA-NN, you
 can directly read the `report.pr_matrix.tsv` into a `QFeatures` object
 using the
-[`QFeatures::readQFeatures`](https://rdrr.io/pkg/QFeatures/man/readQFeatures.html)
+[`QFeatures::readQFeatures`](https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html)
 function.
 
 `diann_report.tsv` is a file available from the `biomasslmb` package
@@ -85,9 +85,10 @@ dia_qf <- readDIANNFilterQJoin(diann_report_inf,
 #> Splitting data in runs.
 #> Formatting sample annotations (colData).
 #> Formatting data as a 'QFeatures' object.
-#> 'Lib.PG.Q.Value' found in 6 out of 6 assay(s)
-#> 'PG.Q.Value' found in 6 out of 6 assay(s)
-#> 'Q.Value' found in 6 out of 6 assay(s)
+#> Setting assay rownames.
+#> 'Lib.PG.Q.Value' found in 6 out of 6 assay(s).
+#> 'PG.Q.Value' found in 6 out of 6 assay(s).
+#> 'Q.Value' found in 6 out of 6 assay(s).
 #> Warning: 'experiments' dropped; see 'drops()'
 #> harmonizing input:
 #>   removing 6 sampleMap rows not in names(experiments)
@@ -308,6 +309,7 @@ dia_qf <- QFeatures::aggregateFeatures(dia_qf,
 #> Your quantitative data contain missing values. Please read the relevant
 #> section(s) in the aggregateFeatures manual page regarding the effects
 #> of missing values on data aggregation.
+#> Aggregated: 1/1
 
 biomasslmb:::message_parse(rowData(dia_qf[['protein']]),
                            'Protein.Group',
@@ -454,7 +456,7 @@ proteins. Whether this is appropriate will depend on your data in hand.
 
 ``` r
 sessionInfo()
-#> R version 4.4.3 (2025-02-28)
+#> R version 4.5.2 (2025-10-31)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -476,49 +478,48 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.1.4                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.1               biomasslmb_0.0.4           
-#>  [5] QFeatures_1.16.0            MultiAssayExperiment_1.32.0
-#>  [7] SummarizedExperiment_1.36.0 Biobase_2.66.0             
-#>  [9] GenomicRanges_1.58.0        GenomeInfoDb_1.42.3        
-#> [11] IRanges_2.40.1              S4Vectors_0.44.0           
-#> [13] BiocGenerics_0.52.0         MatrixGenerics_1.18.1      
-#> [15] matrixStats_1.5.0          
+#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.2               biomasslmb_0.0.4           
+#>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.1
+#>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
+#>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
+#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [13] BiocGenerics_0.56.0         generics_0.1.4             
+#> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] DBI_1.2.3               gridExtra_2.3           rlang_1.1.7            
-#>  [4] magrittr_2.0.4          clue_0.3-66             otel_0.2.0             
-#>  [7] compiler_4.4.3          RSQLite_2.4.5           png_0.1-8              
-#> [10] systemfonts_1.3.1       vctrs_0.7.1             reshape2_1.4.5         
-#> [13] stringr_1.6.0           ProtGenerics_1.38.0     pkgconfig_2.0.3        
+#>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.1.7            
+#>  [4] magrittr_2.0.4          clue_0.3-67             otel_0.2.0             
+#>  [7] compiler_4.5.2          RSQLite_2.4.6           png_0.1-8              
+#> [10] systemfonts_1.3.2       vctrs_0.7.1             reshape2_1.4.5         
+#> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
-#> [19] XVector_0.46.0          labeling_0.4.3          rmarkdown_2.30         
-#> [22] UCSC.utils_1.2.0        UpSetR_1.4.0            visdat_0.6.0           
-#> [25] ragg_1.5.0              purrr_1.2.1             bit_4.6.0              
-#> [28] xfun_0.56               zlibbioc_1.52.0         cachem_1.1.0           
-#> [31] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.32.0    
-#> [34] cluster_2.1.8           R6_2.6.1                bslib_0.10.0           
-#> [37] stringi_1.8.7           RColorBrewer_1.1-3      genefilter_1.88.0      
-#> [40] jquerylib_0.1.4         Rcpp_1.1.1              knitr_1.51             
-#> [43] usethis_3.2.1           BiocBaseUtils_1.8.0     Matrix_1.7-2           
-#> [46] splines_4.4.3           igraph_2.2.1            tidyselect_1.2.1       
-#> [49] abind_1.4-8             yaml_2.3.12             lattice_0.22-6         
-#> [52] tibble_3.3.1            plyr_1.8.9              withr_3.0.2            
-#> [55] KEGGREST_1.46.0         S7_0.2.1                evaluate_1.0.5         
-#> [58] uniprotREST_1.0.0       desc_1.4.3              survival_3.8-3         
-#> [61] Biostrings_2.74.1       pillar_1.11.1           corrplot_0.95          
-#> [64] checkmate_2.3.3         generics_0.1.4          rprojroot_2.1.1        
-#> [67] scales_1.4.0            xtable_1.8-4            glue_1.8.0             
-#> [70] lazyeval_0.2.2          tools_4.4.3             robustbase_0.99-6      
-#> [73] annotate_1.84.0         fs_1.6.6                XML_3.99-0.20          
-#> [76] grid_4.4.3              MsCoreUtils_1.18.0      AnnotationDbi_1.68.0   
-#> [79] GenomeInfoDbData_1.2.13 naniar_1.1.0            cli_3.6.5              
-#> [82] textshaping_1.0.4       S4Arrays_1.6.0          AnnotationFilter_1.30.0
-#> [85] gtable_0.3.6            DEoptimR_1.1-4          sass_0.4.10            
-#> [88] digest_0.6.39           SparseArray_1.6.2       htmlwidgets_1.6.4      
-#> [91] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
-#> [94] pkgdown_2.2.0           lifecycle_1.0.5         httr_1.4.7             
-#> [97] bit64_4.6.0-1           MASS_7.3-64
+#> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.30         
+#> [22] visdat_0.6.0            ragg_1.5.1              UpSetR_1.4.0           
+#> [25] purrr_1.2.1             bit_4.6.0               xfun_0.56              
+#> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
+#> [31] DelayedArray_0.36.0     cluster_2.1.8.1         R6_2.6.1               
+#> [34] bslib_0.10.0            stringi_1.8.7           RColorBrewer_1.1-3     
+#> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1             
+#> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
+#> [43] Matrix_1.7-4            splines_4.5.2           igraph_2.2.2           
+#> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
+#> [49] lattice_0.22-7          tibble_3.3.1            plyr_1.8.9             
+#> [52] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.1               
+#> [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             
+#> [58] survival_3.8-3          Biostrings_2.78.0       pillar_1.11.1          
+#> [61] corrplot_0.95           checkmate_2.3.4         rprojroot_2.1.1        
+#> [64] scales_1.4.0            xtable_1.8-8            glue_1.8.0             
+#> [67] lazyeval_0.2.2          tools_4.5.2             robustbase_0.99-7      
+#> [70] annotate_1.88.0         fs_1.6.7                XML_3.99-0.22          
+#> [73] grid_4.5.2              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
+#> [76] naniar_1.1.0            cli_3.6.5               textshaping_1.0.5      
+#> [79] S4Arrays_1.10.1         AnnotationFilter_1.34.0 gtable_0.3.6           
+#> [82] DEoptimR_1.1-4          sass_0.4.10             digest_0.6.39          
+#> [85] SparseArray_1.10.9      htmlwidgets_1.6.4       farver_2.1.2           
+#> [88] memoise_2.0.1           htmltools_0.5.9         pkgdown_2.2.0          
+#> [91] lifecycle_1.0.5         httr_1.4.8              bit64_4.6.0-1          
+#> [94] MASS_7.3-65
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

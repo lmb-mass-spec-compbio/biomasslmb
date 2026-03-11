@@ -44,6 +44,9 @@ qfeatures_long <- function(object, ...) {
   }
 
   stop(
-    "Neither a longForm() method nor longFormat() is available for this object."
+    paste0(
+      "Neither a longForm() method nor longFormat() is available for object of class: ",
+      paste(class(object), collapse = ", ")
+    )
   )
 }

@@ -162,31 +162,24 @@ assay(tmt_qf[['psms_filtered_sn']][retain_psms,])
 We can directly compare the protein-level abundance estimates to explore where these two summarisation methods differ in their estimates.
 
 ```{r}
-# Define a function to extract the protein abundances in long form and
-# add a column annotating the method
-get_long_form_prot_exp <- function(obj, method_name) {
-  assay(obj) %>%
-    data.frame() %>%
-    tibble::rownames_to_column('protein') %>%
-    pivot_longer(cols=-protein) %>%
-    mutate(method = method_name)
-}
 
 # Single object with protein inference from both methods 
-compare_protein_abundances <- rbind(
-  mutate(longFormat(tmt_qf[['protein']]), method='Sum'),
-  mutate(longFormat(tmt_qf[['protein_robust']]), method='Robust'),
-  mutate(longFormat(tmt_qf[['protein_median']]), method='Median'),
-  mutate(longFormat(tmt_qf[['protein_mean']]), method='Mean')
-)
+compare_protein_abundances <- biomasslmb:::qfeatures_long(
+  tmt_qf[,,c('protein', 'protein_robust', 'protein_median', 'protein_mean')]) %>%
+  data.frame() %>%
+  mutate(method=recode_values(
+    assay,
+    'protein'~'Sum',
+    'protein_robust'~'Robust',
+    'protein_median'~'Median',
+    'protein_mean'~'Mean'))
 
-
-print(head(compare_protein_abundances))
 ```
 We want to identify the proteins with the lowest correlation for abundances across the samples between summarisation methods so we can inspect the difference between them.
 
 ```{r}
 proteins_of_interest <- compare_protein_abundances %>%
+    select(method, value, rowname,colname) %>%
   pivot_wider(names_from = method, values_from = value) %>%
   group_by(rowname) %>%
   summarise(cor_sum_median=cor(Sum, Median),
@@ -211,7 +204,7 @@ plot_pep_and_protein <- function(protein_of_interest) {
     VariableFilter("Master.Protein.Accessions",
                    protein_of_interest,
                    condition = "=="))[['psms_filtered_sn']] %>%
-    longFormat() %>%
+    biomasslmb:::qfeatures_long() %>%
     ggplot(aes(x = colname, y = log2(value))) +
     geom_line(aes(group = rowname), colour = 'grey') +
     geom_point(colour = 'grey') +

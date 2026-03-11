@@ -1,7 +1,3 @@
-
-
-
-
 #' Restrict imputed values to specific conditions
 #'
 #' @description This function takes a `Qfeatures` object with unimputed data and

@@ -13,7 +13,7 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 
   check_q(obj)
 
-  samples_present <- longFormat(obj, rowvars=rowVars) %>%
+  samples_present <- qfeatures_long(obj, rowvars=rowVars) %>%
     data.frame() %>%
     filter(is.finite(value)) %>%
     group_by_at(.vars=c('assay', 'colname', rowVars)) %>%

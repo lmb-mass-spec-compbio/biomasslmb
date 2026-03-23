@@ -367,7 +367,7 @@ missing values, consider using `robust` instead.
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
+#> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -390,7 +390,7 @@ sessionInfo()
 #> 
 #> other attached packages:
 #>  [1] dplyr_1.2.0                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.2               biomasslmb_0.0.4           
+#>  [3] ggplot2_4.0.2               biomasslmb_0.0.5           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.1
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
@@ -401,23 +401,23 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1        farver_2.1.2            blob_1.3.0             
 #>  [4] Biostrings_2.78.0       S7_0.2.1                fastmap_1.2.0          
-#>  [7] lazyeval_0.2.2          XML_3.99-0.22           digest_0.6.39          
-#> [10] lifecycle_1.0.5         cluster_2.1.8.1         ProtGenerics_1.42.0    
-#> [13] survival_3.8-3          KEGGREST_1.50.0         RSQLite_2.4.6          
-#> [16] magrittr_2.0.4          genefilter_1.92.0       compiler_4.5.2         
-#> [19] rlang_1.1.7             sass_0.4.10             tools_4.5.2            
+#>  [7] lazyeval_0.2.2          XML_3.99-0.23           digest_0.6.39          
+#> [10] lifecycle_1.0.5         cluster_2.1.8.2         ProtGenerics_1.42.0    
+#> [13] survival_3.8-6          KEGGREST_1.50.0         RSQLite_2.4.6          
+#> [16] magrittr_2.0.4          genefilter_1.92.0       compiler_4.5.3         
+#> [19] rlang_1.1.7             sass_0.4.10             tools_4.5.3            
 #> [22] igraph_2.2.2            yaml_2.3.12             corrplot_0.95          
 #> [25] knitr_1.51              labeling_0.4.3          S4Arrays_1.10.1        
 #> [28] htmlwidgets_1.6.4       bit_4.6.0               DelayedArray_0.36.0    
 #> [31] plyr_1.8.9              RColorBrewer_1.1-3      abind_1.4-8            
 #> [34] withr_3.0.2             purrr_1.2.1             desc_1.4.3             
-#> [37] grid_4.5.2              xtable_1.8-8            scales_1.4.0           
+#> [37] grid_4.5.3              xtable_1.8-8            scales_1.4.0           
 #> [40] MASS_7.3-65             cli_3.6.5               rmarkdown_2.30         
 #> [43] crayon_1.5.3            ragg_1.5.1              otel_0.2.0             
 #> [46] robustbase_0.99-7       httr_1.4.8              reshape2_1.4.5         
 #> [49] BiocBaseUtils_1.12.0    DBI_1.3.0               cachem_1.1.0           
-#> [52] stringr_1.6.0           splines_4.5.2           AnnotationDbi_1.72.0   
-#> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.1            
+#> [52] stringr_1.6.0           splines_4.5.3           AnnotationDbi_1.72.0   
+#> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.2            
 #> [58] Matrix_1.7-4            jsonlite_2.0.0          naniar_1.1.0           
 #> [61] visdat_0.6.0            bit64_4.6.0-1           clue_0.3-67            
 #> [64] systemfonts_1.3.2       jquerylib_0.1.4         annotate_1.88.0        
@@ -425,10 +425,10 @@ sessionInfo()
 #> [70] uniprotREST_1.0.0       stringi_1.8.7           gtable_0.3.6           
 #> [73] tibble_3.3.1            pillar_1.11.1           htmltools_0.5.9        
 #> [76] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
-#> [79] lattice_0.22-7          backports_1.5.0         png_0.1-8              
+#> [79] lattice_0.22-9          backports_1.5.0         png_0.1-9              
 #> [82] memoise_2.0.1           bslib_0.10.0            Rcpp_1.1.1             
-#> [85] checkmate_2.3.4         SparseArray_1.10.9      xfun_0.56              
-#> [88] MsCoreUtils_1.22.1      fs_1.6.7                pkgconfig_2.0.3
+#> [85] checkmate_2.3.4         SparseArray_1.10.9      xfun_0.57              
+#> [88] MsCoreUtils_1.22.1      fs_2.0.0                pkgconfig_2.0.3
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

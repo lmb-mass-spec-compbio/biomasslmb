@@ -456,7 +456,7 @@ proteins. Whether this is appropriate will depend on your data in hand.
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
+#> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -479,7 +479,7 @@ sessionInfo()
 #> 
 #> other attached packages:
 #>  [1] dplyr_1.2.0                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.2               biomasslmb_0.0.4           
+#>  [3] ggplot2_4.0.2               biomasslmb_0.0.5           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.1
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
@@ -490,29 +490,29 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.1.7            
 #>  [4] magrittr_2.0.4          clue_0.3-67             otel_0.2.0             
-#>  [7] compiler_4.5.2          RSQLite_2.4.6           png_0.1-8              
-#> [10] systemfonts_1.3.2       vctrs_0.7.1             reshape2_1.4.5         
+#>  [7] compiler_4.5.3          RSQLite_2.4.6           png_0.1-9              
+#> [10] systemfonts_1.3.2       vctrs_0.7.2             reshape2_1.4.5         
 #> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.30         
 #> [22] visdat_0.6.0            ragg_1.5.1              UpSetR_1.4.0           
-#> [25] purrr_1.2.1             bit_4.6.0               xfun_0.56              
+#> [25] purrr_1.2.1             bit_4.6.0               xfun_0.57              
 #> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
-#> [31] DelayedArray_0.36.0     cluster_2.1.8.1         R6_2.6.1               
+#> [31] DelayedArray_0.36.0     cluster_2.1.8.2         R6_2.6.1               
 #> [34] bslib_0.10.0            stringi_1.8.7           RColorBrewer_1.1-3     
 #> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1             
 #> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
-#> [43] Matrix_1.7-4            splines_4.5.2           igraph_2.2.2           
+#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.2.2           
 #> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
-#> [49] lattice_0.22-7          tibble_3.3.1            plyr_1.8.9             
+#> [49] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
 #> [52] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.1               
 #> [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             
-#> [58] survival_3.8-3          Biostrings_2.78.0       pillar_1.11.1          
+#> [58] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
 #> [61] corrplot_0.95           checkmate_2.3.4         rprojroot_2.1.1        
 #> [64] scales_1.4.0            xtable_1.8-8            glue_1.8.0             
-#> [67] lazyeval_0.2.2          tools_4.5.2             robustbase_0.99-7      
-#> [70] annotate_1.88.0         fs_1.6.7                XML_3.99-0.22          
-#> [73] grid_4.5.2              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
+#> [67] lazyeval_0.2.2          tools_4.5.3             robustbase_0.99-7      
+#> [70] annotate_1.88.0         fs_2.0.0                XML_3.99-0.23          
+#> [73] grid_4.5.3              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
 #> [76] naniar_1.1.0            cli_3.6.5               textshaping_1.0.5      
 #> [79] S4Arrays_1.10.1         AnnotationFilter_1.34.0 gtable_0.3.6           
 #> [82] DEoptimR_1.1-4          sass_0.4.10             digest_0.6.39          

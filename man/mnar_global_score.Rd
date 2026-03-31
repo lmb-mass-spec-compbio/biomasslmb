@@ -2,55 +2,69 @@
 % Please edit documentation in R/mnar.R
 \name{mnar_global_score}
 \alias{mnar_global_score}
-\title{Compute a single dataset-level MNAR index using a linear mixed model}
+\title{Compute a single dataset-level MNAR index using logistic regression}
 \usage{
-mnar_global_score(mnar_result, i, group_cols, subset_features = TRUE)
+mnar_global_score(
+  obj,
+  i,
+  group_cols,
+  min_observed = 2,
+  min_missing = 1,
+  subset_features = TRUE,
+  log_transform = FALSE
+)
 }
 \arguments{
-\item{mnar_result}{A list returned by \code{mnar_score()}.}
+\item{obj}{A QFeatures object.}
 
-\item{i}{Integer or character. Must match the \code{i} used
-in the \code{mnar_score()} call.}
+\item{i}{Integer or character. Index or name of the assay to analyse.}
 
-\item{group_cols}{Character vector. Must match the \code{group_cols} used
-in the \code{mnar_score()} call.}
+\item{group_cols}{Character vector. One or more column names from colData(obj)
+that define experimental groups (e.g. c("condition", "treatment")).
+Multiple columns are combined into an interaction term.}
 
-\item{subset_features}{Logical. If TRUE (default), only features with a
-non-NA per-feature score are included in the mixed model. Features
-excluded by the min_observed / min_missing filters in \code{mnar_score()}
-are uninformative and would dilute the fixed effect estimate.}
+\item{min_observed}{Integer. Minimum number of observed (non-missing) values
+required for a feature to be included in the model. Default: 2.}
+
+\item{min_missing}{Integer. Minimum number of missing values required for a
+feature to be included in the model. Default: 1.}
+
+\item{subset_features}{Logical. If TRUE (default), features with fewer than
+\code{min_observed} observed values or fewer than \code{min_missing} missing
+values are excluded, as they are uninformative and would dilute the
+intensity and group effect estimates.}
+
+\item{log_transform}{Logical. If TRUE, apply log2 to the assay intensities
+before computing the per-feature mean intensity covariate. Set to TRUE if
+your data has not already been log-transformed. Default: FALSE.}
 }
 \value{
 A list with the following elements:
 \describe{
-\item{r2_intensity_only}{Numeric. Marginal R² of the intensity-only
-model. The proportion of missingness variance explained by feature
-abundance alone — the universal intensity-dependent baseline present
-in all proteomics data.}
-\item{r2_incremental}{Numeric. The increase in marginal R² when
+\item{tjur_intensity_only}{Numeric. Tjur's R² of the intensity-only
+model. The discrimination between missing and observed explained by
+feature abundance alone — the universal intensity-dependent baseline
+present in all proteomics data.}
+\item{tjur_incremental}{Numeric. The increase in Tjur's R² when
 condition is added on top of intensity. This is the primary quantity
 of interest: condition-specific missingness beyond what intensity
 already explains. Near zero means missingness is purely
 intensity-driven; positive values indicate condition-specific
 depletion of particular features.}
-\item{r2_condition_fraction}{Numeric. The fraction of total explainable
-missingness (r2_full_marginal) that is condition-specific rather than
-intensity-driven. Ranges from 0 (all intensity-driven) to 1 (all
+\item{tjur_condition_fraction}{Numeric. The fraction of total
+explainable missingness (tjur_full) that is condition-specific rather
+than intensity-driven. Ranges from 0 (all intensity-driven) to 1 (all
 condition-specific).}
-\item{r2_full_marginal}{Numeric. Marginal R² of the full model
-(intensity + condition). Equal to r2_intensity_only + r2_incremental.}
-\item{r2_full_conditional}{Numeric. Conditional R² of the full model.
-NA if the model is singular.}
+\item{tjur_full}{Numeric. Tjur's R² of the full model
+(intensity + condition). Equal to tjur_intensity_only +
+tjur_incremental.}
 \item{lrt_chi2}{Numeric. Chi-squared statistic from the likelihood
 ratio test of the full vs intensity-only model.}
 \item{lrt_df}{Integer. Degrees of freedom for the LRT.}
 \item{lrt_pvalue}{Numeric. P-value for the LRT — tests whether
 condition adds significant explanatory power over intensity alone.}
-\item{singular_intensity}{Logical. Whether the intensity-only model
-is singular.}
-\item{singular_full}{Logical. Whether the full model is singular.}
-\item{model_intensity}{The fitted intensity-only \code{lmerMod} object.}
-\item{model_full}{The fitted full \code{lmerMod} object.}
+\item{model_intensity}{The fitted intensity-only \code{glm} object.}
+\item{model_full}{The fitted full \code{glm} object.}
 \item{interpretation}{Character string. Human-readable summary of all
 key quantities.}
 \item{n_features}{Integer. Number of features included in the models.}
@@ -59,65 +73,64 @@ key quantities.}
 }
 \description{
 Summarises missingness structure across the whole dataset into a single
-value by fitting one mixed model across all features simultaneously:
+value by fitting two pooled logistic regressions across all
+(feature x sample) observations simultaneously:
 }
 \details{
-missing ~ group + (1 | feature)
+mod_intensity : missing ~ intensity
+mod_full      : missing ~ intensity + group
 
-Two mixed models are fitted and compared to decompose missingness into
-intensity-driven and condition-specific components:
-
-mod_intensity : missing ~ intensity + (1 | feature)
-mod_full      : missing ~ intensity + group + (1 | feature)
-
-The incremental marginal R² (full - intensity) is the primary quantity of
+The incremental Tjur's R² (full - intensity) is the primary quantity of
 interest: it measures condition-specific missingness beyond what feature
 abundance alone would predict.
 
+Tjur's R² (discrimination coefficient) is computed as:
+
+mean(P(missing | truly missing)) - mean(P(missing | truly observed))
+
+It ranges from 0 (no discrimination) to 1 (perfect discrimination) and is
+a natural measure of how well the model separates missing from observed.
+
+Pooled logistic regression (no random effects) is used in preference to a
+linear mixed model. A per-feature random intercept would absorb the very
+variance that intensity is meant to explain (low-abundance features have
+both low intensity and high baseline missingness), suppressing the intensity
+fixed effect. The pooled approach is analogous to the detection probability
+curve (DPC) fitted by the limpa package.
+
 The intensity covariate is the per-feature mean observed intensity, scaled
-to mean 0 and sd 1. This captures each feature's typical abundance level,
-which drives intensity-dependent missingness. It is a feature-level
-(not sample-level) covariate, so the same value is used for all samples
-of a given feature.
+to mean 0 and sd 1. If your data has not been log-transformed upstream,
+set \code{log_transform = TRUE} so that the sigmoidal intensity-missingness
+relationship is approximately linear on the log scale, consistent with how
+DPC curves are typically modelled.
 
 The decomposition is:
 
-Total explainable missingness = intensity effect + condition effect
-r2_full_marginal              = r2_intensity_only + r2_incremental
+tjur_full = tjur_intensity_only + tjur_incremental
 
-A large r2_intensity_only with small r2_incremental means missingness is
-driven by abundance uniformly across conditions — the typical baseline.
-A substantial r2_incremental means certain features are specifically
+A large tjur_intensity_only with small tjur_incremental means missingness
+is driven by abundance uniformly across conditions — the typical baseline.
+A substantial tjur_incremental means certain features are specifically
 depleted in particular conditions beyond what their overall abundance
 would predict.
-
-Marginal R² values use the Nakagawa & Schielzeth (2013) method via
-\code{performance::r2()}. Both models use ML (REML = FALSE) to allow
-likelihood ratio testing and for valid marginal R² computation.
-
-Requires packages: lme4, performance.
 }
 \examples{
 \dontrun{
-result <- mnar_score(obj, i = "peptides", group_cols = "condition")
-
-idx <- mnar_global_score(result,
-                         i          = "peptides",
-                         group_cols = "condition")
+idx <- mnar_global_score(obj, i = "peptides", group_cols = "condition")
 
 # Primary quantities
-cat("Intensity-only R²:       ", round(idx$r2_intensity_only,     3), "\n")
-cat("Incremental (condition): ", round(idx$r2_incremental,        3), "\n")
-cat("Condition fraction:      ", round(idx$r2_condition_fraction, 3), "\n")
-cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),         "\n")
+cat("Intensity-only Tjur R²:  ", round(idx$tjur_intensity_only,  3), "\n")
+cat("Incremental (condition): ", round(idx$tjur_incremental,     3), "\n")
+cat("Condition fraction:      ", round(idx$tjur_condition_fraction, 3), "\n")
+cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")
 cat(idx$interpretation, "\n")
 }
 
 }
 \references{
-Nakagawa S & Schielzeth H (2013). A general and simple method for
-obtaining R² from generalised linear mixed-effects models.
-Methods in Ecology and Evolution, 4(2), 133-142.
+Tjur T (2009). Coefficients of determination in logistic regression models —
+a new proposal: the coefficient of discrimination.
+The American Statistician, 63(4), 366-372.
 }
 \seealso{
 \code{\link{mnar_score}}

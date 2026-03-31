@@ -37,7 +37,8 @@ Default: TRUE.}
 \value{
 A list with the following elements:
 \describe{
-\item{scores}{Named numeric vector of per-feature MNAR scores (R²).}
+\item{scores}{Named numeric vector of per-feature MNAR scores
+(Tjur's R²).}
 \item{summary}{A data.frame with per-feature details: n_observed,
 n_missing, miss_frac, mnar_score, mnar_class.}
 \item{global}{A named numeric vector with dataset-level summaries:
@@ -48,19 +49,29 @@ into rowData if store_results = TRUE.}
 }
 }
 \description{
-For each protein/feature, fits a linear model of binary missingness
-against one or more experimental group variables from colData. The R²
-of this model is used as a per-feature MNAR score: high R² indicates
-that missingness is structured by experimental condition (MNAR-like),
-while R² near zero indicates missingness is unrelated to condition (MAR-like).
+For each feature, fits a logistic regression of binary missingness against
+one or more experimental group variables from colData. Tjur's R²
+(discrimination coefficient) of this model is used as a per-feature MNAR
+score: high values indicate that missingness is structured by experimental
+condition (MNAR-like), while values near zero indicate missingness is
+unrelated to condition (MAR-like).
 }
 \details{
-The MNAR score for each feature is the R² from a linear model:
+The MNAR score for each feature is Tjur's R² (discrimination coefficient)
+from a logistic regression:
 
 missing_indicator ~ group
 
 where missing_indicator is 1 if the value is missing and 0 if observed,
-and group is a factor combining the specified colData columns.
+and group is a factor combining the specified colData columns. Tjur's R² is
+computed as the difference in mean predicted probabilities between missing
+and observed values:
+
+Tjur's R² = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
+
+It ranges from 0 (no discrimination — MAR) to 1 (perfect discrimination —
+MNAR). Logistic regression is used in preference to a linear model as it
+is the correct model for a binary outcome.
 
 If multiple group_cols are provided they are combined into a single
 interaction factor (e.g. condition:timepoint), so each unique combination
@@ -68,17 +79,14 @@ of levels is treated as a distinct group.
 
 MNAR classification thresholds (mnar_class):
 \itemize{
-\item "MNAR"          : R² >= 0.5
-\item "mixed"         : R² in [0.2, 0.5)
-\item "MAR"           : R² <  0.2
+\item "MNAR"          : Tjur's R² >= 0.5
+\item "mixed"         : Tjur's R² in [0.2, 0.5)
+\item "MAR"           : Tjur's R² <  0.2
 \item "uninformative" : excluded due to min_observed / min_missing filters
 }
 
 These thresholds are heuristic — inspect the score distribution before
 applying fixed cutoffs to your dataset.
-
-To summarise the dataset to a single value, pass the output of this
-function to \code{mnar_global_score()}.
 }
 \examples{
 \dontrun{
@@ -93,16 +101,9 @@ result <- mnar_score(obj, i = 1,
 
 # Inspect per-feature results
 hist(result$scores, breaks = 40,
-     xlab = "MNAR score (R²)", main = "Missingness structure")
+     xlab = "MNAR score (Tjur's R²)", main = "Missingness structure")
 print(result$global)
 head(result$summary)
-
-# Summarise to a single dataset-level value via mixed model
-idx <- mnar_global_score(result,
-                         i          = "peptides",
-                         group_cols = "condition")
-cat("Global MNAR index:", round(idx$r2_incremental, 3), "\n")
-cat(idx$interpretation, "\n")
 }
 
 }

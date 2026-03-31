@@ -37,4 +37,7 @@ Imports:
     tidyr,
     uniprotREST,
     usethis
+Suggests:
+    lme4,
+    performance
 URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/

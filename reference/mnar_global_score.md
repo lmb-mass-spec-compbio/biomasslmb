@@ -161,6 +161,36 @@ typical baseline. A substantial tjur_incremental means certain features
 are specifically depleted in particular conditions beyond what their
 overall abundance would predict.
 
+**Important limitation — cancellation of opposing condition effects:**
+
+Because the group coefficients are estimated once across all features
+simultaneously, this function measures whether one condition tends to
+have more missingness than another *on average across all features*. It
+captures asymmetric, directional missingness (e.g. a condition that is
+globally depleted), but it cannot detect condition effects that cancel
+in aggregation.
+
+Consider a dataset where peptide A is missing entirely in condition X
+and peptide B is missing entirely in condition Y. Both features are
+strongly MNAR, but their opposing condition associations cancel in the
+pooled model: condition X sees elevated missingness from peptide A and
+suppressed missingness from peptide B, and vice versa for condition Y.
+The net group coefficients may be near zero, and `tjur_incremental` can
+be close to zero even when every missing value in the dataset is
+condition-structured.
+
+If your experiment may contain features with opposing
+condition-missingness patterns — which is common when comparing multiple
+biological conditions — use
+[`mnar_index`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_index.md)
+on the output of
+[`mnar_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
+instead. `mnar_index` aggregates absolute per-feature Tjur R² scores and
+is immune to this cancellation problem. `mnar_global_score` is best
+suited to experiments where you expect missingness to be directionally
+consistent across features (e.g. one condition is globally lower
+abundance).
+
 ## References
 
 Tjur T (2009). Coefficients of determination in logistic regression
@@ -169,7 +199,8 @@ Statistician, 63(4), 366-372.
 
 ## See also
 
-[`mnar_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
+[`mnar_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md),
+[`mnar_index`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_index.md)
 
 ## Examples
 
@@ -183,5 +214,9 @@ cat("Incremental (condition): ", round(idx$tjur_incremental,     3), "\n")
 cat("Condition fraction:      ", round(idx$tjur_condition_fraction, 3), "\n")
 cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")
 cat(idx$interpretation, "\n")
+
+# If cancellation is a concern, prefer mnar_index() instead
+mnar_res <- mnar_score(obj, i = "peptides", group_cols = "condition")
+idx2     <- mnar_index(mnar_res$summary)
 } # }
 ```

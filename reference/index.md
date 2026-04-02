@@ -110,6 +110,8 @@
   : Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures
 - [`mnar_global_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.md)
   : Compute a single dataset-level MNAR index using logistic regression
+- [`mnar_index()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_index.md)
+  : Summarise per-feature MNAR scores into a single dataset-level index
 - [`mnar_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
   : Quantify the degree of MNAR vs MAR missingness in a QFeatures assay
 - [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)

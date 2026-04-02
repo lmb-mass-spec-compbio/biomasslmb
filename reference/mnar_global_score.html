@@ -188,6 +188,27 @@ is driven by abundance uniformly across conditions — the typical baseline.
 A substantial tjur_incremental means certain features are specifically
 depleted in particular conditions beyond what their overall abundance
 would predict.</p>
+<p><strong>Important limitation — cancellation of opposing condition effects:</strong></p>
+<p>Because the group coefficients are estimated once across all features
+simultaneously, this function measures whether one condition tends to have
+more missingness than another <em>on average across all features</em>. It
+captures asymmetric, directional missingness (e.g. a condition that is
+globally depleted), but it cannot detect condition effects that cancel in
+aggregation.</p>
+<p>Consider a dataset where peptide A is missing entirely in condition X and
+peptide B is missing entirely in condition Y. Both features are strongly
+MNAR, but their opposing condition associations cancel in the pooled model:
+condition X sees elevated missingness from peptide A and suppressed
+missingness from peptide B, and vice versa for condition Y. The net group
+coefficients may be near zero, and <code>tjur_incremental</code> can be close to
+zero even when every missing value in the dataset is condition-structured.</p>
+<p>If your experiment may contain features with opposing condition-missingness
+patterns — which is common when comparing multiple biological conditions —
+use <code><a href="mnar_index.html">mnar_index</a></code> on the output of <code><a href="mnar_score.html">mnar_score</a></code>
+instead. <code>mnar_index</code> aggregates absolute per-feature Tjur R² scores
+and is immune to this cancellation problem. <code>mnar_global_score</code> is
+best suited to experiments where you expect missingness to be directionally
+consistent across features (e.g. one condition is globally lower abundance).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -197,7 +218,7 @@ The American Statistician, 63(4), 366-372.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="mnar_score.html">mnar_score</a></code></p></div>
+    <div class="dont-index"><p><code><a href="mnar_score.html">mnar_score</a></code>, <code><a href="mnar_index.html">mnar_index</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -211,6 +232,10 @@ The American Statistician, 63(4), 366-372.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Condition fraction:      "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">tjur_condition_fraction</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"LRT p-value:             "</span>, <span class="fu"><a href="https://rdrr.io/r/base/format.pval.html" class="external-link">format.pval</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">lrt_pvalue</span><span class="op">)</span>,        <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">interpretation</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># If cancellation is a concern, prefer mnar_index() instead</span></span></span>
+<span class="r-in"><span><span class="va">mnar_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="mnar_score.html">mnar_score</a></span><span class="op">(</span><span class="va">obj</span>, i <span class="op">=</span> <span class="st">"peptides"</span>, group_cols <span class="op">=</span> <span class="st">"condition"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">idx2</span>     <span class="op">&lt;-</span> <span class="fu"><a href="mnar_index.html">mnar_index</a></span><span class="op">(</span><span class="va">mnar_res</span><span class="op">$</span><span class="va">summary</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

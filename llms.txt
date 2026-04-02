@@ -94,6 +94,8 @@ also available via the ‘articles’ tab
 - [`filter_by_protein_fdr()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.md)
   : Filter to remove peptides from proteins failing the protein FDR
   threshold
+- [`filter_complete_groups()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_complete_groups.md)
+  : Filter a QFeatures assay to samples with complete group annotations
 - [`filter_features_diann()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.md)
   : Filter DIA-NN output
 - [`filter_features_mq_dda()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_mq_dda.md)
@@ -145,6 +147,10 @@ also available via the ‘articles’ tab
   too few lower feature level quantifications
 - [`maxlfq_wrapper()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/maxlfq_wrapper.md)
   : Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures
+- [`mnar_global_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.md)
+  : Compute a single dataset-level MNAR index using logistic regression
+- [`mnar_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
+  : Quantify the degree of MNAR vs MAR missingness in a QFeatures assay
 - [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
   : Parse the PTM probabilities from Proteome Discoverer and add new
   columns with PTM information

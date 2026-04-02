@@ -34,6 +34,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/extract_peptide_positions.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_TMT_PSMs.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_complete_groups.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_diann.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_mq_dda.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_features_pd_dda.html</loc></url>
@@ -58,6 +59,8 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_unique_all.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mask_protein_level_quant.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/maxlfq_wrapper.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_cor_samples.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_go.html</loc></url>

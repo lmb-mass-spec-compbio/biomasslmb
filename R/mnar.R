@@ -246,8 +246,9 @@ mnar_score <- function(obj,
 
   # ── Per-feature MNAR scoring ──────────────────────────────────────────────────
 
-  miss_mat     <- is.na(mat)
-  n_separation <- 0L
+  miss_mat <- is.na(mat)
+  sep_env  <- new.env(parent = emptyenv())
+  sep_env$count <- 0L
 
   scores <- vapply(seq_len(n_features), function(idx) {
     m      <- miss_mat[idx, ]
@@ -267,7 +268,7 @@ mnar_score <- function(obj,
       warning = function(w) {
         if (grepl("fitted probabilities numerically 0 or 1", conditionMessage(w),
                   fixed = TRUE)) {
-          n_separation <<- n_separation + 1L
+          sep_env$count <- sep_env$count + 1L
           invokeRestart("muffleWarning")
         }
       }
@@ -276,10 +277,10 @@ mnar_score <- function(obj,
     mean(preds[m]) - mean(preds[!m])  # Tjur's R²
   }, numeric(1))
 
-  if (n_separation > 0L) {
+  if (sep_env$count > 0L) {
     message(sprintf(
       "%d feature(s) showed near-complete separation (missingness almost fully determined by group). Tjur's R\u00b2 for these features will be close to 1 \u2014 this indicates strong MNAR structure and is expected.",
-      n_separation
+      sep_env$count
     ))
   }
 
@@ -442,6 +443,31 @@ mnar_score <- function(obj,
 #' depleted in particular conditions beyond what their overall abundance
 #' would predict.
 #'
+#' \strong{Important limitation — cancellation of opposing condition effects:}
+#'
+#' Because the group coefficients are estimated once across all features
+#' simultaneously, this function measures whether one condition tends to have
+#' more missingness than another \emph{on average across all features}. It
+#' captures asymmetric, directional missingness (e.g. a condition that is
+#' globally depleted), but it cannot detect condition effects that cancel in
+#' aggregation.
+#'
+#' Consider a dataset where peptide A is missing entirely in condition X and
+#' peptide B is missing entirely in condition Y. Both features are strongly
+#' MNAR, but their opposing condition associations cancel in the pooled model:
+#' condition X sees elevated missingness from peptide A and suppressed
+#' missingness from peptide B, and vice versa for condition Y. The net group
+#' coefficients may be near zero, and \code{tjur_incremental} can be close to
+#' zero even when every missing value in the dataset is condition-structured.
+#'
+#' If your experiment may contain features with opposing condition-missingness
+#' patterns — which is common when comparing multiple biological conditions —
+#' use \code{\link{mnar_index}} on the output of \code{\link{mnar_score}}
+#' instead. \code{mnar_index} aggregates absolute per-feature Tjur R² scores
+#' and is immune to this cancellation problem. \code{mnar_global_score} is
+#' best suited to experiments where you expect missingness to be directionally
+#' consistent across features (e.g. one condition is globally lower abundance).
+#'
 #' @references
 #' Tjur T (2009). Coefficients of determination in logistic regression models —
 #' a new proposal: the coefficient of discrimination.
@@ -457,9 +483,13 @@ mnar_score <- function(obj,
 #' cat("Condition fraction:      ", round(idx$tjur_condition_fraction, 3), "\n")
 #' cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")
 #' cat(idx$interpretation, "\n")
+#'
+#' # If cancellation is a concern, prefer mnar_index() instead
+#' mnar_res <- mnar_score(obj, i = "peptides", group_cols = "condition")
+#' idx2     <- mnar_index(mnar_res$summary)
 #' }
 #'
-#' @seealso \code{\link{mnar_score}}
+#' @seealso \code{\link{mnar_score}}, \code{\link{mnar_index}}
 #' @export
 mnar_global_score <- function(obj,
                               i,
@@ -561,12 +591,13 @@ mnar_global_score <- function(obj,
   # mod_full      : missing ~ intensity + group
   #   Adds condition. Incremental Tjur R² is the condition-specific signal.
 
+  sep_env       <- new.env(parent = emptyenv())
+  sep_env$count <- 0L
+
   .catch_separation <- function(w) {
     if (grepl("fitted probabilities numerically 0 or 1", conditionMessage(w),
               fixed = TRUE)) {
-      message("Note: some features show near-complete separation between missing ",
-              "and observed values. Fitted probabilities close to 0 or 1 are ",
-              "expected for strong MNAR features and do not affect Tjur's R\u00b2.")
+      sep_env$count <- sep_env$count + 1L
       invokeRestart("muffleWarning")
     }
   }
@@ -582,6 +613,13 @@ mnar_global_score <- function(obj,
     stats::glm(missing ~ intensity + group, data = long_df, family = stats::binomial()),
     warning = .catch_separation
   )
+
+  if (sep_env$count > 0L) {
+    message(sprintf(
+      "Near-complete separation detected in %d model fit(s) — some features have missingness almost fully determined by intensity or group. Fitted probabilities close to 0 or 1 are expected for strong MNAR features and do not affect Tjur's R\u00b2.",
+      sep_env$count
+    ))
+  }
 
   # ── Likelihood ratio test: does condition add explanatory power? ──────────────
 
@@ -651,5 +689,174 @@ mnar_global_score <- function(obj,
     interpretation          = interpretation,
     n_features              = n_features,
     n_obs_total             = nrow(long_df)
+  ))
+}
+
+
+#' Summarise per-feature MNAR scores into a single dataset-level index
+#'
+#' Aggregates the per-feature Tjur R² scores produced by \code{mnar_score()}
+#' into a single value in 0-1 representing how strongly experimental
+#' condition predicts missingness across the dataset.
+#'
+#' Unlike \code{mnar_global_score()}, which fits a pooled logistic regression
+#' and can miss condition effects that cancel across features (e.g. peptide A
+#' missing in condition X and peptide B missing in condition Y), this function
+#' aggregates absolute per-feature scores and correctly identifies such
+#' opposing patterns as condition-structured missingness.
+#'
+#' @param summary_df A data.frame as returned in the \code{$summary} element
+#'   of \code{mnar_score()}. Must contain columns: \code{mnar_score},
+#'   \code{miss_frac}, and \code{mnar_class}.
+#' @param weight_by Character. How to weight features when computing the
+#'   mean score. One of:
+#'   \describe{
+#'     \item{"miss_frac"}{(Default) Weight each feature by its missingness
+#'       fraction. Features with more missing values contribute more — they
+#'       represent a larger share of the imputation/modelling challenge.}
+#'     \item{"equal"}{Unweighted mean across all informative features.}
+#'   }
+#' @param coverage_penalty Logical. If TRUE (default), scales the weighted
+#'   mean score by the fraction of features that are informative (i.e. have
+#'   at least \code{min_observed} observed and \code{min_missing} missing
+#'   values as set in \code{mnar_score()}). When most features are fully
+#'   observed and therefore uninformative, the dataset-level index is
+#'   attenuated accordingly. If FALSE, the index reflects only the
+#'   informative features without penalising for their proportion.
+#'
+#' @return A list with the following elements:
+#'   \describe{
+#'     \item{index}{Numeric in 0-1. The dataset-level MNAR index. Values
+#'       near 0 indicate MAR-like missingness; values near 1 indicate
+#'       missingness that is strongly structured by experimental condition.}
+#'     \item{weighted_mean_score}{Numeric. The weighted mean Tjur R² across
+#'       informative features, before any coverage penalty is applied.}
+#'     \item{coverage}{Numeric. Fraction of features that were informative
+#'       (had scoreable missingness).}
+#'     \item{n_informative}{Integer. Number of informative features.}
+#'     \item{n_total}{Integer. Total number of features.}
+#'     \item{weight_by}{Character. The weighting scheme used.}
+#'     \item{coverage_penalty}{Logical. Whether the coverage penalty was
+#'       applied.}
+#'   }
+#'
+#' @details
+#' The index is computed as follows:
+#'
+#' 1. Uninformative features (NA score) are excluded.
+#' 2. The weighted mean Tjur R² is computed across informative features,
+#'    using \code{miss_frac} or equal weights depending on \code{weight_by}.
+#' 3. If \code{coverage_penalty = TRUE}, the result is multiplied by the
+#'    fraction of all features that were informative.
+#'
+#' The coverage penalty ensures that a dataset where only 5\% of features
+#' have any missingness does not score the same as one where 80\% of features
+#' are missing in a condition-structured way, even if the informative features
+#' have identical per-feature scores.
+#'
+#' When \code{coverage_penalty = FALSE} the index reflects the strength of
+#' condition-missingness association among features that \emph{do} have
+#' missing values, which may be preferable when missingness prevalence is not
+#' itself of interest.
+#'
+#' @examples
+#' \dontrun{
+#' result <- mnar_score(obj, i = "peptides", group_cols = "condition")
+#'
+#' # Default: miss_frac weighted, with coverage penalty
+#' idx <- mnar_index(result$summary)
+#' cat("MNAR index:", round(idx$index, 3), "\n")
+#'
+#' # Strength among missing features only, no coverage penalty
+#' idx2 <- mnar_index(result$summary,
+#'                    weight_by        = "equal",
+#'                    coverage_penalty = FALSE)
+#' }
+#'
+#' @seealso \code{\link{mnar_score}}, \code{\link{mnar_global_score}}
+#' @export
+mnar_index <- function(summary_df,
+                       weight_by        = c("miss_frac", "equal"),
+                       coverage_penalty = TRUE) {
+
+  # ── Input validation ──────────────────────────────────────────────────────────
+
+  weight_by <- match.arg(weight_by)
+
+  required_cols <- c("mnar_score", "miss_frac", "mnar_class")
+  missing_cols  <- setdiff(required_cols, colnames(summary_df))
+  if (length(missing_cols) > 0) {
+    stop(sprintf(
+      "summary_df is missing required column(s): %s\n",
+      "Pass the $summary element from mnar_score() directly.",
+      paste(missing_cols, collapse = ", ")
+    ))
+  }
+
+  if (!is.logical(coverage_penalty) || length(coverage_penalty) != 1) {
+    stop("`coverage_penalty` must be a single logical value (TRUE or FALSE).")
+  }
+
+  # ── Separate informative and uninformative features ───────────────────────────
+
+  n_total       <- nrow(summary_df)
+  informative   <- summary_df[summary_df$mnar_class != "uninformative", ]
+  n_informative <- nrow(informative)
+
+  if (n_informative == 0) {
+    warning(
+      "No informative features found (all features are classified as ",
+      "'uninformative'). Returning an index of NA."
+    )
+    return(list(
+      index              = NA_real_,
+      weighted_mean_score = NA_real_,
+      coverage           = 0,
+      n_informative      = 0L,
+      n_total            = n_total,
+      weight_by          = weight_by,
+      coverage_penalty   = coverage_penalty
+    ))
+  }
+
+  # ── Compute weighted mean Tjur R² across informative features ─────────────────
+
+  scores <- informative$mnar_score
+
+  weights <- if (weight_by == "miss_frac") {
+    w <- informative$miss_frac
+    if (sum(w) == 0) {
+      message("All informative features have miss_frac = 0; falling back to equal weights.")
+      rep(1, n_informative)
+    } else {
+      w
+    }
+  } else {
+    rep(1, n_informative)
+  }
+
+  weighted_mean <- stats::weighted.mean(scores, w = weights)
+
+  # ── Apply coverage penalty ────────────────────────────────────────────────────
+
+  coverage <- n_informative / n_total
+  index    <- if (coverage_penalty) weighted_mean * coverage else weighted_mean
+
+  # ── Messaging ─────────────────────────────────────────────────────────────────
+
+  message(sprintf(
+    "MNAR index: %.4f | Weighted mean score: %.4f | Coverage: %.1f%% (%d / %d features informative)%s",
+    index, weighted_mean, coverage * 100, n_informative, n_total,
+    if (coverage_penalty) " [coverage penalty applied]" else ""
+  ))
+
+  invisible(list(
+    index               = index,
+    weighted_mean_score = weighted_mean,
+    coverage            = coverage,
+    n_informative       = n_informative,
+    n_total             = n_total,
+    weight_by           = weight_by,
+    coverage_penalty    = coverage_penalty
   ))
 }

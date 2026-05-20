@@ -22,12 +22,12 @@
 #' in the function output being shorter than the input.
 #'
 #'
-#' @param obj `SummarisedExperiment` containing PSM-level output from Proteome Discoverer.
+#' @param obj `SummarizedExperiment` or `data.frame` containing PSM-level output from Proteome Discoverer.
 #' @param pep_inf `string`. Filepath for Peptide-level output
 #' @param verbose `boolean`. Default is FALSE; Don't output tallies of PSMs/proteins.
 #' @param master_protein_col `string`. Name of column containing master
 #' proteins. (Only used when verbose=TRUE)
-#' @return Returns a `SummarisedExperiment` with the standardised assignments
+#' @return Returns the input object type (`SummarizedExperiment` or `data.frame`) with standardised assignments
 #' @export
 update_peptide_assignments <- function(obj,
                                        pep_inf,
@@ -35,11 +35,17 @@ update_peptide_assignments <- function(obj,
                                        master_protein_col = "Master.Protein.Accessions"){
 
   # check arguments
-  check_se(obj)
+  is_df <- is.data.frame(obj)
+  if (is_df) {
+    if (is.null(obj)) stop("`obj` is NULL")
+  } else {
+    check_se(obj)
+  }
+
+  row_data <- if (is_df) obj else rowData(obj) %>% data.frame()
 
   if(verbose){
-    # print input summary
-    message_parse(rowData(obj), master_protein_col, "Input")
+    message_parse(row_data, master_protein_col, "Input")
   }
 
   pep_infdf <- read.delim(pep_inf)
@@ -71,15 +77,18 @@ update_peptide_assignments <- function(obj,
 
   }
 
-  assignment_cols_to_remove <- intersect(assignment_cols_present, colnames(rowData(obj)))
+  assignment_cols_to_remove <- intersect(assignment_cols_present, colnames(row_data))
 
-  updated_rowData <- rowData(obj) %>%
-    data.frame() %>%
+  updated_rowData <- row_data %>%
     tibble::rownames_to_column('row_value') %>%
     select(-all_of(assignment_cols_to_remove)) %>%
     merge(pep2assignments, by='Sequence') %>%
     tibble::column_to_rownames('row_value')
 
+  if (is_df) {
+    if(verbose) message_parse(updated_rowData, master_protein_col, "Updating peptide assignments")
+    return(updated_rowData)
+  }
 
   new_obj <- obj[rownames(obj) %in% rownames(updated_rowData),]
   rowData(new_obj) <- updated_rowData[rownames(new_obj),]

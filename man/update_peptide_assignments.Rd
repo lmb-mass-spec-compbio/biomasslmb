@@ -12,7 +12,7 @@ update_peptide_assignments(
 )
 }
 \arguments{
-\item{obj}{\code{SummarisedExperiment} containing PSM-level output from Proteome Discoverer.}
+\item{obj}{\code{SummarizedExperiment} or \code{data.frame} containing PSM-level output from Proteome Discoverer.}
 
 \item{pep_inf}{\code{string}. Filepath for Peptide-level output}
 
@@ -22,7 +22,7 @@ update_peptide_assignments(
 proteins. (Only used when verbose=TRUE)}
 }
 \value{
-Returns a \code{SummarisedExperiment} with the standardised assignments
+Returns the input object type (\code{SummarizedExperiment} or \code{data.frame}) with standardised assignments
 }
 \description{
 When multiple search engines are used in Proteome Discoverer for TMT proteomics

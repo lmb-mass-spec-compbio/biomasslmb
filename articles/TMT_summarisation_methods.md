@@ -20,6 +20,7 @@ To clarify which functionality is provided by which package, we will use
 package unless you want to maintain this clarity.
 
 ``` r
+
 library(QFeatures)
 library(biomasslmb)
 library(ggplot2)
@@ -46,6 +47,7 @@ protein-level quantification. Here, we will retain PSMs with at most
 5/10 missing values
 
 ``` r
+
 tmt_qf[['psms_filtered_forRobust']] <- QFeatures::filterNA(
   tmt_qf[['psms_filtered_rank']], 5/10)
 ```
@@ -53,6 +55,7 @@ tmt_qf[['psms_filtered_forRobust']] <- QFeatures::filterNA(
 Next, we remove PSMs for proteins with fewer than 2 PSMs.
 
 ``` r
+
 
 min_psms <- 2
  
@@ -64,6 +67,7 @@ For the `robustSummary` summarisation, we need our quantification values
 to be approximately Gaussian distributed. Hence, we log transform them.
 
 ``` r
+
 tmt_qf[['psms_filtered_forRobust']] <- QFeatures::logTransform(
   tmt_qf[['psms_filtered_forRobust']], base=2)
 ```
@@ -71,6 +75,7 @@ tmt_qf[['psms_filtered_forRobust']] <- QFeatures::logTransform(
 Now we can summarise with `robustSummary`
 
 ``` r
+
 # Aggregate to protein-level abundances (using QFeatures function)
 tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
                                        i = "psms_filtered_forRobust", 
@@ -94,6 +99,7 @@ features (PSMs). We can then give this mask to
 NA.
 
 ``` r
+
 # plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
 protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
   tmt_qf[['psms_filtered_forRobust']], min_features=2, plot=TRUE) 
@@ -102,6 +108,7 @@ protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
 ![](TMT_summarisation_methods_files/figure-html/unnamed-chunk-6-1.png)
 
 ``` r
+
 
 tmt_qf[['protein_robust']] <- biomasslmb::mask_protein_level_quant(
   tmt_qf[['protein_robust']], protein_retain_mask)
@@ -118,6 +125,7 @@ values is inappropriate for summarisation of PSMs to proteins with these
 methods.
 
 ``` r
+
 
 tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
                                        i = "psms_filtered_forSum", 
@@ -147,6 +155,7 @@ more proteins, since we can still use the PSMs with a low number of
 missing values.
 
 ``` r
+
 nrow(tmt_qf[['protein']])
 #> [1] 891
 nrow(tmt_qf[['protein_robust']])
@@ -162,6 +171,7 @@ analysis will be minimal. We can inspect missing values using the
 function, or just `is.na` on the quantitative data matrix.
 
 ``` r
+
 QFeatures::nNA(tmt_qf[['protein']])$nNAcols
 #> DataFrame with 10 rows and 3 columns
 #>             name       nNA       pNA
@@ -203,6 +213,7 @@ has no missing values with `robustSummary`, but is not summarised with
 `sum`.
 
 ``` r
+
 # Identify the proteins with no missing values present only following robustSummary
 protein_robust_proteins <- rownames(filterNA(tmt_qf[['protein_robust']]))
 protein_sum_proteins <- rownames(filterNA(tmt_qf[['protein']]))
@@ -223,6 +234,7 @@ with `robustSummary`.
 
 ``` r
 
+
 retain_psms <- rowData(
   tmt_qf[['psms_filtered_sn']])$Master.Protein.Accessions==no_missing_robustSummary_only
 
@@ -241,6 +253,7 @@ We can directly compare the protein-level abundance estimates to explore
 where these two summarisation methods differ in their estimates.
 
 ``` r
+
 
 # Single object with protein inference from both methods 
 compare_protein_abundances <- biomasslmb:::qfeatures_long(
@@ -262,6 +275,7 @@ abundances across the samples between summarisation methods so we can
 inspect the difference between them.
 
 ``` r
+
 proteins_of_interest <- compare_protein_abundances %>%
     select(method, value, rowname,colname) %>%
   pivot_wider(names_from = method, values_from = value) %>%
@@ -279,6 +293,7 @@ Below, we define a function to plot the PSM and protein level abundances
 for a single protein.
 
 ``` r
+
 plot_pep_and_protein <- function(protein_of_interest) {
   
   to_plot_compare <- compare_protein_abundances %>% 
@@ -318,6 +333,7 @@ the abundance profile between the tags for any one summarisation method
 or PSM.
 
 ``` r
+
 for(poi in proteins_of_interest) print(plot_pep_and_protein(poi))
 ```
 
@@ -366,6 +382,7 @@ quantified. For typical TMT datasets with very low missing values,
 missing values, consider using `robust` instead.
 
 ``` r
+
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
@@ -389,46 +406,46 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.2               biomasslmb_0.0.5           
+#>  [1] dplyr_1.2.1                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.3               biomasslmb_0.0.5           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.2
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
-#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [11] IRanges_2.44.0              S4Vectors_0.48.1           
 #> [13] BiocGenerics_0.56.0         generics_0.1.4             
 #> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1        farver_2.1.2            blob_1.3.0             
-#>  [4] Biostrings_2.78.0       S7_0.2.1                fastmap_1.2.0          
-#>  [7] lazyeval_0.2.2          XML_3.99-0.23           digest_0.6.39          
+#>  [4] Biostrings_2.78.0       S7_0.2.2                fastmap_1.2.0          
+#>  [7] lazyeval_0.2.3          XML_3.99-0.23           digest_0.6.39          
 #> [10] lifecycle_1.0.5         cluster_2.1.8.2         ProtGenerics_1.42.0    
-#> [13] survival_3.8-6          KEGGREST_1.50.0         RSQLite_2.4.6          
-#> [16] magrittr_2.0.4          genefilter_1.92.0       compiler_4.5.3         
-#> [19] rlang_1.1.7             sass_0.4.10             tools_4.5.3            
-#> [22] igraph_2.2.2            yaml_2.3.12             corrplot_0.95          
+#> [13] survival_3.8-6          KEGGREST_1.50.0         RSQLite_3.52.0         
+#> [16] magrittr_2.0.5          genefilter_1.92.0       compiler_4.5.3         
+#> [19] rlang_1.2.0             sass_0.4.10             tools_4.5.3            
+#> [22] igraph_2.3.1            yaml_2.3.12             corrplot_0.95          
 #> [25] knitr_1.51              labeling_0.4.3          S4Arrays_1.10.1        
 #> [28] htmlwidgets_1.6.4       bit_4.6.0               DelayedArray_0.36.1    
 #> [31] plyr_1.8.9              RColorBrewer_1.1-3      abind_1.4-8            
-#> [34] withr_3.0.2             purrr_1.2.1             desc_1.4.3             
+#> [34] withr_3.0.2             purrr_1.2.2             desc_1.4.3             
 #> [37] grid_4.5.3              xtable_1.8-8            scales_1.4.0           
-#> [40] MASS_7.3-65             cli_3.6.5               rmarkdown_2.31         
+#> [40] MASS_7.3-65             cli_3.6.6               rmarkdown_2.31         
 #> [43] crayon_1.5.3            ragg_1.5.2              otel_0.2.0             
 #> [46] robustbase_0.99-7       httr_1.4.8              reshape2_1.4.5         
 #> [49] BiocBaseUtils_1.12.0    DBI_1.3.0               cachem_1.1.0           
 #> [52] stringr_1.6.0           splines_4.5.3           AnnotationDbi_1.72.0   
-#> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.2            
+#> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.3            
 #> [58] Matrix_1.7-4            jsonlite_2.0.0          naniar_1.1.0           
-#> [61] visdat_0.6.0            bit64_4.6.0-1           clue_0.3-68            
+#> [61] visdat_0.6.0            bit64_4.8.2             clue_0.3-68            
 #> [64] systemfonts_1.3.2       jquerylib_0.1.4         annotate_1.88.0        
-#> [67] glue_1.8.0              DEoptimR_1.1-4          pkgdown_2.2.0          
+#> [67] glue_1.8.1              DEoptimR_1.1-4          pkgdown_2.2.0          
 #> [70] uniprotREST_1.0.0       stringi_1.8.7           gtable_0.3.6           
 #> [73] tibble_3.3.1            pillar_1.11.1           htmltools_0.5.9        
 #> [76] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
-#> [79] lattice_0.22-9          backports_1.5.0         png_0.1-9              
-#> [82] memoise_2.0.1           bslib_0.10.0            Rcpp_1.1.1             
+#> [79] lattice_0.22-9          backports_1.5.1         png_0.1-9              
+#> [82] memoise_2.0.1           bslib_0.11.0            Rcpp_1.1.1-1.1         
 #> [85] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.57              
-#> [88] MsCoreUtils_1.22.1      fs_2.0.1                pkgconfig_2.0.3
+#> [88] MsCoreUtils_1.22.1      fs_2.1.0                pkgconfig_2.0.3
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

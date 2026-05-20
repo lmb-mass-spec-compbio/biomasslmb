@@ -23,6 +23,7 @@ Returns `character` or `string` with duplicate full stops removed.
 ## Examples
 
 ``` r
+
 df <- data.frame(
   column...name = c(1, 2, 3)
 )

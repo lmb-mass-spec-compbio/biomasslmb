@@ -21,8 +21,8 @@ update_peptide_assignments(
 
 - obj:
 
-  `SummarisedExperiment` containing PSM-level output from Proteome
-  Discoverer.
+  `SummarizedExperiment` or `data.frame` containing PSM-level output
+  from Proteome Discoverer.
 
 - pep_inf:
 
@@ -39,7 +39,8 @@ update_peptide_assignments(
 
 ## Value
 
-Returns a `SummarisedExperiment` with the standardised assignments
+Returns the input object type (`SummarizedExperiment` or `data.frame`)
+with standardised assignments
 
 ## Details
 

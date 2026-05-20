@@ -21,6 +21,7 @@ To clarify which functionality is provided by which package, we will use
 package unless you want to maintain this clarity.
 
 ``` r
+
 library(QFeatures)
 library(biomasslmb)
 library(ggplot2)
@@ -35,6 +36,7 @@ the cRAP database. Below, we parse the contaminants fasta to extract the
 IDs for the proteins in both ‘cRAP’ format and Uniprot IDs.
 
 ``` r
+
 
 crap_fasta_inf <- system.file(
   "extdata", "cRAP_20190401.fasta.gz", 
@@ -71,6 +73,7 @@ is a truncated file containing the precursors (peptides) for just 500
 proteins.
 
 ``` r
+
 diann_report_inf <- system.file(
   "extdata", "diann_report.tsv", 
   package = "biomasslmb"
@@ -100,12 +103,14 @@ not capable of asserting that the protein had zero abundance in the
 sample.
 
 ``` r
+
 tmt_qf[['peptides_fdr_cntrl']] <- QFeatures::zeroIsNA(dia_qf[['peptides_fdr_cntrl']])
 ```
 
 Our column names include redundant information (‘HYE_DIA’)
 
 ``` r
+
 colnames(dia_qf)[["peptides_fdr_cntrl"]]
 #> [1] "HYE_DIA_A1" "HYE_DIA_A2" "HYE_DIA_A3" "HYE_DIA_B1" "HYE_DIA_B2"
 #> [6] "HYE_DIA_B3"
@@ -115,6 +120,7 @@ Below, we update the column names to remove the redundant information
 and then update the sample names in the QFeatures
 
 ``` r
+
 colnames(dia_qf)[["peptides_fdr_cntrl"]] <- gsub('HYE_DIA_', '', colnames(dia_qf)[["peptides_fdr_cntrl"]])
 dia_qf <- renamePrimary(dia_qf, colnames(dia_qf)[["peptides_fdr_cntrl"]])
 ```
@@ -122,6 +128,7 @@ dia_qf <- renamePrimary(dia_qf, colnames(dia_qf)[["peptides_fdr_cntrl"]])
 We need to populate the `colData`, which is currently empty
 
 ``` r
+
 data.frame(colData(dia_qf))
 #> data frame with 0 columns and 6 rows
 ```
@@ -130,6 +137,7 @@ Here, we can create our `colData` from the sample names. In other cases,
 you may need to read in a separate experimental design file.
 
 ``` r
+
 
 colData(dia_qf) <- data.frame(quantCols=rownames(colData(dia_qf))) %>%
   separate(quantCols, sep='', into=c(NA, 'condition', 'replicate'), remove = FALSE) %>%
@@ -148,6 +156,7 @@ data.frame(colData(dia_qf))
 Adding the `colData` to the peptide-level data too.
 
 ``` r
+
 colData(dia_qf[['peptides_fdr_cntrl']]) <- colData(dia_qf)
 ```
 
@@ -159,6 +168,7 @@ We first perform routine filtering to remove PSMs that:
 - Don’t have a unique master protein.
 
 ``` r
+
 dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(dia_qf[['peptides_fdr_cntrl']], contaminant_proteins=crap_accessions)
 #> Filtering data...
 #> 5009 features found from 454 master proteins => Input
@@ -184,6 +194,7 @@ interactome proteomics.
 
 ``` r
 
+
 # Plot the peptide-level quantification distributions per sample
 biomasslmb::plot_quant(dia_qf[['peptides_filtered']],
                        log2transform=TRUE,
@@ -199,6 +210,7 @@ biomasslmb::plot_quant(dia_qf[['peptides_filtered']],
 Below, we inspect the number of missing values per sample
 
 ``` r
+
 
 
 nNA(dia_qf[['peptides_filtered']])$nNAcols %>%
@@ -220,6 +232,7 @@ typical of DIA data at the precursor level.
 Next, we inspect the most common patterns for the missing values.
 
 ``` r
+
 plot_missing_upset(dia_qf, i='peptides_filtered')
 #> Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
 #> ℹ Please use tidy evaluation idioms with `aes()`.
@@ -267,6 +280,7 @@ estimating the protein-level quantification. Here, we will retain PSMs
 with at most 4/6 missing values
 
 ``` r
+
 dia_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
   dia_qf[['peptides_filtered']], 4/6)
 
@@ -284,6 +298,7 @@ stringent, it may be appropriate to skip it.
 
 ``` r
 
+
 min_psms <- 2
  
 dia_qf[['peptides_filtered_forRobust']] <- biomasslmb::filter_features_per_protein(
@@ -298,6 +313,7 @@ biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_forRobust']]),
 Now we can summarise with `robustSummary`
 
 ``` r
+
 
 # Aggregate to protein-level abundances (using QFeatures function)
 dia_qf <- QFeatures::aggregateFeatures(dia_qf, 
@@ -327,6 +343,7 @@ features (PSMs). We can then give this mask to
 NA.
 
 ``` r
+
 # plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
 protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
   dia_qf[['peptides_filtered_forRobust']], min_features=2, plot=TRUE, master_protein_col='Protein.Group') 
@@ -335,6 +352,7 @@ protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
 ![](LFQ_DIA_Peptide_QC_files/figure-html/unnamed-chunk-17-1.png)
 
 ``` r
+
 
 dia_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
   dia_qf[['protein']], protein_retain_mask)
@@ -350,6 +368,7 @@ for a single condition.
 
 ``` r
 
+
 nNA(dia_qf[['protein']])$nNAcols %>%
   data.frame() %>% knitr::kable(digits=2)
 ```
@@ -364,6 +383,7 @@ nNA(dia_qf[['protein']])$nNAcols %>%
 | B3   |  34 | 0.08 |
 
 ``` r
+
 
 plot_missing_upset(dia_qf, i='protein')
 ```
@@ -386,6 +406,7 @@ names are not sufficiently clear by themselves
 Below, we inspect the experiment names.
 
 ``` r
+
 names(dia_qf)
 #> [1] "peptides_fdr_cntrl"          "peptides_filtered"          
 #> [3] "peptides_filtered_missing"   "peptides_filtered_forRobust"
@@ -403,6 +424,7 @@ exlcuding `psms_filtered_norm`. We set the row variables to be
 (precursors).
 
 ``` r
+
 
 
 
@@ -435,6 +457,7 @@ be just the `Master.Protein.Accesions` column.
 
 ``` r
 
+
 rename_cols_prot <- c(rename_cols, 'Protein'='protein')
 
 rowvars_prot <- c('Protein.Group')
@@ -455,6 +478,7 @@ proteins have \>1 peptides removed only a few peptides, but more
 proteins. Whether this is appropriate will depend on your data in hand.
 
 ``` r
+
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
@@ -478,47 +502,47 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.2               biomasslmb_0.0.5           
+#>  [1] dplyr_1.2.1                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.3               biomasslmb_0.0.5           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.2
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
-#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [11] IRanges_2.44.0              S4Vectors_0.48.1           
 #> [13] BiocGenerics_0.56.0         generics_0.1.4             
 #> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.1.7            
-#>  [4] magrittr_2.0.4          clue_0.3-68             otel_0.2.0             
-#>  [7] compiler_4.5.3          RSQLite_2.4.6           png_0.1-9              
-#> [10] systemfonts_1.3.2       vctrs_0.7.2             reshape2_1.4.5         
+#>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.2.0            
+#>  [4] magrittr_2.0.5          clue_0.3-68             otel_0.2.0             
+#>  [7] compiler_4.5.3          RSQLite_3.52.0          png_0.1-9              
+#> [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
 #> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
-#> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
+#> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.31         
 #> [22] visdat_0.6.0            ragg_1.5.2              UpSetR_1.4.0           
-#> [25] purrr_1.2.1             bit_4.6.0               xfun_0.57              
+#> [25] purrr_1.2.2             bit_4.6.0               xfun_0.57              
 #> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
 #> [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               
-#> [34] bslib_0.10.0            stringi_1.8.7           RColorBrewer_1.1-3     
-#> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1             
+#> [34] bslib_0.11.0            stringi_1.8.7           RColorBrewer_1.1-3     
+#> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1-1.1         
 #> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
-#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.2.2           
+#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.1           
 #> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
 #> [49] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
-#> [52] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.1               
+#> [52] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.2               
 #> [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             
 #> [58] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
 #> [61] corrplot_0.95           checkmate_2.3.4         rprojroot_2.1.1        
-#> [64] scales_1.4.0            xtable_1.8-8            glue_1.8.0             
-#> [67] lazyeval_0.2.2          tools_4.5.3             robustbase_0.99-7      
-#> [70] annotate_1.88.0         fs_2.0.1                XML_3.99-0.23          
+#> [64] scales_1.4.0            xtable_1.8-8            glue_1.8.1             
+#> [67] lazyeval_0.2.3          tools_4.5.3             robustbase_0.99-7      
+#> [70] annotate_1.88.0         fs_2.1.0                XML_3.99-0.23          
 #> [73] grid_4.5.3              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
-#> [76] naniar_1.1.0            cli_3.6.5               textshaping_1.0.5      
+#> [76] naniar_1.1.0            cli_3.6.6               textshaping_1.0.5      
 #> [79] S4Arrays_1.10.1         AnnotationFilter_1.34.0 gtable_0.3.6           
 #> [82] DEoptimR_1.1-4          sass_0.4.10             digest_0.6.39          
 #> [85] SparseArray_1.10.10     htmlwidgets_1.6.4       farver_2.1.2           
 #> [88] memoise_2.0.1           htmltools_0.5.9         pkgdown_2.2.0          
-#> [91] lifecycle_1.0.5         httr_1.4.8              bit64_4.6.0-1          
+#> [91] lifecycle_1.0.5         httr_1.4.8              bit64_4.8.2            
 #> [94] MASS_7.3-65
 ```
 

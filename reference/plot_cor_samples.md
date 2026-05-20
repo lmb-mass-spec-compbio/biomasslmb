@@ -33,6 +33,7 @@ Returns a *ggplot* object.
 ## Examples
 
 ``` r
+
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
   quantCols = 36:45,
   name = "psms_raw")

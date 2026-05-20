@@ -21,6 +21,7 @@ Returns `character` or `string` with leading X removed.
 ## Examples
 
 ``` r
+
 df <- data.frame('X1'=c(1,2))
 
 remove_x(colnames(df))

@@ -36,6 +36,7 @@ To clarify which functionality is provided by which package, we will use
 package unless you want to maintain this clarity.
 
 ``` r
+
 library(QFeatures)
 library(biomasslmb)
 library(ggplot2)
@@ -50,6 +51,7 @@ the cRAP database. Below, we parse the contaminants fasta to extract the
 IDs for the proteins in both ‘cRAP’ format and Uniprot IDs.
 
 ``` r
+
 
 crap_fasta_inf <- system.file(
   "extdata", "cRAP_20190401.fasta.gz", 
@@ -85,6 +87,7 @@ object.
 
 ``` r
 
+
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
                                    quantCols = 36:45, 
                                    name = "psms_raw")
@@ -99,6 +102,7 @@ replaced with NA, since mass spectrometry is not capable of asserting
 that the protein had zero abundance in the sample.
 
 ``` r
+
 tmt_qf[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf[['psms_raw']])
 ```
 
@@ -110,6 +114,7 @@ We first perform routine filtering to remove PSMs that:
 - Don’t have a unique master protein.
 
 ``` r
+
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
 # - Remove PSMs where protein ID is empty or not unique
@@ -137,6 +142,7 @@ the same using
 
 ``` r
 
+
 # Plot the peptide-level quantification distributions per sample
 biomasslmb::plot_quant(tmt_qf[['psms_filtered']],
                        log2transform=TRUE,
@@ -157,6 +163,7 @@ afterwards, since the downstream steps including summarisation to
 protein require non-transformed values
 
 ``` r
+
 
 # Normalise the log2-transformed abundances using diff.median
 tmt_qf[['psms_filtered_norm']] <- QFeatures::normalize(
@@ -186,6 +193,7 @@ Note that where the signal:noise \> 10, there are far fewer missing
 values.
 
 ``` r
+
 # Add a more accurate average S:N ratio value.
 # The one calculated by PD doesn't treat NA values appropriately!
 tmt_qf[['psms_filtered_norm']] <- update_average_sn(tmt_qf[['psms_filtered_norm']])
@@ -205,6 +213,7 @@ appears to have a high proportion of missing values when signal:noise \>
 10.
 
 ``` r
+
 plot_missing_SN_per_sample(tmt_qf[['psms_filtered_norm']], bins = 20)
 ```
 
@@ -223,6 +232,7 @@ since these are also likely to contain less accurate quantification
 data.
 
 ``` r
+
 # Then filter PSMs to remove low S:N and/or high interference
 tmt_qf[['psms_filtered_sn']] <- filter_TMT_PSMs(tmt_qf[['psms_filtered_norm']],
                                                 inter_thresh=50, sn_thresh=10)
@@ -240,6 +250,7 @@ We will also remove peptides that are not rank 1 according to the search
 engine
 
 ``` r
+
 
 tmt_qf[['psms_filtered_rank']] <- tmt_qf[['psms_filtered_sn']]
 
@@ -277,6 +288,7 @@ across the samples less accurately estimated. Here, we will therefore
 remove all PSMs with missing values.
 
 ``` r
+
 tmt_qf[['psms_filtered_missing']] <- QFeatures::filterNA(
   tmt_qf[['psms_filtered_rank']], 0)
 ```
@@ -288,6 +300,7 @@ for example phosphoproteomics, or where this filter appears to be too
 stringent, it may be appropriate to skip it.
 
 ``` r
+
 min_psms <- 2
 tmt_qf[['psms_filtered_forSum']] <- biomasslmb::filter_features_per_protein(
   tmt_qf[['psms_filtered_missing']], min_features = min_psms)
@@ -296,6 +309,7 @@ tmt_qf[['psms_filtered_forSum']] <- biomasslmb::filter_features_per_protein(
 Finally, we perform the summarisation.
 
 ``` r
+
 # Aggregate to protein-level abundances (using QFeatures function)
 tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
                                        i = "psms_filtered_forSum", 
@@ -306,6 +320,7 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
 ```
 
 ``` r
+
 tmt_qf[['protein']] <- QFeatures::logTransform(
   tmt_qf[['protein']], base=2)
 ```
@@ -326,6 +341,7 @@ names are not sufficiently clear by themselves
 Below, we inspect the experiment names.
 
 ``` r
+
 names(tmt_qf)
 #> [1] "psms_raw"              "psms_filtered"         "psms_filtered_norm"   
 #> [4] "psms_filtered_sn"      "psms_filtered_rank"    "psms_filtered_missing"
@@ -345,6 +361,7 @@ excluding `psms_filtered_norm`. We set the row variables to be
 of unique PSMs.
 
 ``` r
+
 
 
 rename_cols <- c('All PSMs' = 'psms_raw' ,
@@ -378,6 +395,7 @@ vector to include the `protein` experiment and set the row variables to
 be just the `Master.Protein.Accesions` column.
 
 ``` r
+
 
 
 rename_cols_prot <- c(rename_cols, 'Protein'='protein')
@@ -421,6 +439,7 @@ outliers with very high abundance, while `robust` is more sensitive to
 outliers with very low abundance.
 
 ``` r
+
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
@@ -444,58 +463,57 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] dplyr_1.2.0                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.2               biomasslmb_0.0.5           
+#>  [1] dplyr_1.2.1                 tidyr_1.3.2                
+#>  [3] ggplot2_4.0.3               biomasslmb_0.0.5           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.2
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
-#> [11] IRanges_2.44.0              S4Vectors_0.48.0           
+#> [11] IRanges_2.44.0              S4Vectors_0.48.1           
 #> [13] BiocGenerics_0.56.0         generics_0.1.4             
 #> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] DBI_1.3.0               gridExtra_2.3           rlang_1.1.7            
-#>   [4] magrittr_2.0.4          clue_0.3-68             otel_0.2.0             
-#>   [7] compiler_4.5.3          RSQLite_2.4.6           png_0.1-9              
-#>  [10] systemfonts_1.3.2       vctrs_0.7.2             reshape2_1.4.5         
+#>   [1] DBI_1.3.0               gridExtra_2.3           rlang_1.2.0            
+#>   [4] magrittr_2.0.5          clue_0.3-68             otel_0.2.0             
+#>   [7] compiler_4.5.3          RSQLite_3.52.0          png_0.1-9              
+#>  [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
 #>  [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
-#>  [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
+#>  [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #>  [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.31         
-#>  [22] visdat_0.6.0            ragg_1.5.2              purrr_1.2.1            
+#>  [22] visdat_0.6.0            ragg_1.5.2              purrr_1.2.2            
 #>  [25] bit_4.6.0               xfun_0.57               cachem_1.1.0           
 #>  [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.1    
-#>  [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.10.0           
+#>  [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.11.0           
 #>  [34] stringi_1.8.7           RColorBrewer_1.1-3      genefilter_1.92.0      
-#>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.1             
+#>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.1-1.1         
 #>  [40] knitr_1.51              usethis_3.2.1           base64enc_0.1-6        
 #>  [43] BiocBaseUtils_1.12.0    nnet_7.3-20             Matrix_1.7-4           
-#>  [46] splines_4.5.3           igraph_2.2.2            tidyselect_1.2.1       
+#>  [46] splines_4.5.3           igraph_2.3.1            tidyselect_1.2.1       
 #>  [49] rstudioapi_0.18.0       abind_1.4-8             yaml_2.3.12            
 #>  [52] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
-#>  [55] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.1               
+#>  [55] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.2               
 #>  [58] evaluate_1.0.5          uniprotREST_1.0.0       foreign_0.8-91         
 #>  [61] desc_1.4.3              survival_3.8-6          Biostrings_2.78.0      
 #>  [64] pillar_1.11.1           corrplot_0.95           checkmate_2.3.4        
 #>  [67] rprojroot_2.1.1         scales_1.4.0            xtable_1.8-8           
-#>  [70] glue_1.8.0              Hmisc_5.2-5             lazyeval_0.2.2         
-#>  [73] tools_4.5.3             data.table_1.18.2.1     robustbase_0.99-7      
-#>  [76] annotate_1.88.0         fs_2.0.1                XML_3.99-0.23          
+#>  [70] glue_1.8.1              Hmisc_5.2-5             lazyeval_0.2.3         
+#>  [73] tools_4.5.3             data.table_1.18.4       robustbase_0.99-7      
+#>  [76] annotate_1.88.0         fs_2.1.0                XML_3.99-0.23          
 #>  [79] grid_4.5.3              cutr_0.0.0.9000         colorspace_2.1-2       
-#>  [82] MsCoreUtils_1.22.1      AnnotationDbi_1.72.0    htmlTable_2.4.3        
-#>  [85] Formula_1.2-5           naniar_1.1.0            cli_3.6.5              
+#>  [82] MsCoreUtils_1.22.1      AnnotationDbi_1.72.0    htmlTable_2.5.0        
+#>  [85] Formula_1.2-5           naniar_1.1.0            cli_3.6.6              
 #>  [88] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
 #>  [91] gtable_0.3.6            DEoptimR_1.1-4          sass_0.4.10            
 #>  [94] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
 #>  [97] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
 #> [100] pkgdown_2.2.0           lifecycle_1.0.5         httr_1.4.8             
-#> [103] bit64_4.6.0-1           MASS_7.3-65
+#> [103] bit64_4.8.2             MASS_7.3-65
 ```
 
-McAlister, Graeme C., David P. Nusinow, Mark P. Jedrychowski, Martin
-Wühr, Edward L. Huttlin, Brian K. Erickson, Ramin Rad, Wilhelm Haas, and
-Steven P. Gygi. 2014. “MultiNotch MS3 Enables Accurate, Sensitive, and
-Multiplexed Detection of Differential Expression Across Cancer Cell Line
-Proteomes.” *Analytical Chemistry* 86 (14): 7150–58.
+McAlister, Graeme C., David P. Nusinow, Mark P. Jedrychowski, et al.
+2014. “MultiNotch MS3 Enables Accurate, Sensitive, and Multiplexed
+Detection of Differential Expression Across Cancer Cell Line Proteomes.”
+*Analytical Chemistry* 86 (14): 7150–58.
 <https://doi.org/10.1021/ac502040v>.
 
 O’Connell, Jeremy D., Joao A. Paulo, Jonathon J. O’Brien, and Steven P.

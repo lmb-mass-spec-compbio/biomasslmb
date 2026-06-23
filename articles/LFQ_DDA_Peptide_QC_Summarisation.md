@@ -297,21 +297,21 @@ plot_missing_upset(lfq_qf, i='peptides_norm')
 #> ℹ Please use tidy evaluation idioms with `aes()`.
 #> ℹ See also `vignette("ggplot2-in-packages")` for more information.
 #> ℹ The deprecated feature was likely used in the UpSetR package.
-#>   Please report the issue to the authors.
+#>   Please report the issue at <https://github.com/hms-dbmi/UpSetR/issues>.
 #> This warning is displayed once per session.
 #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
 #> generated.
 #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
 #> ℹ Please use `linewidth` instead.
 #> ℹ The deprecated feature was likely used in the UpSetR package.
-#>   Please report the issue to the authors.
+#>   Please report the issue at <https://github.com/hms-dbmi/UpSetR/issues>.
 #> This warning is displayed once per session.
 #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
 #> generated.
 #> Warning: The `size` argument of `element_line()` is deprecated as of ggplot2 3.4.0.
 #> ℹ Please use the `linewidth` argument instead.
 #> ℹ The deprecated feature was likely used in the UpSetR package.
-#>   Please report the issue to the authors.
+#>   Please report the issue at <https://github.com/hms-dbmi/UpSetR/issues>.
 #> This warning is displayed once per session.
 #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
 #> generated.
@@ -540,22 +540,22 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.2.0            
 #>  [4] magrittr_2.0.5          clue_0.3-68             otel_0.2.0             
-#>  [7] compiler_4.5.3          RSQLite_3.52.0          png_0.1-9              
+#>  [7] compiler_4.5.3          RSQLite_3.53.2          png_0.1-9              
 #> [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
 #> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.31         
-#> [22] visdat_0.6.0            ragg_1.5.2              UpSetR_1.4.0           
-#> [25] purrr_1.2.2             bit_4.6.0               xfun_0.57              
+#> [22] visdat_0.6.0            ragg_1.5.2              UpSetR_1.4.1           
+#> [25] purrr_1.2.2             bit_4.6.0               xfun_0.59              
 #> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
 #> [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               
 #> [34] bslib_0.11.0            stringi_1.8.7           RColorBrewer_1.1-3     
 #> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1-1.1         
 #> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
-#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.1           
+#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.2           
 #> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
 #> [49] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
-#> [52] withr_3.0.2             KEGGREST_1.50.0         S7_0.2.2               
+#> [52] withr_3.0.3             KEGGREST_1.50.0         S7_0.2.2               
 #> [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             
 #> [58] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
 #> [61] corrplot_0.95           checkmate_2.3.4         rprojroot_2.1.1        
@@ -565,7 +565,7 @@ sessionInfo()
 #> [73] grid_4.5.3              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
 #> [76] naniar_1.1.0            cli_3.6.6               textshaping_1.0.5      
 #> [79] S4Arrays_1.10.1         AnnotationFilter_1.34.0 gtable_0.3.6           
-#> [82] DEoptimR_1.1-4          sass_0.4.10             digest_0.6.39          
+#> [82] DEoptimR_1.2-0          sass_0.4.10             digest_0.6.39          
 #> [85] SparseArray_1.10.10     htmlwidgets_1.6.4       farver_2.1.2           
 #> [88] memoise_2.0.1           htmltools_0.5.9         pkgdown_2.2.0          
 #> [91] lifecycle_1.0.5         httr_1.4.8              bit64_4.8.2            

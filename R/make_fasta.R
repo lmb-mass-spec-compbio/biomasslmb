@@ -89,7 +89,7 @@ check_uniprot_job <- function(jobid) {
   polling_interval <- 5 # seconds
   n_tries <- 20
 
-  for (i in n_tries) {
+  for (i in seq_len(n_tries)) {
     status_url <- paste("https://rest.uniprot.org/idmapping/status/", jobid, sep = "")
     status <- httr::content(
       httr::GET(url = status_url, httr::accept_json()),

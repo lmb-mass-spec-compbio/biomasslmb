@@ -47,17 +47,17 @@ A list with the following elements:
 ## Details
 
 This is a utility used internally by
-[`mnar_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
+[`condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_score.md)
 and
-[`mnar_global_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.md),
+[`global_condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md),
 but is exported for use in any context where you need a clean sample set
 with complete group annotations — for example, before building a design
 matrix or running differential abundance testing.
 
 ## See also
 
-[`mnar_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md),
-[`mnar_global_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.md)
+[`condition_miss_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_score.md),
+[`global_condition_miss_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)
 
 ## Examples
 

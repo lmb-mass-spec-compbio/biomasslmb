@@ -40,6 +40,12 @@
   medians from a reference dataset
 - [`check_uniprot_release()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/check_uniprot_release.md)
   : Check the current UniProt release
+- [`condition_miss_index()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_index.md)
+  : Summarise per-feature condition missingness scores into a
+  dataset-level index
+- [`condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_score.md)
+  : Score features by how well missingness can be predicted by
+  experimental condition
 - [`create_long_form_imputed_data()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/create_long_form_imputed_data.md)
   : Create long format data with column defining if quantification value
   is imputed
@@ -99,6 +105,9 @@
   experiment in a Qfeatures object
 - [`get_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_sequence.md)
   : Get the amino acid sequence around a PTM
+- [`global_condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)
+  : Compute a dataset-level score of condition-predictable missingness
+  using logistic regression
 - [`make_fasta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_fasta.md)
   : Make a FASTA using UniProt accessions
 - [`make_unique_all()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_unique_all.md)
@@ -109,11 +118,11 @@
 - [`maxlfq_wrapper()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/maxlfq_wrapper.md)
   : Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures
 - [`mnar_global_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_global_score.md)
-  : Compute a single dataset-level MNAR index using logistic regression
+  : Deprecated: use global_condition_miss_score()
 - [`mnar_index()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_index.md)
-  : Summarise per-feature MNAR scores into a single dataset-level index
+  : Deprecated: use condition_miss_index()
 - [`mnar_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.md)
-  : Quantify the degree of MNAR vs MAR missingness in a QFeatures assay
+  : Deprecated: use condition_miss_score()
 - [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
   : Parse the PTM probabilities from Proteome Discoverer and add new
   columns with PTM information

@@ -538,9 +538,9 @@ sessionInfo()
 #> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] DBI_1.3.0               gridExtra_2.3           rlang_1.2.0            
+#>  [1] DBI_1.3.0               gridExtra_2.3.1         rlang_1.2.0            
 #>  [4] magrittr_2.0.5          clue_0.3-68             otel_0.2.0             
-#>  [7] compiler_4.5.3          RSQLite_3.53.2          png_0.1-9              
+#>  [7] compiler_4.5.3          RSQLite_3.53.3          png_0.1-9              
 #> [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
 #> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
@@ -552,7 +552,7 @@ sessionInfo()
 #> [34] bslib_0.11.0            stringi_1.8.7           RColorBrewer_1.1-3     
 #> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.1-1.1         
 #> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
-#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.2           
+#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.3           
 #> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
 #> [49] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
 #> [52] withr_3.0.3             KEGGREST_1.50.0         S7_0.2.2               

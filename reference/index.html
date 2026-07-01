@@ -154,6 +154,20 @@
 
         <dt>
 
+          <code><a href="condition_miss_index.html">condition_miss_index()</a></code>
+
+        </dt>
+        <dd>Summarise per-feature condition missingness scores into a dataset-level index</dd>
+
+        <dt>
+
+          <code><a href="condition_miss_score.html">condition_miss_score()</a></code>
+
+        </dt>
+        <dd>Score features by how well missingness can be predicted by experimental condition</dd>
+
+        <dt>
+
           <code><a href="create_long_form_imputed_data.html">create_long_form_imputed_data()</a></code>
 
         </dt>
@@ -329,6 +343,13 @@
 
         <dt>
 
+          <code><a href="global_condition_miss_score.html">global_condition_miss_score()</a></code>
+
+        </dt>
+        <dd>Compute a dataset-level score of condition-predictable missingness using logistic regression</dd>
+
+        <dt>
+
           <code><a href="make_fasta.html">make_fasta()</a></code>
 
         </dt>
@@ -360,21 +381,21 @@
           <code><a href="mnar_global_score.html">mnar_global_score()</a></code>
 
         </dt>
-        <dd>Compute a single dataset-level MNAR index using logistic regression</dd>
+        <dd>Deprecated: use global_condition_miss_score()</dd>
 
         <dt>
 
           <code><a href="mnar_index.html">mnar_index()</a></code>
 
         </dt>
-        <dd>Summarise per-feature MNAR scores into a single dataset-level index</dd>
+        <dd>Deprecated: use condition_miss_index()</dd>
 
         <dt>
 
           <code><a href="mnar_score.html">mnar_score()</a></code>
 
         </dt>
-        <dd>Quantify the degree of MNAR vs MAR missingness in a QFeatures assay</dd>
+        <dd>Deprecated: use condition_miss_score()</dd>
 
         <dt>
 

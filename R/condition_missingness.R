@@ -4,10 +4,11 @@
 #' then removes any samples that have NA in one or more of the given colData
 #' columns. Both the assay matrix and colData are filtered consistently.
 #'
-#' This is a utility used internally by \code{mnar_score()} and
-#' \code{mnar_global_score()}, but is exported for use in any context where
-#' you need a clean sample set with complete group annotations — for example,
-#' before building a design matrix or running differential abundance testing.
+#' This is a utility used internally by \code{condition_miss_score()} and
+#' \code{global_condition_miss_score()}, but is exported for use in any context
+#' where you need a clean sample set with complete group annotations — for
+#' example, before building a design matrix or running differential abundance
+#' testing.
 #'
 #' @param obj A QFeatures object.
 #' @param i Integer or character. Index or name of the assay to filter.
@@ -35,7 +36,7 @@
 #' filtered$removed
 #' }
 #'
-#' @seealso \code{\link{mnar_score}}, \code{\link{mnar_global_score}}
+#' @seealso \code{\link{condition_miss_score}}, \code{\link{global_condition_miss_score}}
 #' @importFrom SummarizedExperiment assay colData rowData
 #' @export
 filter_complete_groups <- function(obj, i, group_cols) {
@@ -93,14 +94,21 @@ filter_complete_groups <- function(obj, i, group_cols) {
 }
 
 
-#' Quantify the degree of MNAR vs MAR missingness in a QFeatures assay
+#' Score features by how well missingness can be predicted by experimental condition
 #'
 #' For each feature, fits a logistic regression of binary missingness against
 #' one or more experimental group variables from colData. Tjur's R²
-#' (discrimination coefficient) of this model is used as a per-feature MNAR
-#' score: high values indicate that missingness is structured by experimental
-#' condition (MNAR-like), while values near zero indicate missingness is
-#' unrelated to condition (MAR-like).
+#' (discrimination coefficient) of this model is used as a per-feature score:
+#' high values indicate that missingness is structured by experimental condition
+#' (condition-structured), while values near zero indicate missingness is
+#' unrelated to condition (condition-independent).
+#'
+#' Note: in proteomics, all missingness is partly intensity-dependent — low-
+#' abundance features are more likely to be missing regardless of condition.
+#' This function measures the additional, condition-specific component: whether
+#' missingness is systematically higher in some conditions than others for a
+#' given feature. A high score does not imply the missingness is purely
+#' non-random; a low score does not imply it is purely random.
 #'
 #' @param obj A QFeatures object.
 #' @param i Integer or character. Index or name of the assay to analyse.
@@ -113,25 +121,25 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #' @param min_missing Integer. Minimum number of missing values required for a
 #'   feature to be included. Features with no missingness are uninformative and
 #'   returned as NA. Default: 1.
-#' @param store_results Logical. If TRUE, MNAR scores and classifications are
-#'   stored in rowData of the assay within the returned QFeatures object.
-#'   Default: TRUE.
+#' @param store_results Logical. If TRUE, scores and classifications are stored
+#'   in rowData of the assay within the returned QFeatures object. Default: TRUE.
 #'
 #' @return A list with the following elements:
 #'   \describe{
-#'     \item{scores}{Named numeric vector of per-feature MNAR scores
-#'       (Tjur's R²).}
+#'     \item{scores}{Named numeric vector of per-feature condition missingness
+#'       scores (Tjur's R²).}
 #'     \item{summary}{A data.frame with per-feature details: n_observed,
-#'       n_missing, miss_frac, mnar_score, mnar_class.}
+#'       n_missing, miss_frac, condition_miss_score, condition_miss_class.}
 #'     \item{global}{A named numeric vector with dataset-level summaries:
-#'       mean_mnar_score, median_mnar_score, prop_mnar, prop_mar,
+#'       mean_condition_miss_score, median_condition_miss_score,
+#'       prop_condition_structured, prop_condition_independent,
 #'       prop_uninformative.}
 #'     \item{obj}{The input QFeatures object, optionally with results written
 #'       into rowData if store_results = TRUE.}
 #'   }
 #'
 #' @details
-#' The MNAR score for each feature is Tjur's R² (discrimination coefficient)
+#' The score for each feature is Tjur's R² (discrimination coefficient)
 #' from a logistic regression:
 #'
 #'   missing_indicator ~ group
@@ -143,19 +151,19 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #'
 #'   Tjur's R² = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
 #'
-#' It ranges from 0 (no discrimination — MAR) to 1 (perfect discrimination —
-#' MNAR). Logistic regression is used in preference to a linear model as it
-#' is the correct model for a binary outcome.
+#' It ranges from 0 (no discrimination — condition-independent) to 1 (perfect
+#' discrimination — condition-structured). Logistic regression is used in
+#' preference to a linear model as it is the correct model for a binary outcome.
 #'
 #' If multiple group_cols are provided they are combined into a single
 #' interaction factor (e.g. condition:timepoint), so each unique combination
 #' of levels is treated as a distinct group.
 #'
-#' MNAR classification thresholds (mnar_class):
-#'   - "MNAR"          : Tjur's R² >= 0.5
-#'   - "mixed"         : Tjur's R² in [0.2, 0.5)
-#'   - "MAR"           : Tjur's R² <  0.2
-#'   - "uninformative" : excluded due to min_observed / min_missing filters
+#' Classification thresholds (condition_miss_class):
+#'   - "condition_structured" : Tjur's R² >= 0.5
+#'   - "mixed"                : Tjur's R² in [0.2, 0.5)
+#'   - "condition_independent": Tjur's R² <  0.2
+#'   - "uninformative"        : excluded due to min_observed / min_missing filters
 #'
 #' These thresholds are heuristic — inspect the score distribution before
 #' applying fixed cutoffs to your dataset.
@@ -165,27 +173,28 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #' library(QFeatures)
 #'
 #' # Single grouping variable
-#' result <- mnar_score(obj, i = "peptides", group_cols = "condition")
+#' result <- condition_miss_score(obj, i = "peptides", group_cols = "condition")
 #'
 #' # Multiple variables combined as an interaction
-#' result <- mnar_score(obj, i = 1,
-#'                      group_cols = c("condition", "timepoint"))
+#' result <- condition_miss_score(obj, i = 1,
+#'                                group_cols = c("condition", "timepoint"))
 #'
 #' # Inspect per-feature results
 #' hist(result$scores, breaks = 40,
-#'      xlab = "MNAR score (Tjur's R²)", main = "Missingness structure")
+#'      xlab = "Condition missingness score (Tjur's R²)",
+#'      main = "Missingness structure by condition")
 #' print(result$global)
 #' head(result$summary)
 #' }
 #'
-#' @seealso \code{\link{mnar_global_score}}
+#' @seealso \code{\link{global_condition_miss_score}}
 #' @export
-mnar_score <- function(obj,
-                       i,
-                       group_cols,
-                       min_observed  = 2,
-                       min_missing   = 1,
-                       store_results = TRUE) {
+condition_miss_score <- function(obj,
+                                 i,
+                                 group_cols,
+                                 min_observed  = 2,
+                                 min_missing   = 1,
+                                 store_results = TRUE) {
 
   # ── Input validation ──────────────────────────────────────────────────────────
 
@@ -244,7 +253,7 @@ mnar_score <- function(obj,
          "Check that your group_cols have sufficient variation.")
   }
 
-  # ── Per-feature MNAR scoring ──────────────────────────────────────────────────
+  # ── Per-feature scoring ───────────────────────────────────────────────────────
 
   miss_mat <- is.na(mat)
   sep_env  <- new.env(parent = emptyenv())
@@ -279,7 +288,7 @@ mnar_score <- function(obj,
 
   if (sep_env$count > 0L) {
     message(sprintf(
-      "%d feature(s) showed near-complete separation (missingness almost fully determined by group). Tjur's R\u00b2 for these features will be close to 1 \u2014 this indicates strong MNAR structure and is expected.",
+      "%d feature(s) showed near-complete separation (missingness almost fully determined by group). Tjur's R² for these features will be close to 1 — this indicates strongly condition-structured missingness and is expected.",
       sep_env$count
     ))
   }
@@ -291,53 +300,54 @@ mnar_score <- function(obj,
   n_obs_vec  <- rowSums(!miss_mat)
   n_miss_vec <- rowSums(miss_mat)
 
-  mnar_class <- dplyr::case_when(
+  condition_miss_class <- dplyr::case_when(
     is.na(scores)  ~ "uninformative",
-    scores >= 0.5  ~ "MNAR",
+    scores >= 0.5  ~ "condition_structured",
     scores >= 0.2  ~ "mixed",
-    TRUE           ~ "MAR"
+    TRUE           ~ "condition_independent"
   )
 
   summary_df <- data.frame(
-    feature    = rownames(mat),
-    n_observed = n_obs_vec,
-    n_missing  = n_miss_vec,
-    miss_frac  = round(n_miss_vec / n_samples, 3),
-    mnar_score = round(scores, 4),
-    mnar_class = mnar_class,
-    row.names  = rownames(mat),
-    stringsAsFactors = FALSE
+    feature              = rownames(mat),
+    n_observed           = n_obs_vec,
+    n_missing            = n_miss_vec,
+    miss_frac            = round(n_miss_vec / n_samples, 3),
+    condition_miss_score = round(scores, 4),
+    condition_miss_class = condition_miss_class,
+    row.names            = rownames(mat),
+    stringsAsFactors     = FALSE
   )
 
   # ── Dataset-level summary ─────────────────────────────────────────────────────
 
   n_total  <- nrow(summary_df)
-  n_inform <- sum(mnar_class != "uninformative")
+  n_inform <- sum(condition_miss_class != "uninformative")
 
   global <- c(
-    n_features_total         = n_total,
-    n_features_informative   = n_inform,
-    n_features_uninformative = n_total - n_inform,
-    mean_mnar_score          = round(mean(scores, na.rm = TRUE), 4),
-    median_mnar_score        = round(stats::median(scores, na.rm = TRUE), 4),
-    prop_mnar                = round(mean(mnar_class == "MNAR"), 4),
-    prop_mixed               = round(mean(mnar_class == "mixed"), 4),
-    prop_mar                 = round(mean(mnar_class == "MAR"), 4),
-    prop_uninformative       = round(mean(mnar_class == "uninformative"), 4)
+    n_features_total              = n_total,
+    n_features_informative        = n_inform,
+    n_features_uninformative      = n_total - n_inform,
+    mean_condition_miss_score     = round(mean(scores, na.rm = TRUE), 4),
+    median_condition_miss_score   = round(stats::median(scores, na.rm = TRUE), 4),
+    prop_condition_structured     = round(mean(condition_miss_class == "condition_structured"), 4),
+    prop_mixed                    = round(mean(condition_miss_class == "mixed"), 4),
+    prop_condition_independent    = round(mean(condition_miss_class == "condition_independent"), 4),
+    prop_uninformative            = round(mean(condition_miss_class == "uninformative"), 4)
   )
 
   message(sprintf(
-    "Results: %d informative features | mean MNAR score = %.3f | MNAR: %.1f%% | MAR: %.1f%%",
-    n_inform, global["mean_mnar_score"],
-    global["prop_mnar"] * 100, global["prop_mar"] * 100
+    "Results: %d informative features | mean condition miss score = %.3f | condition-structured: %.1f%% | condition-independent: %.1f%%",
+    n_inform, global["mean_condition_miss_score"],
+    global["prop_condition_structured"] * 100,
+    global["prop_condition_independent"] * 100
   ))
 
   # ── Optionally write results into rowData ─────────────────────────────────────
 
   if (store_results) {
-    rd            <- as.data.frame(SummarizedExperiment::rowData(se))
-    rd$mnar_score <- scores[rownames(rd)]
-    rd$mnar_class <- mnar_class[rownames(rd)]
+    rd                       <- as.data.frame(SummarizedExperiment::rowData(se))
+    rd$condition_miss_score  <- scores[rownames(rd)]
+    rd$condition_miss_class  <- condition_miss_class[rownames(rd)]
     SummarizedExperiment::rowData(obj[[i]]) <- rd
   }
 
@@ -350,7 +360,7 @@ mnar_score <- function(obj,
 }
 
 
-#' Compute a single dataset-level MNAR index using logistic regression
+#' Compute a dataset-level score of condition-predictable missingness using logistic regression
 #'
 #' Summarises missingness structure across the whole dataset into a single
 #' value by fitting two pooled logistic regressions across all
@@ -360,8 +370,12 @@ mnar_score <- function(obj,
 #'   mod_full      : missing ~ intensity + group
 #'
 #' The incremental Tjur's R² (full - intensity) is the primary quantity of
-#' interest: it measures condition-specific missingness beyond what feature
-#' abundance alone would predict.
+#' interest: it measures the missingness that can be predicted from experimental
+#' condition beyond what feature abundance alone would predict.
+#'
+#' Note: in proteomics, intensity-dependent missingness is universal — all
+#' datasets will show a non-zero intensity-only Tjur R². The incremental term
+#' isolates the additional, condition-specific component.
 #'
 #' @param obj A QFeatures object.
 #' @param i Integer or character. Index or name of the assay to analyse.
@@ -388,14 +402,14 @@ mnar_score <- function(obj,
 #'       present in all proteomics data.}
 #'     \item{tjur_incremental}{Numeric. The increase in Tjur's R² when
 #'       condition is added on top of intensity. This is the primary quantity
-#'       of interest: condition-specific missingness beyond what intensity
+#'       of interest: condition-predictable missingness beyond what intensity
 #'       already explains. Near zero means missingness is purely
 #'       intensity-driven; positive values indicate condition-specific
 #'       depletion of particular features.}
 #'     \item{tjur_condition_fraction}{Numeric. The fraction of total
-#'       explainable missingness (tjur_full) that is condition-specific rather
+#'       explainable missingness (tjur_full) that is condition-predictable rather
 #'       than intensity-driven. Ranges from 0 (all intensity-driven) to 1 (all
-#'       condition-specific).}
+#'       condition-predictable).}
 #'     \item{tjur_full}{Numeric. Tjur's R² of the full model
 #'       (intensity + condition). Equal to tjur_intensity_only +
 #'       tjur_incremental.}
@@ -453,20 +467,23 @@ mnar_score <- function(obj,
 #' aggregation.
 #'
 #' Consider a dataset where peptide A is missing entirely in condition X and
-#' peptide B is missing entirely in condition Y. Both features are strongly
-#' MNAR, but their opposing condition associations cancel in the pooled model:
-#' condition X sees elevated missingness from peptide A and suppressed
-#' missingness from peptide B, and vice versa for condition Y. The net group
-#' coefficients may be near zero, and \code{tjur_incremental} can be close to
-#' zero even when every missing value in the dataset is condition-structured.
+#' peptide B is missing entirely in condition Y. Both features have missingness
+#' that is entirely predictable from condition, but their opposing condition
+#' associations cancel in the pooled model: condition X sees elevated
+#' missingness from peptide A and suppressed missingness from peptide B, and
+#' vice versa for condition Y. The net group coefficients may be near zero,
+#' and \code{tjur_incremental} can be close to zero even when every missing
+#' value in the dataset is condition-structured.
 #'
 #' If your experiment may contain features with opposing condition-missingness
 #' patterns — which is common when comparing multiple biological conditions —
-#' use \code{\link{mnar_index}} on the output of \code{\link{mnar_score}}
-#' instead. \code{mnar_index} aggregates absolute per-feature Tjur R² scores
-#' and is immune to this cancellation problem. \code{mnar_global_score} is
-#' best suited to experiments where you expect missingness to be directionally
-#' consistent across features (e.g. one condition is globally lower abundance).
+#' use \code{\link{condition_miss_index}} on the output of
+#' \code{\link{condition_miss_score}} instead.
+#' \code{condition_miss_index} aggregates absolute per-feature Tjur R² scores
+#' and is immune to this cancellation problem.
+#' \code{global_condition_miss_score} is best suited to experiments where you
+#' expect missingness to be directionally consistent across features (e.g. one
+#' condition is globally lower abundance).
 #'
 #' @references
 #' Tjur T (2009). Coefficients of determination in logistic regression models —
@@ -475,7 +492,7 @@ mnar_score <- function(obj,
 #'
 #' @examples
 #' \dontrun{
-#' idx <- mnar_global_score(obj, i = "peptides", group_cols = "condition")
+#' idx <- global_condition_miss_score(obj, i = "peptides", group_cols = "condition")
 #'
 #' # Primary quantities
 #' cat("Intensity-only Tjur R²:  ", round(idx$tjur_intensity_only,  3), "\n")
@@ -484,20 +501,20 @@ mnar_score <- function(obj,
 #' cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")
 #' cat(idx$interpretation, "\n")
 #'
-#' # If cancellation is a concern, prefer mnar_index() instead
-#' mnar_res <- mnar_score(obj, i = "peptides", group_cols = "condition")
-#' idx2     <- mnar_index(mnar_res$summary)
+#' # If cancellation is a concern, prefer condition_miss_index() instead
+#' cms_res <- condition_miss_score(obj, i = "peptides", group_cols = "condition")
+#' idx2    <- condition_miss_index(cms_res$summary)
 #' }
 #'
-#' @seealso \code{\link{mnar_score}}, \code{\link{mnar_index}}
+#' @seealso \code{\link{condition_miss_score}}, \code{\link{condition_miss_index}}
 #' @export
-mnar_global_score <- function(obj,
-                              i,
-                              group_cols,
-                              min_observed    = 2,
-                              min_missing     = 1,
-                              subset_features = TRUE,
-                              log_transform   = FALSE) {
+global_condition_miss_score <- function(obj,
+                                        i,
+                                        group_cols,
+                                        min_observed    = 2,
+                                        min_missing     = 1,
+                                        subset_features = TRUE,
+                                        log_transform   = FALSE) {
 
   # ── Input validation ──────────────────────────────────────────────────────────
 
@@ -589,7 +606,7 @@ mnar_global_score <- function(obj,
   #   Baseline — how much missingness is explained by feature abundance alone.
   #
   # mod_full      : missing ~ intensity + group
-  #   Adds condition. Incremental Tjur R² is the condition-specific signal.
+  #   Adds condition. Incremental Tjur R² is the condition-predictable signal.
 
   sep_env       <- new.env(parent = emptyenv())
   sep_env$count <- 0L
@@ -616,7 +633,7 @@ mnar_global_score <- function(obj,
 
   if (sep_env$count > 0L) {
     message(sprintf(
-      "Near-complete separation detected in %d model fit(s) — some features have missingness almost fully determined by intensity or group. Fitted probabilities close to 0 or 1 are expected for strong MNAR features and do not affect Tjur's R\u00b2.",
+      "Near-complete separation detected in %d model fit(s) — some features have missingness almost fully determined by intensity or group. Fitted probabilities close to 0 or 1 are expected for strongly condition-structured features and do not affect Tjur's R².",
       sep_env$count
     ))
   }
@@ -653,9 +670,9 @@ mnar_global_score <- function(obj,
     "Intensity-only Tjur R²  = %.3f: discrimination between missing and",
     "observed explained by feature abundance alone (intensity-dependent baseline).",
     "Incremental Tjur R²     = %.3f: additional discrimination explained by",
-    "experimental condition beyond intensity (condition-specific signal).",
+    "experimental condition beyond intensity (condition-predictable signal).",
     "Condition fraction       = %.3f: %.1f%% of explainable missingness is",
-    "condition-specific rather than purely intensity-driven.",
+    "condition-predictable rather than purely intensity-driven.",
     "LRT p-value              = %s: %s that condition adds explanatory power."),
     tjur_intensity_only,
     tjur_incremental,
@@ -693,21 +710,22 @@ mnar_global_score <- function(obj,
 }
 
 
-#' Summarise per-feature MNAR scores into a single dataset-level index
+#' Summarise per-feature condition missingness scores into a dataset-level index
 #'
-#' Aggregates the per-feature Tjur R² scores produced by \code{mnar_score()}
-#' into a single value in 0-1 representing how strongly experimental
-#' condition predicts missingness across the dataset.
+#' Aggregates the per-feature Tjur R² scores produced by
+#' \code{condition_miss_score()} into a single value in 0-1 representing how
+#' strongly experimental condition predicts missingness across the dataset.
 #'
-#' Unlike \code{mnar_global_score()}, which fits a pooled logistic regression
-#' and can miss condition effects that cancel across features (e.g. peptide A
-#' missing in condition X and peptide B missing in condition Y), this function
-#' aggregates absolute per-feature scores and correctly identifies such
+#' Unlike \code{global_condition_miss_score()}, which fits a pooled logistic
+#' regression and can miss condition effects that cancel across features (e.g.
+#' peptide A missing in condition X and peptide B missing in condition Y), this
+#' function aggregates absolute per-feature scores and correctly identifies such
 #' opposing patterns as condition-structured missingness.
 #'
 #' @param summary_df A data.frame as returned in the \code{$summary} element
-#'   of \code{mnar_score()}. Must contain columns: \code{mnar_score},
-#'   \code{miss_frac}, and \code{mnar_class}.
+#'   of \code{condition_miss_score()}. Must contain columns:
+#'   \code{condition_miss_score}, \code{miss_frac}, and
+#'   \code{condition_miss_class}.
 #' @param weight_by Character. How to weight features when computing the
 #'   mean score. One of:
 #'   \describe{
@@ -719,16 +737,17 @@ mnar_global_score <- function(obj,
 #' @param coverage_penalty Logical. If TRUE (default), scales the weighted
 #'   mean score by the fraction of features that are informative (i.e. have
 #'   at least \code{min_observed} observed and \code{min_missing} missing
-#'   values as set in \code{mnar_score()}). When most features are fully
-#'   observed and therefore uninformative, the dataset-level index is
-#'   attenuated accordingly. If FALSE, the index reflects only the
-#'   informative features without penalising for their proportion.
+#'   values as set in \code{condition_miss_score()}). When most features are
+#'   fully observed and therefore uninformative, the dataset-level index is
+#'   attenuated accordingly. If FALSE, the index reflects only the informative
+#'   features without penalising for their proportion.
 #'
 #' @return A list with the following elements:
 #'   \describe{
-#'     \item{index}{Numeric in 0-1. The dataset-level MNAR index. Values
-#'       near 0 indicate MAR-like missingness; values near 1 indicate
-#'       missingness that is strongly structured by experimental condition.}
+#'     \item{index}{Numeric in 0-1. The dataset-level condition missingness
+#'       index. Values near 0 indicate missingness that is not predictable from
+#'       condition; values near 1 indicate missingness that is strongly
+#'       structured by experimental condition.}
 #'     \item{weighted_mean_score}{Numeric. The weighted mean Tjur R² across
 #'       informative features, before any coverage penalty is applied.}
 #'     \item{coverage}{Numeric. Fraction of features that were informative
@@ -761,34 +780,34 @@ mnar_global_score <- function(obj,
 #'
 #' @examples
 #' \dontrun{
-#' result <- mnar_score(obj, i = "peptides", group_cols = "condition")
+#' result <- condition_miss_score(obj, i = "peptides", group_cols = "condition")
 #'
 #' # Default: miss_frac weighted, with coverage penalty
-#' idx <- mnar_index(result$summary)
-#' cat("MNAR index:", round(idx$index, 3), "\n")
+#' idx <- condition_miss_index(result$summary)
+#' cat("Condition missingness index:", round(idx$index, 3), "\n")
 #'
 #' # Strength among missing features only, no coverage penalty
-#' idx2 <- mnar_index(result$summary,
-#'                    weight_by        = "equal",
-#'                    coverage_penalty = FALSE)
+#' idx2 <- condition_miss_index(result$summary,
+#'                              weight_by        = "equal",
+#'                              coverage_penalty = FALSE)
 #' }
 #'
-#' @seealso \code{\link{mnar_score}}, \code{\link{mnar_global_score}}
+#' @seealso \code{\link{condition_miss_score}}, \code{\link{global_condition_miss_score}}
 #' @export
-mnar_index <- function(summary_df,
-                       weight_by        = c("miss_frac", "equal"),
-                       coverage_penalty = TRUE) {
+condition_miss_index <- function(summary_df,
+                                 weight_by        = c("miss_frac", "equal"),
+                                 coverage_penalty = TRUE) {
 
   # ── Input validation ──────────────────────────────────────────────────────────
 
   weight_by <- match.arg(weight_by)
 
-  required_cols <- c("mnar_score", "miss_frac", "mnar_class")
+  required_cols <- c("condition_miss_score", "miss_frac", "condition_miss_class")
   missing_cols  <- setdiff(required_cols, colnames(summary_df))
   if (length(missing_cols) > 0) {
     stop(sprintf(
       "summary_df is missing required column(s): %s\n",
-      "Pass the $summary element from mnar_score() directly.",
+      "Pass the $summary element from condition_miss_score() directly.",
       paste(missing_cols, collapse = ", ")
     ))
   }
@@ -800,7 +819,7 @@ mnar_index <- function(summary_df,
   # ── Separate informative and uninformative features ───────────────────────────
 
   n_total       <- nrow(summary_df)
-  informative   <- summary_df[summary_df$mnar_class != "uninformative", ]
+  informative   <- summary_df[summary_df$condition_miss_class != "uninformative", ]
   n_informative <- nrow(informative)
 
   if (n_informative == 0) {
@@ -809,19 +828,19 @@ mnar_index <- function(summary_df,
       "'uninformative'). Returning an index of NA."
     )
     return(list(
-      index              = NA_real_,
+      index               = NA_real_,
       weighted_mean_score = NA_real_,
-      coverage           = 0,
-      n_informative      = 0L,
-      n_total            = n_total,
-      weight_by          = weight_by,
-      coverage_penalty   = coverage_penalty
+      coverage            = 0,
+      n_informative       = 0L,
+      n_total             = n_total,
+      weight_by           = weight_by,
+      coverage_penalty    = coverage_penalty
     ))
   }
 
   # ── Compute weighted mean Tjur R² across informative features ─────────────────
 
-  scores <- informative$mnar_score
+  scores <- informative$condition_miss_score
 
   weights <- if (weight_by == "miss_frac") {
     w <- informative$miss_frac
@@ -845,7 +864,7 @@ mnar_index <- function(summary_df,
   # ── Messaging ─────────────────────────────────────────────────────────────────
 
   message(sprintf(
-    "MNAR index: %.4f | Weighted mean score: %.4f | Coverage: %.1f%% (%d / %d features informative)%s",
+    "Condition missingness index: %.4f | Weighted mean score: %.4f | Coverage: %.1f%% (%d / %d features informative)%s",
     index, weighted_mean, coverage * 100, n_informative, n_total,
     if (coverage_penalty) " [coverage penalty applied]" else ""
   ))
@@ -859,4 +878,60 @@ mnar_index <- function(summary_df,
     weight_by           = weight_by,
     coverage_penalty    = coverage_penalty
   ))
+}
+
+
+# ── Deprecated aliases ────────────────────────────────────────────────────────
+
+#' Deprecated: use condition_miss_score()
+#'
+#' \code{mnar_score()} has been renamed to \code{\link{condition_miss_score}()}
+#' to better reflect that the score measures missingness predictable from
+#' experimental condition, not MNAR in the classical sense. All arguments are
+#' identical; this wrapper calls the new function and will be removed in a
+#' future release.
+#'
+#' @inheritParams condition_miss_score
+#' @seealso \code{\link{condition_miss_score}}
+#' @export
+mnar_score <- function(...) {
+  .Deprecated("condition_miss_score")
+  condition_miss_score(...)
+}
+
+#' Deprecated: use global_condition_miss_score()
+#'
+#' \code{mnar_global_score()} has been renamed to
+#' \code{\link{global_condition_miss_score}()} to better reflect that the score
+#' measures missingness predictable from experimental condition, not MNAR in
+#' the classical sense. All arguments are identical; this wrapper calls the new
+#' function and will be removed in a future release.
+#'
+#' @inheritParams global_condition_miss_score
+#' @seealso \code{\link{global_condition_miss_score}}
+#' @export
+mnar_global_score <- function(...) {
+  .Deprecated("global_condition_miss_score")
+  global_condition_miss_score(...)
+}
+
+#' Deprecated: use condition_miss_index()
+#'
+#' \code{mnar_index()} has been renamed to \code{\link{condition_miss_index}()}
+#' to better reflect that the index summarises missingness predictable from
+#' experimental condition, not MNAR in the classical sense. All arguments are
+#' identical; this wrapper calls the new function and will be removed in a
+#' future release.
+#'
+#' Note: \code{condition_miss_index()} expects the \code{$summary} output from
+#' \code{\link{condition_miss_score}()}, which uses updated column names
+#' (\code{condition_miss_score}, \code{condition_miss_class}) rather than the
+#' old \code{mnar_score} / \code{mnar_class} names.
+#'
+#' @inheritParams condition_miss_index
+#' @seealso \code{\link{condition_miss_index}}
+#' @export
+mnar_index <- function(...) {
+  .Deprecated("condition_miss_index")
+  condition_miss_index(...)
 }

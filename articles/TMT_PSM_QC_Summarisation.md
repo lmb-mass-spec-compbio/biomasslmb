@@ -473,7 +473,7 @@ sessionInfo()
 #> [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] DBI_1.3.0               gridExtra_2.3.1         rlang_1.2.0            
+#>   [1] DBI_1.3.0               gridExtra_2.3.1         rlang_1.3.0            
 #>   [4] magrittr_2.0.5          clue_0.3-68             otel_0.2.0             
 #>   [7] compiler_4.5.3          RSQLite_3.53.3          png_0.1-9              
 #>  [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
@@ -485,7 +485,7 @@ sessionInfo()
 #>  [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.1    
 #>  [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.11.0           
 #>  [34] stringi_1.8.7           RColorBrewer_1.1-3      genefilter_1.92.0      
-#>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.1-1.1         
+#>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.2             
 #>  [40] knitr_1.51              usethis_3.2.1           base64enc_0.1-6        
 #>  [43] BiocBaseUtils_1.12.0    nnet_7.3-20             Matrix_1.7-4           
 #>  [46] splines_4.5.3           igraph_2.3.3            tidyselect_1.2.1       
@@ -506,7 +506,7 @@ sessionInfo()
 #>  [91] gtable_0.3.6            DEoptimR_1.2-0          sass_0.4.10            
 #>  [94] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
 #>  [97] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
-#> [100] pkgdown_2.2.0           lifecycle_1.0.5         httr_1.4.8             
+#> [100] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.8             
 #> [103] bit64_4.8.2             MASS_7.3-65
 ```
 

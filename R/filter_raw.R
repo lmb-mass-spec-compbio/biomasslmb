@@ -509,9 +509,27 @@ filter_features_mq_dda <- function (obj,
   }
   obj <- remove_no_master(obj, master_protein_col)
   if (unique_master) {
-    rowData(obj)$Number.of.Protein.Groups <- sapply(strsplit(rowData(obj)$Leading.proteins, split = ';'), length)
-    obj <- remove_non_unique_master_protein(obj, master_protein_col)
+    if('Unique..Proteins.' %in% colnames(rowData(obj))){
+
+      obj[rowData(obj)$Unique..Proteins.=='yes',]
+      message_parse(rowData(obj), master_protein_col, "features with non-unique master proteins removed")
+
+    } else if('Leading.proteins' %in% colnames(rowData(obj))){
+
+        rowData(obj)$Number.of.Protein.Groups <- sapply(
+          strsplit(rowData(obj)$Leading.proteins, split = ';'), length)
+        obj <- remove_non_unique_master_protein(obj, master_protein_col)
+
+    } else{
+
+      stop(paste0(
+        'Could not find a column to determine unique master proteins. ',
+        'Please check the column names in your MaxQuant output contain either ',
+        'Unique..Proteins. or Leading.proteins'))
+
+    }
   }
+
   if (remove_no_quant) {
     obj <- remove_no_quant_assay(obj, master_protein_col)
   }

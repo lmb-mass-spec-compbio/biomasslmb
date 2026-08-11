@@ -57,6 +57,8 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_protein_tm_topology.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_samples_present.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_sequence.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniparc_fallback.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/index.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_fasta.html</loc></url>

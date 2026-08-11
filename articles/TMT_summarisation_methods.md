@@ -439,12 +439,12 @@ sessionInfo()
 #> [61] visdat_0.6.0            bit64_4.8.2             clue_0.3-68            
 #> [64] systemfonts_1.3.2       jquerylib_0.1.4         annotate_1.88.0        
 #> [67] glue_1.8.1              DEoptimR_1.2-0          pkgdown_2.2.1          
-#> [70] uniprotREST_1.0.0       stringi_1.8.7           gtable_0.3.6           
+#> [70] uniprotREST_1.0.0       stringi_1.8.9           gtable_0.3.6           
 #> [73] tibble_3.3.1            pillar_1.11.1           htmltools_0.5.9        
 #> [76] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
 #> [79] lattice_0.22-9          backports_1.5.1         png_0.1-9              
-#> [82] memoise_2.0.1           bslib_0.11.0            Rcpp_1.1.2             
-#> [85] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.59              
+#> [82] memoise_2.0.1           bslib_0.12.0            Rcpp_1.1.2             
+#> [85] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.60              
 #> [88] MsCoreUtils_1.22.1      fs_2.1.0                pkgconfig_2.0.3
 ```
 

@@ -145,6 +145,11 @@ also available via the ‘articles’ tab
   experiment in a Qfeatures object
 - [`get_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_sequence.md)
   : Get the amino acid sequence around a PTM
+- [`get_uniparc_fallback()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniparc_fallback.md)
+  : Recover annotations for retired UniProtKB accessions via UniParc
+- [`get_uniprot_details()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.md)
+  : Get UniProt annotation details, with UniParc fallback for retired
+  accessions
 - [`global_condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)
   : Compute a dataset-level score of condition-predictable missingness
   using logistic regression

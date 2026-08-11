@@ -1,6 +1,4 @@
-library(httptest)
-
-.mockPaths(test_path("uniparc_fallback"))
+httptest::.mockPaths(testthat::test_path("uniparc_fallback"))
 
 # Mock files under uniparc_fallback/ were recorded from the real UniProt API
 # via httptest::capture_requests() against:
@@ -11,9 +9,14 @@ library(httptest)
 #     check the early-return path for entries that are still active. The
 #     recorded response was trimmed to its top-level fields only, since
 #     get_uniparc_fallback_one only reads `entryType` for this case.
+#
+# Uses httptest::with_mock_api() explicitly (rather than library(httptest) +
+# unqualified with_mock_api()) because other test files load httptest2, whose
+# with_mock_api() would otherwise shadow this one and silently let real
+# network calls through instead of mocking them.
 
 test_that("get_uniparc_fallback_one recovers annotation for a retired accession", {
-  with_mock_api({
+  httptest::with_mock_api({
     result <- get_uniparc_fallback_one("A0A5G2QPJ4")
 
     expect_equal(result$UniprotID, "A0A5G2QPJ4")
@@ -25,14 +28,14 @@ test_that("get_uniparc_fallback_one recovers annotation for a retired accession"
 })
 
 test_that("get_uniparc_fallback_one returns NULL for an active accession", {
-  with_mock_api({
+  httptest::with_mock_api({
     result <- get_uniparc_fallback_one("P04406")
     expect_null(result)
   })
 })
 
 test_that("get_uniparc_fallback combines results and drops unresolved accessions", {
-  with_mock_api({
+  httptest::with_mock_api({
     result <- get_uniparc_fallback(c("A0A5G2QPJ4", "P04406"))
 
     expect_equal(nrow(result), 1)

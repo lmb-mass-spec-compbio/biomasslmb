@@ -9,7 +9,10 @@ get_uniprot_details(accessions, verbosity = 0)
 \arguments{
 \item{accessions}{\verb{character vector} UniProt accessions.}
 
-\item{verbosity}{\code{integer} Verbosity level for uniprotREST::uniprot_map.}
+\item{verbosity}{\code{integer} Verbosity level for uniprotREST::uniprot_map.
+Some accessions come back from \code{uniprot_map()} as multiple rows (they have
+subsequently been 'demerged'); these are collapsed to one row per
+accession, with \verb{;}-separated values where the demerged rows differed.}
 }
 \value{
 \code{data.frame} with one row per accession and columns \code{UniprotID},

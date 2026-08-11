@@ -15,7 +15,9 @@ get_uniparc_fallback_one <- function(accession){
     as = "parsed"
   )$uniParcCrossReferences
 
-  named <- Filter(function(x) !is.null(x$geneName), xrefs)
+  # some cross-references (e.g. Ensembl) carry a geneName but no proteinName;
+  # require both since Protein.names is a required output column
+  named <- Filter(function(x) !is.null(x$geneName) && !is.null(x$proteinName), xrefs)
   if(length(named)==0) return(NULL)
 
   best <- named[[which.max(as.Date(sapply(named, `[[`, "lastUpdated")))]]
@@ -42,8 +44,10 @@ get_uniparc_fallback_one <- function(accession){
 #'
 #' For each accession, this function queries the live UniProtKB entry. If it
 #' is inactive, it follows the entry's `uniParcId` to UniParc and returns the
-#' most recently-updated UniParc cross-reference that has a gene name. This
-#' two-step lookup (rather than bulk ID mapping to UniParc) is used because
+#' most recently-updated UniParc cross-reference that has both a gene name
+#' and a protein name (some cross-references, e.g. Ensembl, carry a gene name
+#' but no protein name). This two-step lookup (rather than bulk ID mapping to
+#' UniParc) is used because
 #' accessions are versioned internally (e.g. `A0A5G2QPJ4.1` vs `.2`), and bulk
 #' mapping to UniParc can return multiple UniParc entries for one accession
 #' with no clean way to disambiguate; resolving via the entry's own
@@ -57,7 +61,7 @@ get_uniparc_fallback_one <- function(accession){
 #' @return `data.frame` with columns `UniprotID`, `Gene.Names`,
 #' `Gene.Names.First`, `Protein.names`, `Annotation.Source`. Accessions that
 #' are not inactive, have no `uniParcId`, or have no UniParc cross-reference
-#' with a gene name are omitted from the result.
+#' with both a gene name and a protein name are omitted from the result.
 #' @export
 #' @examples
 #' \dontrun{
@@ -92,6 +96,10 @@ get_uniparc_fallback <- function(accessions){
 #'
 #' @param accessions `character vector` UniProt accessions.
 #' @param verbosity `integer` Verbosity level for uniprotREST::uniprot_map.
+#' Some accessions come back from `uniprot_map()` as multiple rows (they have
+#' subsequently been 'demerged'); these are collapsed to one row per
+#' accession, with `;`-separated values where the demerged rows differed.
+#'
 #' @return `data.frame` with one row per accession and columns `UniprotID`,
 #' `Entry.Name`, `Reviewed`, `Protein.names`, `Gene.Names`, `Organism`,
 #' `Length`, `Gene.Names.First`, `Annotation.Source`. `Annotation.Source` is
@@ -107,19 +115,28 @@ get_uniparc_fallback <- function(accessions){
 #' }
 get_uniprot_details <- function(accessions, verbosity=0){
 
-  uniprot2details <- uniprotREST::uniprot_map(
+  uniprot2details_raw <- uniprotREST::uniprot_map(
     accessions,
     from='UniProtKB_AC-ID',
     method='stream',
     verbosity=verbosity) %>%
     dplyr::rename('UniprotID'=From) %>%
     select(-Entry) %>%
-    mutate(Gene.Names.First=gsub(' .*','', Gene.Names),
-           Annotation.Source='UniProtKB (live)')
+    mutate(Gene.Names.First=gsub(' .*','', Gene.Names))
 
-  needs_fallback <- uniprot2details$UniprotID[
-    uniprot2details$Gene.Names=='' | uniprot2details$Protein.names=='deleted'
-  ]
+  # detect accessions needing fallback on the raw, one-row-per-mapping data,
+  # since collapsing (below) joins blank/'deleted' values with ';' and would
+  # break this exact-match check for accessions with multiple rows
+  needs_fallback <- unique(uniprot2details_raw$UniprotID[
+    uniprot2details_raw$Gene.Names=='' | uniprot2details_raw$Protein.names=='deleted'
+  ])
+
+  uniprot2details <- uniprot2details_raw %>%
+    # some UniprotIDs generate multiple rows, likely because they have
+    # subsequently been 'demerged' -- merge them
+    group_by(UniprotID) %>%
+    summarise_all(.funs=function(x) paste(x, collapse=';')) %>%
+    mutate(Annotation.Source='UniProtKB (live)')
 
   if(length(needs_fallback)==0) return(uniprot2details)
 

@@ -13,7 +13,7 @@ get_uniparc_fallback(accessions)
 \code{data.frame} with columns \code{UniprotID}, \code{Gene.Names},
 \code{Gene.Names.First}, \code{Protein.names}, \code{Annotation.Source}. Accessions that
 are not inactive, have no \code{uniParcId}, or have no UniParc cross-reference
-with a gene name are omitted from the result.
+with both a gene name and a protein name are omitted from the result.
 }
 \description{
 MaxQuant searches are run against a FASTA snapshot of UniProt
@@ -26,8 +26,10 @@ them even though the protein may be a real, well-supported hit.
 
 For each accession, this function queries the live UniProtKB entry. If it
 is inactive, it follows the entry's \code{uniParcId} to UniParc and returns the
-most recently-updated UniParc cross-reference that has a gene name. This
-two-step lookup (rather than bulk ID mapping to UniParc) is used because
+most recently-updated UniParc cross-reference that has both a gene name
+and a protein name (some cross-references, e.g. Ensembl, carry a gene name
+but no protein name). This two-step lookup (rather than bulk ID mapping to
+UniParc) is used because
 accessions are versioned internally (e.g. \code{A0A5G2QPJ4.1} vs \code{.2}), and bulk
 mapping to UniParc can return multiple UniParc entries for one accession
 with no clean way to disambiguate; resolving via the entry's own

@@ -1,0 +1,306 @@
+{
+    "uniParcId": "UPI0020B0616E",
+    "uniParcCrossReferences": [
+        {
+            "database": "UniProtKB/TrEMBL",
+            "id": "A0A5G2QPJ4",
+            "versionI": 2,
+            "version": 2,
+            "active": false,
+            "created": "2022-12-14",
+            "lastUpdated": "2025-02-05",
+            "geneName": "CADM1",
+            "proteinName": "Cell adhesion molecule 1",
+            "organism": {
+                "scientificName": "Sus scrofa",
+                "commonName": "Pig",
+                "taxonId": 9823
+            }
+        },
+        {
+            "database": "Ensembl",
+            "id": "ENSSSCP00000066620",
+            "versionI": 2,
+            "version": 2,
+            "active": false,
+            "created": "2022-06-04",
+            "lastUpdated": "2024-02-20",
+            "geneName": "CADM1",
+            "organism": {
+                "scientificName": "Sus scrofa",
+                "commonName": "Pig",
+                "taxonId": 9823
+            }
+        }
+    ],
+    "sequence": {
+        "value": "AAASCSVGCRLRSDPVLLWLWRDGQNLFTKDVTVIEGEVATISCQVNKSDDSVIQLLNPNRQTIYFRDFRPLKDSRFQLLNFSSSELKVSLTNVSISDEGRYFCQLYTDPPQESYTTITVLVPPRNLMIDIQKDTAVEGEEIEVNCTAMASKPATTIRWFKGNKELKGKSEVEEWSDMYTVTSQLMLKVHKEDDGVPVICQVEHPAVTGNLQTQRYLEVQYKPQVHIQMTYPLQGLTREGDALELTCEAIGKPQPVMVTWVRVDDEMPQHAVLSGPNLFINNLNKTDNGTYRCEASNIVGKAHSDYMLYVYGTSPHNYPSSHNTTTTTTTTTTSTTILTIITDSRAGEEGSIRAVDHAVIGGVVAVVVFAMLCLLIILGRYFARHKGTYFTHEAKGADDAADADTAIINAEGGQNNSEEKKEYFI",
+        "length": 425,
+        "molWeight": 47313,
+        "crc64": "304099D0FAD12D2A",
+        "md5": "207A566B0AE1BAA1C2C00712DB958BB0"
+    },
+    "sequenceFeatures": [
+        {
+            "interproGroup": {
+                "id": "IPR007110",
+                "name": "Immunoglobulin-like domain"
+            },
+            "database": "PROSITE",
+            "databaseId": "PS50835",
+            "locations": [
+                {
+                    "start": 15,
+                    "end": 119,
+                    "alignment": "7M8I19M8I12M4D11M3I25M1D12M"
+                },
+                {
+                    "start": 223,
+                    "end": 297,
+                    "alignment": "7M3I32M5D9M2D24M12D"
+                },
+                {
+                    "start": 124,
+                    "end": 218,
+                    "alignment": "7M1I33M1I39M2I12M"
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR036179",
+                "name": "Immunoglobulin-like domain superfamily"
+            },
+            "database": "SUPFAM",
+            "databaseId": "SSF48726",
+            "locations": [
+                {
+                    "start": 219,
+                    "end": 313
+                },
+                {
+                    "start": 29,
+                    "end": 125
+                },
+                {
+                    "start": 123,
+                    "end": 223
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "FunFam",
+            "databaseId": "G3DSA:2.60.40.10:FF:000013",
+            "locations": [
+                {
+                    "start": 24,
+                    "end": 124
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "Pfam",
+            "databaseId": "PF13927",
+            "locations": [
+                {
+                    "start": 223,
+                    "end": 297
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR003599",
+                "name": "Immunoglobulin domain subtype"
+            },
+            "database": "SMART",
+            "databaseId": "SM00409",
+            "locations": [
+                {
+                    "start": 29,
+                    "end": 121
+                },
+                {
+                    "start": 131,
+                    "end": 220
+                },
+                {
+                    "start": 232,
+                    "end": 311
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR013783",
+                "name": "Immunoglobulin-like fold"
+            },
+            "database": "Gene3D",
+            "databaseId": "G3DSA:2.60.40.10",
+            "locations": [
+                {
+                    "start": 5,
+                    "end": 124
+                },
+                {
+                    "start": 224,
+                    "end": 318
+                },
+                {
+                    "start": 129,
+                    "end": 223
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "CDD",
+            "databaseId": "cd05881",
+            "locations": [
+                {
+                    "start": 27,
+                    "end": 120
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR003598",
+                "name": "Immunoglobulin subtype 2"
+            },
+            "database": "SMART",
+            "databaseId": "SM00408",
+            "locations": [
+                {
+                    "start": 137,
+                    "end": 207
+                },
+                {
+                    "start": 35,
+                    "end": 111
+                },
+                {
+                    "start": 238,
+                    "end": 300
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "FunFam",
+            "databaseId": "G3DSA:2.60.40.10:FF:000184",
+            "locations": [
+                {
+                    "start": 126,
+                    "end": 225
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "PANTHER",
+            "databaseId": "PTHR45889",
+            "locations": [
+                {
+                    "start": 23,
+                    "end": 422
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR013106",
+                "name": "Immunoglobulin V-set domain"
+            },
+            "database": "Pfam",
+            "databaseId": "PF07686",
+            "locations": [
+                {
+                    "start": 31,
+                    "end": 120
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR013162",
+                "name": "CD80-like, immunoglobulin C2-set"
+            },
+            "database": "Pfam",
+            "databaseId": "PF08205",
+            "locations": [
+                {
+                    "start": 135,
+                    "end": 207
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "CDD",
+            "databaseId": "cd05883",
+            "locations": [
+                {
+                    "start": 121,
+                    "end": 219
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "FunFam",
+            "databaseId": "G3DSA:2.60.40.10:FF:000200",
+            "locations": [
+                {
+                    "start": 226,
+                    "end": 317
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+
+            },
+            "database": "PIRSR",
+            "databaseId": "PIRSR000615-3",
+            "locations": [
+                {
+                    "start": 31,
+                    "end": 377
+                }
+            ]
+        },
+        {
+            "interproGroup": {
+                "id": "IPR003585",
+                "name": "Neurexin/syndecan/glycophorin C"
+            },
+            "database": "SMART",
+            "databaseId": "SM00294",
+            "locations": [
+                {
+                    "start": 378,
+                    "end": 396
+                }
+            ]
+        }
+    ],
+    "oldestCrossRefCreated": "2022-06-04",
+    "mostRecentCrossRefUpdated": "2025-02-05"
+}

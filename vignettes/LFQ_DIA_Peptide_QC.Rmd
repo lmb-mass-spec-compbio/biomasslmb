@@ -288,7 +288,7 @@ plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
 From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.
 
 
-```{r, include = FALSE}
+```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes
 usethis::use_data(dia_qf, overwrite=TRUE)
 ```

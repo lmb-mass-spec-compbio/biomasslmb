@@ -56,8 +56,11 @@ Suggests:
     httptest,
     httptest2,
     knitr,
+    matrixStats,
+    MsCoreUtils,
     pcaMethods,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    usethis
 Config/testthat/edition: 3
 URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/

@@ -57,8 +57,9 @@ Returns a FASTA file saved to disk at the specified file path.
 
 ``` r
 # specify some UniProt accessions
-crap <- get_ccp_crap()
-#> Error in get_ccp_crap(): could not find function "get_ccp_crap"
+crap_fasta <- system.file("extdata", "cRAP_20190401.fasta.gz",
+                          package = "biomasslmb")
+crap <- get_crap_fasta_accessions(crap_fasta)
 
 if (FALSE) { # \dontrun{
 make_fasta(crap, "2021-01_cRAP.fasta")

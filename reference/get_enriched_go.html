@@ -52,9 +52,9 @@ expect Ensembl gene IDs to have been used to construct the pwf input.'></head><b
     </div>
 
     <div class="ref-description section level2">
-    <p>A wrapper function around <code>goseq</code> to perform
-GO term enrichment analysis. See the <code>goseq</code> documentation
-for details. <code>pwf</code> can be made using <code>nullp</code>.</p>
+    <p>A wrapper function around <code><a href="https://rdrr.io/pkg/goseq/man/goseq.html" class="external-link">goseq</a></code> to perform
+GO term enrichment analysis. See the <code><a href="https://rdrr.io/pkg/goseq/man/goseq.html" class="external-link">goseq</a></code> documentation
+for details. <code>pwf</code> can be made using <code><a href="https://rdrr.io/pkg/goseq/man/nullp.html" class="external-link">nullp</a></code>.</p>
 <p>Over/underrepresented p-values are automatically
 adjusted using <code>method = "BH"</code>. If <code>gene2cat</code> is not provided then this
 function will default to using the Homo sapiens genome <code>hg19</code> and will
@@ -81,7 +81,7 @@ expect Ensembl gene IDs to have been used to construct the <code>pwf</code> inpu
 <dd><p><code>data.frame</code> with 3 columns (<code>DEgenes</code> = logical,
 <code>bias.data</code> = numeric/integer, <code>pwf</code> = numeric) and row names (usually UniProt
 accessions, Ensembl gene IDs or similar).
-Typically constructed using <code>nullp</code>.</p></dd>
+Typically constructed using <code><a href="https://rdrr.io/pkg/goseq/man/nullp.html" class="external-link">nullp</a></code>.</p></dd>
 
 
 <dt id="arg-gene-cat">gene2cat<a class="anchor" aria-label="anchor" href="#arg-gene-cat"></a></dt>
@@ -92,7 +92,7 @@ a <code>character vector</code> of GO terms.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments to be passed to <code>goseq</code>.</p></dd>
+<dd><p>Other arguments to be passed to <code><a href="https://rdrr.io/pkg/goseq/man/goseq.html" class="external-link">goseq</a></code>.</p></dd>
 
 
 <dt id="arg-shorten-term">shorten_term<a class="anchor" aria-label="anchor" href="#arg-shorten-term"></a></dt>

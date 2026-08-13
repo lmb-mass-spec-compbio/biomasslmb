@@ -1,8 +1,11 @@
 # GO term enrichment using goseq
 
-A wrapper function around `goseq` to perform GO term enrichment
-analysis. See the `goseq` documentation for details. `pwf` can be made
-using `nullp`.
+A wrapper function around
+[`goseq`](https://rdrr.io/pkg/goseq/man/goseq.html) to perform GO term
+enrichment analysis. See the
+[`goseq`](https://rdrr.io/pkg/goseq/man/goseq.html) documentation for
+details. `pwf` can be made using
+[`nullp`](https://rdrr.io/pkg/goseq/man/nullp.html).
 
 Over/underrepresented p-values are automatically adjusted using
 `method = "BH"`. If `gene2cat` is not provided then this function will
@@ -29,7 +32,7 @@ get_enriched_go(
   `data.frame` with 3 columns (`DEgenes` = logical, `bias.data` =
   numeric/integer, `pwf` = numeric) and row names (usually UniProt
   accessions, Ensembl gene IDs or similar). Typically constructed using
-  `nullp`.
+  [`nullp`](https://rdrr.io/pkg/goseq/man/nullp.html).
 
 - gene2cat:
 
@@ -40,7 +43,8 @@ get_enriched_go(
 
 - ...:
 
-  Other arguments to be passed to `goseq`.
+  Other arguments to be passed to
+  [`goseq`](https://rdrr.io/pkg/goseq/man/goseq.html).
 
 - shorten_term:
 

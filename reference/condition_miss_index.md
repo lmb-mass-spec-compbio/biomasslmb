@@ -1,6 +1,6 @@
 # Summarise per-feature condition missingness scores into a dataset-level index
 
-Aggregates the per-feature Tjur R² scores produced by
+Aggregates the per-feature Tjur R^2 scores produced by
 [`condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_score.md)
 into a single value in 0-1 representing how strongly experimental
 condition predicts missingness across the dataset.
@@ -32,7 +32,7 @@ condition_miss_index(
   "miss_frac"
 
   :   (Default) Weight each feature by its missingness fraction.
-      Features with more missing values contribute more — they represent
+      Features with more missing values contribute more – they represent
       a larger share of the imputation/modelling challenge.
 
   "equal"
@@ -63,8 +63,8 @@ A list with the following elements:
 
 - weighted_mean_score:
 
-  Numeric. The weighted mean Tjur R² across informative features, before
-  any coverage penalty is applied.
+  Numeric. The weighted mean Tjur R^2 across informative features,
+  before any coverage penalty is applied.
 
 - coverage:
 
@@ -101,7 +101,7 @@ The index is computed as follows:
 
 1.  Uninformative features (NA score) are excluded.
 
-2.  The weighted mean Tjur R² is computed across informative features,
+2.  The weighted mean Tjur R^2 is computed across informative features,
     using `miss_frac` or equal weights depending on `weight_by`.
 
 3.  If `coverage_penalty = TRUE`, the result is multiplied by the

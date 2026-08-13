@@ -11,7 +11,7 @@ add_topology_info(result)
 
 ## Arguments
 
-- query_resul:
+- result:
 
   `data.frame` output of query_protein_tm_topology
 
@@ -22,7 +22,9 @@ add_topology_info(result)
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 query_result <- query_protein_tm_topology(uniprotIDs)
 query_result_parsed <- add_topology_info(query_result)
+} # }
 ```

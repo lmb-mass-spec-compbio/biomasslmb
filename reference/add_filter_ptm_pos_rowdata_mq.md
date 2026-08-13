@@ -47,11 +47,6 @@ add_filter_ptm_pos_rowdata_mq(
 
   `logical` Describe the number of PTMs detected
 
-- ptm_encoding_pos:
-
-  `character` name vector describing whether modifification comes before
-  (-1) or after (1) amino acid in Modified.sequence column values
-
 ## Value
 
 Returns a `SummarizedExperiment` with an additional column in the

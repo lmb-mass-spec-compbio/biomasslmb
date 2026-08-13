@@ -9,7 +9,8 @@ ID mapping. Within the matrix, some values may be missing (NA). In order
 to correctly identify which proteins can be quantified, we need to start
 from the feature level object and create a mask which we can use to
 replace protein-level quantification values with NA. This is what this
-function does. This can then be combined with the `mask_protein_quant`
+function does. This can then be combined with the
+[`mask_protein_level_quant`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mask_protein_level_quant.md)
 function to replace protein level quantification values with NA where
 they were derived from too few quantification values
 

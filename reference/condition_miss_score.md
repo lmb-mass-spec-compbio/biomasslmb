@@ -1,8 +1,8 @@
 # Score features by how well missingness can be predicted by experimental condition
 
 For each feature, fits a logistic regression of binary missingness
-against one or more experimental group variables from colData. Tjur's R²
-(discrimination coefficient) of this model is used as a per-feature
+against one or more experimental group variables from colData. Tjur's
+R^2 (discrimination coefficient) of this model is used as a per-feature
 score: high values indicate that missingness is structured by
 experimental condition (condition-structured), while values near zero
 indicate missingness is unrelated to condition (condition-independent).
@@ -60,7 +60,7 @@ A list with the following elements:
 - scores:
 
   Named numeric vector of per-feature condition missingness scores
-  (Tjur's R²).
+  (Tjur's R^2).
 
 - summary:
 
@@ -81,7 +81,7 @@ A list with the following elements:
 
 ## Details
 
-Note: in proteomics, all missingness is partly intensity-dependent —
+Note: in proteomics, all missingness is partly intensity-dependent –
 low- abundance features are more likely to be missing regardless of
 condition. This function measures the additional, condition-specific
 component: whether missingness is systematically higher in some
@@ -89,21 +89,21 @@ conditions than others for a given feature. A high score does not imply
 the missingness is purely non-random; a low score does not imply it is
 purely random.
 
-The score for each feature is Tjur's R² (discrimination coefficient)
+The score for each feature is Tjur's R^2 (discrimination coefficient)
 from a logistic regression:
 
 missing_indicator ~ group
 
 where missing_indicator is 1 if the value is missing and 0 if observed,
-and group is a factor combining the specified colData columns. Tjur's R²
-is computed as the difference in mean predicted probabilities between
-missing and observed values:
+and group is a factor combining the specified colData columns. Tjur's
+R^2 is computed as the difference in mean predicted probabilities
+between missing and observed values:
 
-Tjur's R² = mean(P(missing \| truly missing)) - mean(P(missing \| truly
+Tjur's R^2 = mean(P(missing \| truly missing)) - mean(P(missing \| truly
 observed))
 
-It ranges from 0 (no discrimination — condition-independent) to 1
-(perfect discrimination — condition-structured). Logistic regression is
+It ranges from 0 (no discrimination – condition-independent) to 1
+(perfect discrimination – condition-structured). Logistic regression is
 used in preference to a linear model as it is the correct model for a
 binary outcome.
 
@@ -113,15 +113,15 @@ combination of levels is treated as a distinct group.
 
 Classification thresholds (condition_miss_class):
 
-- "condition_structured" : Tjur's R² \>= 0.5
+- "condition_structured" : Tjur's R^2 \>= 0.5
 
-- "mixed" : Tjur's R² in \[0.2, 0.5)
+- "mixed" : Tjur's R^2 in \[0.2, 0.5)
 
-- "condition_independent": Tjur's R² \< 0.2
+- "condition_independent": Tjur's R^2 \< 0.2
 
 - "uninformative" : excluded due to min_observed / min_missing filters
 
-These thresholds are heuristic — inspect the score distribution before
+These thresholds are heuristic – inspect the score distribution before
 applying fixed cutoffs to your dataset.
 
 ## See also
@@ -143,7 +143,7 @@ result <- condition_miss_score(obj, i = 1,
 
 # Inspect per-feature results
 hist(result$scores, breaks = 40,
-     xlab = "Condition missingness score (Tjur's R²)",
+     xlab = "Condition missingness score (Tjur's R^2)",
      main = "Missingness structure by condition")
 print(result$global)
 head(result$summary)

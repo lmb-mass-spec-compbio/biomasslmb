@@ -113,7 +113,7 @@ tmt_qf <- readQFeatures(assayData = psm_tmt_total,
  name = "psms_raw")
 
 # extract the UniProt accessions from the contaminant FASTA headers
-contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta_inf)
+contaminant_accessions <- get_crap_fasta_accessions(contaminant_fasta_inf)
 
 # filter the PSMs
 psm2 <- filter_features_pd_dda(

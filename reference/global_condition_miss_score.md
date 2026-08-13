@@ -63,14 +63,14 @@ A list with the following elements:
 
 - tjur_intensity_only:
 
-  Numeric. Tjur's R² of the intensity-only model. The discrimination
-  between missing and observed explained by feature abundance alone —
+  Numeric. Tjur's R^2 of the intensity-only model. The discrimination
+  between missing and observed explained by feature abundance alone –
   the universal intensity-dependent baseline present in all proteomics
   data.
 
 - tjur_incremental:
 
-  Numeric. The increase in Tjur's R² when condition is added on top of
+  Numeric. The increase in Tjur's R^2 when condition is added on top of
   intensity. This is the primary quantity of interest:
   condition-predictable missingness beyond what intensity already
   explains. Near zero means missingness is purely intensity-driven;
@@ -85,8 +85,8 @@ A list with the following elements:
 
 - tjur_full:
 
-  Numeric. Tjur's R² of the full model (intensity + condition). Equal to
-  tjur_intensity_only + tjur_incremental.
+  Numeric. Tjur's R^2 of the full model (intensity + condition). Equal
+  to tjur_intensity_only + tjur_incremental.
 
 - lrt_chi2:
 
@@ -99,7 +99,7 @@ A list with the following elements:
 
 - lrt_pvalue:
 
-  Numeric. P-value for the LRT — tests whether condition adds
+  Numeric. P-value for the LRT – tests whether condition adds
   significant explanatory power over intensity alone.
 
 - model_intensity:
@@ -127,16 +127,16 @@ A list with the following elements:
 mod_intensity : missing ~ intensity mod_full : missing ~ intensity +
 group
 
-The incremental Tjur's R² (full - intensity) is the primary quantity of
+The incremental Tjur's R^2 (full - intensity) is the primary quantity of
 interest: it measures the missingness that can be predicted from
 experimental condition beyond what feature abundance alone would
 predict.
 
-Note: in proteomics, intensity-dependent missingness is universal — all
-datasets will show a non-zero intensity-only Tjur R². The incremental
+Note: in proteomics, intensity-dependent missingness is universal – all
+datasets will show a non-zero intensity-only Tjur R^2. The incremental
 term isolates the additional, condition-specific component.
 
-Tjur's R² (discrimination coefficient) is computed as:
+Tjur's R^2 (discrimination coefficient) is computed as:
 
 mean(P(missing \| truly missing)) - mean(P(missing \| truly observed))
 
@@ -162,12 +162,12 @@ The decomposition is:
 tjur_full = tjur_intensity_only + tjur_incremental
 
 A large tjur_intensity_only with small tjur_incremental means
-missingness is driven by abundance uniformly across conditions — the
+missingness is driven by abundance uniformly across conditions – the
 typical baseline. A substantial tjur_incremental means certain features
 are specifically depleted in particular conditions beyond what their
 overall abundance would predict.
 
-**Important limitation — cancellation of opposing condition effects:**
+**Important limitation – cancellation of opposing condition effects:**
 
 Because the group coefficients are estimated once across all features
 simultaneously, this function measures whether one condition tends to
@@ -186,12 +186,12 @@ may be near zero, and `tjur_incremental` can be close to zero even when
 every missing value in the dataset is condition-structured.
 
 If your experiment may contain features with opposing
-condition-missingness patterns — which is common when comparing multiple
-biological conditions — use
+condition-missingness patterns – which is common when comparing multiple
+biological conditions – use
 [`condition_miss_index`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_index.md)
 on the output of
 [`condition_miss_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_score.md)
-instead. `condition_miss_index` aggregates absolute per-feature Tjur R²
+instead. `condition_miss_index` aggregates absolute per-feature Tjur R^2
 scores and is immune to this cancellation problem.
 `global_condition_miss_score` is best suited to experiments where you
 expect missingness to be directionally consistent across features (e.g.
@@ -200,7 +200,7 @@ one condition is globally lower abundance).
 ## References
 
 Tjur T (2009). Coefficients of determination in logistic regression
-models — a new proposal: the coefficient of discrimination. The American
+models – a new proposal: the coefficient of discrimination. The American
 Statistician, 63(4), 366-372.
 
 ## See also
@@ -215,7 +215,7 @@ if (FALSE) { # \dontrun{
 idx <- global_condition_miss_score(obj, i = "peptides", group_cols = "condition")
 
 # Primary quantities
-cat("Intensity-only Tjur R²:  ", round(idx$tjur_intensity_only,  3), "\n")
+cat("Intensity-only Tjur R^2:  ", round(idx$tjur_intensity_only,  3), "\n")
 cat("Incremental (condition): ", round(idx$tjur_incremental,     3), "\n")
 cat("Condition fraction:      ", round(idx$tjur_condition_fraction, 3), "\n")
 cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")

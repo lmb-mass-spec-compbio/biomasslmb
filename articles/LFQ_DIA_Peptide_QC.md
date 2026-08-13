@@ -479,6 +479,12 @@ proteins. Whether this is appropriate will depend on your data in hand.
 
 ``` r
 
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(dia_qf, overwrite=TRUE)
+```
+
+``` r
+
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
@@ -525,25 +531,24 @@ sessionInfo()
 #> [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               
 #> [34] bslib_0.12.0            stringi_1.8.9           RColorBrewer_1.1-3     
 #> [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.2             
-#> [40] knitr_1.51              usethis_3.2.1           BiocBaseUtils_1.12.0   
-#> [43] Matrix_1.7-4            splines_4.5.3           igraph_2.3.3           
-#> [46] tidyselect_1.2.1        abind_1.4-8             yaml_2.3.12            
-#> [49] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
-#> [52] withr_3.0.3             KEGGREST_1.50.0         S7_0.2.2               
-#> [55] evaluate_1.0.5          uniprotREST_1.0.0       desc_1.4.3             
-#> [58] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
-#> [61] corrplot_0.95           checkmate_2.3.4         rprojroot_2.1.1        
-#> [64] scales_1.4.0            xtable_1.8-8            glue_1.8.1             
-#> [67] lazyeval_0.2.3          tools_4.5.3             robustbase_0.99-7      
-#> [70] annotate_1.88.0         fs_2.1.0                XML_3.99-0.23          
-#> [73] grid_4.5.3              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
-#> [76] naniar_1.1.0            cli_3.6.6               textshaping_1.0.5      
-#> [79] S4Arrays_1.10.1         AnnotationFilter_1.34.0 gtable_0.3.6           
-#> [82] DEoptimR_1.2-0          sass_0.4.10             digest_0.6.39          
-#> [85] SparseArray_1.10.10     htmlwidgets_1.6.4       farver_2.1.2           
-#> [88] memoise_2.0.1           htmltools_0.5.9         pkgdown_2.2.1          
-#> [91] lifecycle_1.0.5         httr_1.4.8              bit64_4.8.2            
-#> [94] MASS_7.3-65
+#> [40] knitr_1.51              BiocBaseUtils_1.12.0    Matrix_1.7-4           
+#> [43] splines_4.5.3           igraph_2.3.3            tidyselect_1.2.1       
+#> [46] abind_1.4-8             yaml_2.3.12             lattice_0.22-9         
+#> [49] tibble_3.3.1            plyr_1.8.9              withr_3.0.3            
+#> [52] KEGGREST_1.50.0         S7_0.2.2                evaluate_1.0.5         
+#> [55] uniprotREST_1.0.0       desc_1.4.3              survival_3.8-6         
+#> [58] Biostrings_2.78.0       pillar_1.11.1           corrplot_0.95          
+#> [61] checkmate_2.3.4         scales_1.4.0            xtable_1.8-8           
+#> [64] glue_1.8.1              lazyeval_0.2.3          tools_4.5.3            
+#> [67] robustbase_0.99-7       annotate_1.88.0         fs_2.1.0               
+#> [70] XML_3.99-0.23           grid_4.5.3              MsCoreUtils_1.22.1     
+#> [73] AnnotationDbi_1.72.0    naniar_1.1.0            cli_3.6.6              
+#> [76] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
+#> [79] gtable_0.3.6            DEoptimR_1.2-0          sass_0.4.10            
+#> [82] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
+#> [85] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
+#> [88] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.8             
+#> [91] bit64_4.8.2             MASS_7.3-65
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

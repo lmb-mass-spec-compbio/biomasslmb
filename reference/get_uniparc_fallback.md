@@ -25,6 +25,14 @@ Intended to be called only with the subset of accessions that came back
 empty/`"deleted"` from a prior `uniprot_map()` call, not a full
 accession list.
 
+The two lookups this requires (UniProtKB entry, then UniParc entry) are
+each done for all `accessions` in parallel via
+[`httr2::req_perform_parallel()`](https://httr2.r-lib.org/reference/req_perform_parallel.html),
+rather than one accession at a time, since this is the dominant runtime
+cost of
+[`get_uniprot_details`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.md)
+for inputs with many retired accessions.
+
 ## Usage
 
 ``` r

@@ -12,7 +12,7 @@ add_tm_info(query_result)
 
 ## Arguments
 
-- query_resul:
+- query_result:
 
   `data.frame` output of query_protein_tm_topology
 
@@ -23,68 +23,9 @@ add_tm_info(query_result)
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 query_result <- query_protein_tm_topology(uniprotIDs)
-#> Waiting 4s for retry backoff ■■■■■■■■■                       
-#> Waiting 4s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■         
-#> Waiting 4s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
-#> Waiting 6s for retry backoff ■■■■■■■■■■■■                    
-#> Waiting 6s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   
-#> Waiting 6s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
-#> Waiting 4s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■        
-#> Waiting 4s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  
-#> Waiting 31s for retry backoff ■■                              
-#> Waiting 31s for retry backoff ■■■■■                           
-#> Waiting 31s for retry backoff ■■■■■■■■                        
-#> Waiting 31s for retry backoff ■■■■■■■■■■■                     
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■                  
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■               
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■■■■            
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■         
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■       
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■    
-#> Waiting 31s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
-#> Waiting 60s for retry backoff ■                               
-#> Waiting 60s for retry backoff ■■■                             
-#> Waiting 60s for retry backoff ■■■■                            
-#> Waiting 60s for retry backoff ■■■■■■                          
-#> Waiting 60s for retry backoff ■■■■■■■                         
-#> Waiting 60s for retry backoff ■■■■■■■■■                       
-#> Waiting 60s for retry backoff ■■■■■■■■■■                      
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■                    
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■                   
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■                 
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■                
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■              
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■             
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■           
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■          
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■        
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■       
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■     
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■    
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
-#> Waiting 60s for retry backoff ■                               
-#> Waiting 60s for retry backoff ■■■                             
-#> Waiting 60s for retry backoff ■■■■                            
-#> Waiting 60s for retry backoff ■■■■■■                          
-#> Waiting 60s for retry backoff ■■■■■■■                         
-#> Waiting 60s for retry backoff ■■■■■■■■■                       
-#> Waiting 60s for retry backoff ■■■■■■■■■■                      
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■                    
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■                   
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■                 
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■                
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■              
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■             
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■           
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■          
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■        
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■       
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■     
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■    
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  
-#> Waiting 60s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
 query_result_parsed <- add_tm_info(query_result)
+} # }
 ```

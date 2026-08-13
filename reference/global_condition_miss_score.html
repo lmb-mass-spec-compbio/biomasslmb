@@ -106,13 +106,13 @@ your data has not already been log-transformed. Default: FALSE.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with the following elements:</p><dl><dt>tjur_intensity_only</dt>
-<dd><p>Numeric. Tjur's R² of the intensity-only
+<dd><p>Numeric. Tjur's R^2 of the intensity-only
 model. The discrimination between missing and observed explained by
-feature abundance alone — the universal intensity-dependent baseline
+feature abundance alone – the universal intensity-dependent baseline
 present in all proteomics data.</p></dd>
 
 <dt>tjur_incremental</dt>
-<dd><p>Numeric. The increase in Tjur's R² when
+<dd><p>Numeric. The increase in Tjur's R^2 when
 condition is added on top of intensity. This is the primary quantity
 of interest: condition-predictable missingness beyond what intensity
 already explains. Near zero means missingness is purely
@@ -126,7 +126,7 @@ than intensity-driven. Ranges from 0 (all intensity-driven) to 1 (all
 condition-predictable).</p></dd>
 
 <dt>tjur_full</dt>
-<dd><p>Numeric. Tjur's R² of the full model
+<dd><p>Numeric. Tjur's R^2 of the full model
 (intensity + condition). Equal to tjur_intensity_only +
 tjur_incremental.</p></dd>
 
@@ -138,7 +138,7 @@ ratio test of the full vs intensity-only model.</p></dd>
 <dd><p>Integer. Degrees of freedom for the LRT.</p></dd>
 
 <dt>lrt_pvalue</dt>
-<dd><p>Numeric. P-value for the LRT — tests whether
+<dd><p>Numeric. P-value for the LRT – tests whether
 condition adds significant explanatory power over intensity alone.</p></dd>
 
 <dt>model_intensity</dt>
@@ -163,13 +163,13 @@ key quantities.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>mod_intensity : missing ~ intensity
 mod_full      : missing ~ intensity + group</p>
-<p>The incremental Tjur's R² (full - intensity) is the primary quantity of
+<p>The incremental Tjur's R^2 (full - intensity) is the primary quantity of
 interest: it measures the missingness that can be predicted from experimental
 condition beyond what feature abundance alone would predict.</p>
-<p>Note: in proteomics, intensity-dependent missingness is universal — all
-datasets will show a non-zero intensity-only Tjur R². The incremental term
+<p>Note: in proteomics, intensity-dependent missingness is universal – all
+datasets will show a non-zero intensity-only Tjur R^2. The incremental term
 isolates the additional, condition-specific component.</p>
-<p>Tjur's R² (discrimination coefficient) is computed as:</p>
+<p>Tjur's R^2 (discrimination coefficient) is computed as:</p>
 <p>mean(P(missing | truly missing)) - mean(P(missing | truly observed))</p>
 <p>It ranges from 0 (no discrimination) to 1 (perfect discrimination) and is
 a natural measure of how well the model separates missing from observed.</p>
@@ -187,11 +187,11 @@ DPC curves are typically modelled.</p>
 <p>The decomposition is:</p>
 <p>tjur_full = tjur_intensity_only + tjur_incremental</p>
 <p>A large tjur_intensity_only with small tjur_incremental means missingness
-is driven by abundance uniformly across conditions — the typical baseline.
+is driven by abundance uniformly across conditions – the typical baseline.
 A substantial tjur_incremental means certain features are specifically
 depleted in particular conditions beyond what their overall abundance
 would predict.</p>
-<p><strong>Important limitation — cancellation of opposing condition effects:</strong></p>
+<p><strong>Important limitation – cancellation of opposing condition effects:</strong></p>
 <p>Because the group coefficients are estimated once across all features
 simultaneously, this function measures whether one condition tends to have
 more missingness than another <em>on average across all features</em>. It
@@ -207,10 +207,10 @@ vice versa for condition Y. The net group coefficients may be near zero,
 and <code>tjur_incremental</code> can be close to zero even when every missing
 value in the dataset is condition-structured.</p>
 <p>If your experiment may contain features with opposing condition-missingness
-patterns — which is common when comparing multiple biological conditions —
+patterns – which is common when comparing multiple biological conditions –
 use <code><a href="condition_miss_index.html">condition_miss_index</a></code> on the output of
 <code><a href="condition_miss_score.html">condition_miss_score</a></code> instead.
-<code>condition_miss_index</code> aggregates absolute per-feature Tjur R² scores
+<code>condition_miss_index</code> aggregates absolute per-feature Tjur R^2 scores
 and is immune to this cancellation problem.
 <code>global_condition_miss_score</code> is best suited to experiments where you
 expect missingness to be directionally consistent across features (e.g. one
@@ -218,7 +218,7 @@ condition is globally lower abundance).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Tjur T (2009). Coefficients of determination in logistic regression models —
+    <p>Tjur T (2009). Coefficients of determination in logistic regression models –
 a new proposal: the coefficient of discrimination.
 The American Statistician, 63(4), 366-372.</p>
     </div>
@@ -233,7 +233,7 @@ The American Statistician, 63(4), 366-372.</p>
 <span class="r-in"><span><span class="va">idx</span> <span class="op">&lt;-</span> <span class="fu">global_condition_miss_score</span><span class="op">(</span><span class="va">obj</span>, i <span class="op">=</span> <span class="st">"peptides"</span>, group_cols <span class="op">=</span> <span class="st">"condition"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Primary quantities</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Intensity-only Tjur R²:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">tjur_intensity_only</span>,  <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Intensity-only Tjur R^2:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">tjur_intensity_only</span>,  <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Incremental (condition): "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">tjur_incremental</span>,     <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Condition fraction:      "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">tjur_condition_fraction</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"LRT p-value:             "</span>, <span class="fu"><a href="https://rdrr.io/r/base/format.pval.html" class="external-link">format.pval</a></span><span class="op">(</span><span class="va">idx</span><span class="op">$</span><span class="va">lrt_pvalue</span><span class="op">)</span>,        <span class="st">"\n"</span><span class="op">)</span></span></span>

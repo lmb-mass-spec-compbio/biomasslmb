@@ -54,6 +54,14 @@ plot_pca(
 
   `numeric`. Principle component to plot on x-axis
 
+- ...:
+
+  additional arguments passed onto
+  [`pcaMethods::pca`](https://rdrr.io/pkg/pcaMethods/man/pca.html) (when
+  `allowing_missing=TRUE`) or
+  [`stats::prcomp`](https://rdrr.io/r/stats/prcomp.html) (when
+  `allowing_missing=FALSE`)
+
 ## Value
 
 Returns a *ggplot* object.

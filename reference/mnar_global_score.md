@@ -13,6 +13,13 @@ in a future release.
 mnar_global_score(...)
 ```
 
+## Arguments
+
+- ...:
+
+  arguments passed on to
+  [`global_condition_miss_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)
+
 ## See also
 
 [`global_condition_miss_score`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)

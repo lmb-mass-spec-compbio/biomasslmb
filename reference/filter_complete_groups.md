@@ -51,7 +51,7 @@ This is a utility used internally by
 and
 [`global_condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md),
 but is exported for use in any context where you need a clean sample set
-with complete group annotations — for example, before building a design
+with complete group annotations – for example, before building a design
 matrix or running differential abundance testing.
 
 ## See also

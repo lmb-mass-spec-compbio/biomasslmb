@@ -1,6 +1,7 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/404.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/CLAUDE.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/LICENSE-text.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/LICENSE.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/LFQ_DDA_Peptide_QC_Summarisation.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/LFQ_DIA_Peptide_QC.html</loc></url>
@@ -61,6 +62,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/index.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/lfq_qf.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_fasta.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_unique_all.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mask_protein_level_quant.html</loc></url>

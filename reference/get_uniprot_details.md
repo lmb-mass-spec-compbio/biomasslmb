@@ -16,7 +16,7 @@ is used to recover the last-known annotation from UniParc.
 ## Usage
 
 ``` r
-get_uniprot_details(accessions, verbosity = 0)
+get_uniprot_details(accessions, verbosity = 0, check_complete = "error")
 ```
 
 ## Arguments
@@ -31,6 +31,16 @@ get_uniprot_details(accessions, verbosity = 0)
   accessions come back from `uniprot_map()` as multiple rows (they have
   subsequently been 'demerged'); these are collapsed to one row per
   accession, with `;`-separated values where the demerged rows differed.
+
+- check_complete:
+
+  `string`, one of `"error"` (default), `"warn"`, or `"none"`. Passed to
+  [`uniprotREST::uniprot_map()`](https://csdaw.github.io/uniprotREST/reference/uniprot_map.html),
+  which compares the number of submitted accessions against the number
+  mapped plus the number UniProt reports as failed, to catch ID mapping
+  jobs that silently return a truncated result. See
+  [`?uniprotREST::uniprot_map`](https://csdaw.github.io/uniprotREST/reference/uniprot_map.html)
+  for details.
 
 ## Value
 

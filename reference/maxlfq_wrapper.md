@@ -1,6 +1,8 @@
 # Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures
 
-This function wraps `iq::maxLFQ()` so it can be passed to
+This function wraps
+[`iq::maxLFQ()`](https://rdrr.io/pkg/iq/man/maxLFQ.html) so it can be
+passed to
 [`QFeatures::aggregateFeatures()`](https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html)
 as the `fun` argument. It expects a numeric matrix with peptides as rows
 and samples as columns, and returns a numeric vector of protein-level
@@ -21,7 +23,8 @@ maxlfq_wrapper(mat, ...)
 
 - ...:
 
-  Additional arguments passed to `iq::maxLFQ()`.
+  Additional arguments passed to
+  [`iq::maxLFQ()`](https://rdrr.io/pkg/iq/man/maxLFQ.html).
 
 ## Value
 
@@ -33,8 +36,8 @@ containing protein-level abundance estimates.
 The MaxLFQ algorithm computes protein abundances from peptide
 intensities by using peptide ratios across samples and solving a
 least-squares system. This wrapper extracts the `estimate` component
-returned by `iq::maxLFQ()` and coerces it to a numeric vector, suitable
-for
+returned by [`iq::maxLFQ()`](https://rdrr.io/pkg/iq/man/maxLFQ.html) and
+coerces it to a numeric vector, suitable for
 [`aggregateFeatures()`](https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html).
 
 ## Examples

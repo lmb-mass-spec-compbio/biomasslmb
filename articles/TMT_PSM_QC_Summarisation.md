@@ -419,6 +419,12 @@ protein. From these two plots, we can see that the filtering to ensure
 that all proteins have \>1 PSM removed only a few PSMs, but many
 proteins. Whether this is appropriate will depend on your data in hand.
 
+``` r
+
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(tmt_qf, overwrite=TRUE)
+```
+
 ### Summary
 
 Here, we have QCed the PSMs and filtered them in the following steps:
@@ -486,28 +492,27 @@ sessionInfo()
 #>  [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.12.0           
 #>  [34] stringi_1.8.9           RColorBrewer_1.1-3      genefilter_1.92.0      
 #>  [37] rpart_4.1.24            jquerylib_0.1.4         Rcpp_1.1.2             
-#>  [40] knitr_1.51              usethis_3.2.1           base64enc_0.1-6        
-#>  [43] BiocBaseUtils_1.12.0    nnet_7.3-20             Matrix_1.7-4           
-#>  [46] splines_4.5.3           igraph_2.3.3            tidyselect_1.2.1       
-#>  [49] rstudioapi_0.19.0       abind_1.4-8             yaml_2.3.12            
-#>  [52] lattice_0.22-9          tibble_3.3.1            plyr_1.8.9             
-#>  [55] withr_3.0.3             KEGGREST_1.50.0         S7_0.2.2               
-#>  [58] evaluate_1.0.5          uniprotREST_1.0.0       foreign_0.8-91         
-#>  [61] desc_1.4.3              survival_3.8-6          Biostrings_2.78.0      
-#>  [64] pillar_1.11.1           corrplot_0.95           checkmate_2.3.4        
-#>  [67] rprojroot_2.1.1         scales_1.4.0            xtable_1.8-8           
-#>  [70] glue_1.8.1              Hmisc_5.2-6             lazyeval_0.2.3         
-#>  [73] tools_4.5.3             data.table_1.18.4       robustbase_0.99-7      
-#>  [76] annotate_1.88.0         fs_2.1.0                XML_3.99-0.23          
-#>  [79] grid_4.5.3              cutr_0.0.0.9000         colorspace_2.1-3       
-#>  [82] MsCoreUtils_1.22.1      AnnotationDbi_1.72.0    htmlTable_2.5.0        
-#>  [85] Formula_1.2-6           naniar_1.1.0            cli_3.6.6              
-#>  [88] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
-#>  [91] gtable_0.3.6            DEoptimR_1.2-0          sass_0.4.10            
-#>  [94] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
-#>  [97] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
-#> [100] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.8             
-#> [103] bit64_4.8.2             MASS_7.3-65
+#>  [40] knitr_1.51              base64enc_0.1-6         BiocBaseUtils_1.12.0   
+#>  [43] nnet_7.3-20             Matrix_1.7-4            splines_4.5.3          
+#>  [46] igraph_2.3.3            tidyselect_1.2.1        rstudioapi_0.19.0      
+#>  [49] abind_1.4-8             yaml_2.3.12             lattice_0.22-9         
+#>  [52] tibble_3.3.1            plyr_1.8.9              withr_3.0.3            
+#>  [55] KEGGREST_1.50.0         S7_0.2.2                evaluate_1.0.5         
+#>  [58] uniprotREST_1.0.0       foreign_0.8-91          desc_1.4.3             
+#>  [61] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
+#>  [64] corrplot_0.95           checkmate_2.3.4         scales_1.4.0           
+#>  [67] xtable_1.8-8            glue_1.8.1              Hmisc_5.2-6            
+#>  [70] lazyeval_0.2.3          tools_4.5.3             data.table_1.18.4      
+#>  [73] robustbase_0.99-7       annotate_1.88.0         fs_2.1.0               
+#>  [76] XML_3.99-0.23           grid_4.5.3              cutr_0.0.0.9000        
+#>  [79] colorspace_2.1-3        MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
+#>  [82] htmlTable_2.5.0         Formula_1.2-6           naniar_1.1.0           
+#>  [85] cli_3.6.6               textshaping_1.0.5       S4Arrays_1.10.1        
+#>  [88] AnnotationFilter_1.34.0 gtable_0.3.6            DEoptimR_1.2-0         
+#>  [91] sass_0.4.10             digest_0.6.39           SparseArray_1.10.10    
+#>  [94] htmlwidgets_1.6.4       farver_2.1.2            memoise_2.0.1          
+#>  [97] htmltools_0.5.9         pkgdown_2.2.1           lifecycle_1.0.5        
+#> [100] httr_1.4.8              bit64_4.8.2             MASS_7.3-65
 ```
 
 McAlister, Graeme C., David P. Nusinow, Mark P. Jedrychowski, et al.

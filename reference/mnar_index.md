@@ -13,6 +13,13 @@ in a future release.
 mnar_index(...)
 ```
 
+## Arguments
+
+- ...:
+
+  arguments passed on to
+  [`condition_miss_index`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_index.md)
+
 ## Details
 
 Note:

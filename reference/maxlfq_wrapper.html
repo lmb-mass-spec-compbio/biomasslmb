@@ -46,7 +46,7 @@ returns a numeric vector of protein-level intensities."></head><body>
     </div>
 
     <div class="ref-description section level2">
-    <p>This function wraps <code>iq::maxLFQ()</code> so it can be passed to
+    <p>This function wraps <code><a href="https://rdrr.io/pkg/iq/man/maxLFQ.html" class="external-link">iq::maxLFQ()</a></code> so it can be passed to
 <code><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">QFeatures::aggregateFeatures()</a></code> as the <code>fun</code> argument. It expects
 a numeric matrix with peptides as rows and samples as columns, and
 returns a numeric vector of protein-level intensities.</p>
@@ -67,7 +67,7 @@ columns = samples). Missing values should be <code>NA</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments passed to <code>iq::maxLFQ()</code>.</p></dd>
+<dd><p>Additional arguments passed to <code><a href="https://rdrr.io/pkg/iq/man/maxLFQ.html" class="external-link">iq::maxLFQ()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -80,7 +80,7 @@ columns = samples). Missing values should be <code>NA</code>.</p></dd>
     <p>The MaxLFQ algorithm computes protein abundances from peptide
 intensities by using peptide ratios across samples and solving a
 least-squares system. This wrapper extracts the <code>estimate</code> component
-returned by <code>iq::maxLFQ()</code> and coerces it to a numeric vector,
+returned by <code><a href="https://rdrr.io/pkg/iq/man/maxLFQ.html" class="external-link">iq::maxLFQ()</a></code> and coerces it to a numeric vector,
 suitable for <code><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">aggregateFeatures()</a></code>.</p>
     </div>
 

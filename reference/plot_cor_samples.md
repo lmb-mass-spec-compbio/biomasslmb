@@ -22,6 +22,10 @@ plot_cor_samples(obj, i, order = "original", ...)
 
   `string`. Index for the SummarizedExperiment you wish to plot
 
+- order:
+
+  `character` ordering method passed onto corrplot::corrplot
+
 - ...:
 
   addiional arguments passed onto corrplot::corrplot
@@ -42,6 +46,5 @@ tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
 #> Formatting sample annotations (colData).
 #> Formatting data as a 'QFeatures' object.
 
-cor_sample(tmt_qf, 'psms_raw')
-#> Error in cor_sample(tmt_qf, "psms_raw"): could not find function "cor_sample"
+plot_cor_samples(tmt_qf, 'psms_raw')
 ```

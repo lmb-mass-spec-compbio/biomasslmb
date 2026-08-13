@@ -113,6 +113,8 @@
 - [`global_condition_miss_score()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/global_condition_miss_score.md)
   : Compute a dataset-level score of condition-predictable missingness
   using logistic regression
+- [`lfq_qf`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/lfq_qf.md)
+  : LFQ-DDA data
 - [`make_fasta()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_fasta.md)
   : Make a FASTA using UniProt accessions
 - [`make_unique_all()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/make_unique_all.md)

@@ -14,6 +14,10 @@ get_go_terms(UniprotID, expand_terms = FALSE, verbosity = 0)
 
 ## Arguments
 
+- UniprotID:
+
+  `character vector` Uniprot IDs
+
 - expand_terms:
 
   `logical` Should GO terms be expanded to include all ancestors
@@ -22,10 +26,6 @@ get_go_terms(UniprotID, expand_terms = FALSE, verbosity = 0)
 
   `integer` Verbosity level for uniprotREST::uniprot_map
 
-- uniprotIDs:
-
-  `character vector` Uniprot IDs
-
 ## Value
 
 `data.frame` object.
@@ -33,7 +33,8 @@ get_go_terms(UniprotID, expand_terms = FALSE, verbosity = 0)
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 get_go_terms(uniprotIDs, expand_terms=TRUE)
-#> Error in (function (cond) .Internal(C_tryCatchHelper(addr, 1L, cond)))(structure(list(message = "there is no package called ‘GO.db’",     call = loadNamespace(x), package = "GO.db", lib.loc = NULL), class = c("packageNotFoundError", "error", "condition"))): error in evaluating the argument 'x' in selecting a method for function 'select': there is no package called ‘GO.db’
+} # }
 ```

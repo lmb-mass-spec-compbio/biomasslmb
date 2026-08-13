@@ -69,7 +69,7 @@ annotation from UniParc.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_uniprot_details</span><span class="op">(</span><span class="va">accessions</span>, verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_uniprot_details</span><span class="op">(</span><span class="va">accessions</span>, verbosity <span class="op">=</span> <span class="fl">0</span>, check_complete <span class="op">=</span> <span class="st">"error"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -85,6 +85,14 @@ annotation from UniParc.</p>
 Some accessions come back from <code>uniprot_map()</code> as multiple rows (they have
 subsequently been 'demerged'); these are collapsed to one row per
 accession, with <code>;</code>-separated values where the demerged rows differed.</p></dd>
+
+
+<dt id="arg-check-complete">check_complete<a class="anchor" aria-label="anchor" href="#arg-check-complete"></a></dt>
+<dd><p><code>string</code>, one of <code>"error"</code> (default), <code>"warn"</code>, or
+<code>"none"</code>. Passed to <code><a href="https://csdaw.github.io/uniprotREST/reference/uniprot_map.html" class="external-link">uniprotREST::uniprot_map()</a></code>, which compares the
+number of submitted accessions against the number mapped plus the number
+UniProt reports as failed, to catch ID mapping jobs that silently return a
+truncated result. See <code><a href="https://csdaw.github.io/uniprotREST/reference/uniprot_map.html" class="external-link">?uniprotREST::uniprot_map</a></code> for details.</p></dd>
 
 </dl></div>
     <div class="section level2">

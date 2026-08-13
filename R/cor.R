@@ -7,6 +7,7 @@
 #'
 #' @param obj `QFeatures`. Proteomics dataset
 #' @param i `string`. Index for the SummarizedExperiment you wish to plot
+#' @param order `character` ordering method passed onto corrplot::corrplot
 #' @param ... addiional arguments passed onto corrplot::corrplot
 #' @return Returns a _ggplot_ object.
 #' @export
@@ -17,7 +18,7 @@
 #'   quantCols = 36:45,
 #'   name = "psms_raw")
 #'
-#' cor_sample(tmt_qf, 'psms_raw')
+#' plot_cor_samples(tmt_qf, 'psms_raw')
 plot_cor_samples <- function(obj, i, order='original', ...){
 
   check_q(obj)

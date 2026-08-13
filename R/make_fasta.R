@@ -21,7 +21,9 @@
 #' @return Returns a FASTA file saved to disk at the specified file path.
 #' @examples
 #' # specify some UniProt accessions
-#' crap <- get_ccp_crap()
+#' crap_fasta <- system.file("extdata", "cRAP_20190401.fasta.gz",
+#'                           package = "biomasslmb")
+#' crap <- get_crap_fasta_accessions(crap_fasta)
 #'
 #' \dontrun{
 #' make_fasta(crap, "2021-01_cRAP.fasta")
@@ -161,6 +163,7 @@ sub_crap <- function(x, start = 1, width = 3) {
 #' is incremented for each release of a given year, e.g. 2010_01, 2010_02, etc.
 #'
 #' @examples
+#' \dontrun{
 #' # print release number to console
 #' check_uniprot_release()
 #'
@@ -168,6 +171,7 @@ sub_crap <- function(x, start = 1, width = 3) {
 #' rls <- check_uniprot_release()
 #'
 #' paste0("folder/filename_", rls, ".fasta")
+#' }
 #'
 #' @export
 check_uniprot_release <- function() {

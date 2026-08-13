@@ -38,6 +38,12 @@ with no clean way to disambiguate; resolving via the entry's own
 Intended to be called only with the subset of accessions that came back
 empty/\code{"deleted"} from a prior \code{uniprot_map()} call, not a full accession
 list.
+
+The two lookups this requires (UniProtKB entry, then UniParc entry) are
+each done for all \code{accessions} in parallel via \code{httr2::req_perform_parallel()},
+rather than one accession at a time, since this is the dominant runtime
+cost of \code{\link{get_uniprot_details}} for inputs with many retired
+accessions.
 }
 \examples{
 \dontrun{

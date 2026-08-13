@@ -33,6 +33,6 @@ from a matrix (columns=samples, rows=features) with an associated feature to pro
 Within the matrix, some values may be missing (NA). In order to correctly identify which proteins can
 be quantified, we need to start from the feature level object and create a mask
 which we can use to replace protein-level quantification values with NA.
-This is what this function does. This can then be combined with the \code{\link{mask_protein_quant}} function
+This is what this function does. This can then be combined with the \code{\link{mask_protein_level_quant}} function
 to replace protein level quantification values with NA where they were derived from too few quantification values
 }

@@ -26,8 +26,6 @@ add_filter_ptm_pos_rowdata_mq(
 equals the number of PTMs in the peptide}
 
 \item{verbose}{\code{logical} Describe the number of PTMs detected}
-
-\item{ptm_encoding_pos}{\code{character} name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values}
 }
 \value{
 Returns a \code{SummarizedExperiment} with an additional column in the RowData describing the position of the PTMs with respect to the peptide sequence

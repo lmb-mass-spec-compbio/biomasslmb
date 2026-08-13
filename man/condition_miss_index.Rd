@@ -20,7 +20,7 @@ of \code{condition_miss_score()}. Must contain columns:
 mean score. One of:
 \describe{
 \item{"miss_frac"}{(Default) Weight each feature by its missingness
-fraction. Features with more missing values contribute more — they
+fraction. Features with more missing values contribute more -- they
 represent a larger share of the imputation/modelling challenge.}
 \item{"equal"}{Unweighted mean across all informative features.}
 }}
@@ -40,7 +40,7 @@ A list with the following elements:
 index. Values near 0 indicate missingness that is not predictable from
 condition; values near 1 indicate missingness that is strongly
 structured by experimental condition.}
-\item{weighted_mean_score}{Numeric. The weighted mean Tjur R² across
+\item{weighted_mean_score}{Numeric. The weighted mean Tjur R^2 across
 informative features, before any coverage penalty is applied.}
 \item{coverage}{Numeric. Fraction of features that were informative
 (had scoreable missingness).}
@@ -52,7 +52,7 @@ applied.}
 }
 }
 \description{
-Aggregates the per-feature Tjur R² scores produced by
+Aggregates the per-feature Tjur R^2 scores produced by
 \code{condition_miss_score()} into a single value in 0-1 representing how
 strongly experimental condition predicts missingness across the dataset.
 }
@@ -66,7 +66,7 @@ opposing patterns as condition-structured missingness.
 The index is computed as follows:
 \enumerate{
 \item Uninformative features (NA score) are excluded.
-\item The weighted mean Tjur R² is computed across informative features,
+\item The weighted mean Tjur R^2 is computed across informative features,
 using \code{miss_frac} or equal weights depending on \code{weight_by}.
 \item If \code{coverage_penalty = TRUE}, the result is multiplied by the
 fraction of all features that were informative.

@@ -17,7 +17,7 @@ r <- HEAD("https://rest.uniprot.org/uniprot/P60709.fasta")
 r$handle <- NULL
 r$request <- NULL
 
-dst <- "tests/testthat/make_fasta/rest.uniprot.org/uniprot/P60709.fasta-HEAD.R"
+dst <- "tests/mocks/fa/rest.uniprot.org/uniprot/P60709.fasta-HEAD.R"
 dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
 f <- file(dst, "wb", encoding = "UTF-8")
 dput(r, file = f)

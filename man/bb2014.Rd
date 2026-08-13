@@ -8,7 +8,7 @@ using external screening p-values (e.g., F-test p-values)}
 bb2014(mtx_p, p_screen, alpha = 0.05)
 }
 \arguments{
-\item{mtx_p}{Matrix of raw p-values (families × hypotheses)}
+\item{mtx_p}{Matrix of raw p-values (families x hypotheses)}
 
 \item{p_screen}{Vector of screening p-values (one per family)}
 

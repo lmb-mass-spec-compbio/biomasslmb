@@ -3,7 +3,8 @@ test_that("get_tm_info parses start/end/length/type from TRANSMEM segments", {
 
   result <- get_tm_info(trans_info_string)
 
-  expect_equal(result, c("1;45", "20;67", "19;22", "Extracellular;Cytoplasmic",
+  # Lengths are inclusive of both endpoints: 1..20 is 20 residues, 45..67 is 23
+  expect_equal(result, c("1;45", "20;67", "20;23", "Extracellular;Cytoplasmic",
                           "Cytoplasmic;Extracellular"))
 })
 
@@ -13,6 +14,11 @@ test_that("get_tm_info returns NA for empty input", {
 
 test_that("get_tm_info returns NA for beta-stranded segments", {
   result <- get_tm_info("1..20; /note=Beta stranded")
+  expect_equal(result, rep(NA, 5))
+})
+
+test_that("get_tm_info returns NA when only some segments are beta-stranded", {
+  result <- get_tm_info(c("1..20; /note=Beta stranded", "45..67; /note=Helical"))
   expect_equal(result, rep(NA, 5))
 })
 
@@ -30,13 +36,13 @@ test_that("add_tm_info adds per-protein transmembrane columns", {
   expect_equal(result$n_tms, c(2, 1))
   expect_equal(result$tm_start, c("1;45", "10"))
   expect_equal(result$tm_end, c("20;67", "30"))
-  expect_equal(result$tm_length, c("19;22", "20"))
+  expect_equal(result$tm_length, c("20;23", "21"))
   expect_equal(result$tm_types, c("Extracellular;Cytoplasmic", "Extracellular"))
   expect_equal(result$tm_types_set, c("Cytoplasmic;Extracellular", "Extracellular"))
 })
 
 test_that("get_topology parses topology, termini, and ranges", {
-  # single-residue segment ("21", no "..") exercises the end = start + 1 branch
+  # single-residue segment ("21", no "..") starts and ends at 21, length 1
   topology_string <- c("1..20; /note=Extracellular", "21; /note=Helical", "22..50; /note=Cytoplasmic")
 
   result <- get_topology(topology_string)
@@ -46,8 +52,8 @@ test_that("get_topology parses topology, termini, and ranges", {
     "Extracellular",
     "Cytoplasmic",
     "1;21;22",
-    "20;22;50",
-    "19;1;28"
+    "20;21;50",
+    "20;1;29"
   ))
 })
 
@@ -74,5 +80,5 @@ test_that("add_topology_info adds per-protein topology columns", {
   expect_equal(out$c_term, c("Extracellular", "Extracellular"))
   expect_equal(out$topology_start, c("1;21;45", "1;10"))
   expect_equal(out$topology_end, c("20;44;70", "9;30"))
-  expect_equal(out$topology_length, c("19;23;25", "8;20"))
+  expect_equal(out$topology_length, c("20;24;26", "9;21"))
 })

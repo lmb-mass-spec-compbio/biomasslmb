@@ -1,6 +1,6 @@
-httptest2::.mockPaths(testthat::test_path("uniprot_go"))
+httptest2::.mockPaths(testthat::test_path("..", "mocks", "go"))
 
-# Mock files under uniprot_go/ were recorded from the real UniProt ID mapping
+# Mock files under tests/mocks/go/ were recorded from the real UniProt ID mapping
 # API via httptest2::capture_requests(simplify = FALSE) against
 # c("O76024", "Q03135"), expand_terms = FALSE. simplify = FALSE is required
 # for the same reason as tests/testthat/test-query_protein_tm_topology.R.

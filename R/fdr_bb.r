@@ -17,7 +17,7 @@ bh_with_alpha <- function(p, alpha) {
 #' Benjamini & Bogomolov (2014) selective-inference adjustment
 #' using external screening p-values (e.g., F-test p-values)
 #'
-#' @param mtx_p     Matrix of raw p-values (families × hypotheses)
+#' @param mtx_p     Matrix of raw p-values (families x hypotheses)
 #' @param p_screen  Vector of screening p-values (one per family)
 #' @param alpha     Target FDR level across selected families
 #'

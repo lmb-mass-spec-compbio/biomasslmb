@@ -27,6 +27,11 @@ tls <- function(formula, data, ...) {
 
 #' Predict method for tls_model
 #'
+#' @param object `tls_model` object as returned by `tls_fit`
+#' @param newdata `data.frame` with an `x` column, or a `numeric` vector of x values
+#' @param se.fit `logical` Not supported for TLS; an error is raised if TRUE
+#' @param ... ignored, present for consistency with the `predict` generic
+#' @return `numeric` vector of predicted y values.
 #' @export
 predict.tls_model <- function(object, newdata, se.fit = FALSE, ...) {
   if (is.data.frame(newdata) && "x" %in% names(newdata)) {

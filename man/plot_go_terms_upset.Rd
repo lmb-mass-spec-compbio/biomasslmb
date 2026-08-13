@@ -29,7 +29,7 @@ Returns a \code{ggplot} object.
 }
 \description{
 This function plots a set of GO terms of interest.
-be run after \code{\link{get_enriched_go}} and \code{\link{estimate_go_overrep}}.
+be run after \code{\link{get_enriched_go}} and \code{\link{estimate_overrep}}.
 To avoid plotting too many terms, you may wish to use
 \code{\link{remove_redundant_go}} first too. A warning is shown if you try
 and plot more than 100 GO terms.

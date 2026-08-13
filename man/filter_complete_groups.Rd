@@ -33,7 +33,7 @@ columns. Both the assay matrix and colData are filtered consistently.
 \details{
 This is a utility used internally by \code{condition_miss_score()} and
 \code{global_condition_miss_score()}, but is exported for use in any context
-where you need a clean sample set with complete group annotations — for
+where you need a clean sample set with complete group annotations -- for
 example, before building a design matrix or running differential abundance
 testing.
 }

@@ -11,6 +11,8 @@ plot_cor_samples(obj, i, order = "original", ...)
 
 \item{i}{\code{string}. Index for the SummarizedExperiment you wish to plot}
 
+\item{order}{\code{character} ordering method passed onto corrplot::corrplot}
+
 \item{...}{addiional arguments passed onto corrplot::corrplot}
 }
 \value{
@@ -28,5 +30,5 @@ tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
   quantCols = 36:45,
   name = "psms_raw")
 
-cor_sample(tmt_qf, 'psms_raw')
+plot_cor_samples(tmt_qf, 'psms_raw')
 }

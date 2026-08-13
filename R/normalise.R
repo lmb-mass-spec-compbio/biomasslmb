@@ -32,6 +32,7 @@ get_medians <- function(obj){
 #' @return Returns a `SummarisedExperiment` with the assay data column center-median
 #' normalised
 #'
+#' @importFrom SummarizedExperiment "assay<-"
 #' @export
 center_normalise_to_ref <- function(obj, medians,
                                     center_to_zero=FALSE,

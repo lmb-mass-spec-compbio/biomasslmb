@@ -6,6 +6,9 @@
 \usage{
 mnar_global_score(...)
 }
+\arguments{
+\item{...}{arguments passed on to \code{\link{global_condition_miss_score}}}
+}
 \description{
 \code{mnar_global_score()} has been renamed to
 \code{\link{global_condition_miss_score}()} to better reflect that the score

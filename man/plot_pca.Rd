@@ -29,6 +29,9 @@ plot_pca(
 \item{x}{\code{numeric}. Principle component to plot on x-axis}
 
 \item{y}{\code{numeric}. Principle component to plot on x-axis}
+
+\item{...}{additional arguments passed onto \code{pcaMethods::pca} (when
+\code{allowing_missing=TRUE}) or \code{stats::prcomp} (when \code{allowing_missing=FALSE})}
 }
 \value{
 Returns a \emph{ggplot} object.

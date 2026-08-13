@@ -7,11 +7,11 @@
 get_go_terms(UniprotID, expand_terms = FALSE, verbosity = 0)
 }
 \arguments{
+\item{UniprotID}{\verb{character vector} Uniprot IDs}
+
 \item{expand_terms}{\code{logical} Should GO terms be expanded to include all ancestors}
 
 \item{verbosity}{\code{integer} Verbosity level for uniprotREST::uniprot_map}
-
-\item{uniprotIDs}{\verb{character vector} Uniprot IDs}
 }
 \value{
 \code{data.frame} object.
@@ -23,6 +23,8 @@ can be helpful when using GO over-representation/enrichment tools that do not
 consider the GO term heirarchy. Note that expansion will significantly increase the run-time
 }
 \examples{
+\dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 get_go_terms(uniprotIDs, expand_terms=TRUE)
+}
 }

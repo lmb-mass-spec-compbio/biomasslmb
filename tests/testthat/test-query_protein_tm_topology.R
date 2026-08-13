@@ -1,6 +1,6 @@
-httptest2::.mockPaths(testthat::test_path("uniprot_tm_topology"))
+httptest2::.mockPaths(testthat::test_path("..", "mocks", "tm"))
 
-# Mock files under uniprot_tm_topology/ were recorded from the real UniProt ID
+# Mock files under tests/mocks/tm/ were recorded from the real UniProt ID
 # mapping API via httptest2::capture_requests(simplify = FALSE) against
 # c("O76024", "Q03135"). simplify = FALSE is required here (rather than the
 # plain-text default) because uniprot_map()'s internal polling logic reads the
@@ -22,5 +22,15 @@ test_that("query_protein_tm_topology returns TM/topology columns for real access
     expect_true(grepl("^TRANSMEM 314\\.\\.334", result$Transmembrane[1]))
     expect_equal(result$Transmembrane[2], "")
     expect_true(grepl("^INTRAMEM 105\\.\\.125", result$Intramembrane[2]))
+  })
+})
+
+test_that("get_protein_tm_topology chains query_protein_tm_topology with the TM/topology parsers", {
+  httptest2::with_mock_api({
+    result <- get_protein_tm_topology(c("O76024", "Q03135"))
+
+    expect_equal(result$UniprotID, c("O76024", "Q03135"))
+    expect_equal(result$n_tms, c(11, 0))
+    expect_equal(result$tm_start[[1]], "314;340;402;427;465;496;529;563;589;632;870")
   })
 })

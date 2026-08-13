@@ -12,7 +12,7 @@
 library(httptest)
 library(httr)
 
-capture_requests(path = "tests/testthat/uniparc_fallback", {
+capture_requests(path = "tests/mocks/up", {
   GET("https://rest.uniprot.org/uniprotkb/A0A5G2QPJ4.json")
   GET("https://rest.uniprot.org/uniparc/UPI0020B0616E.json")
   GET("https://rest.uniprot.org/uniprotkb/P04406.json")
@@ -22,7 +22,7 @@ capture_requests(path = "tests/testthat/uniparc_fallback", {
 # reads `entryType` from it (it returns early once the entry is active), so
 # after recording, trim it down to just the top-level fields:
 #
-# tests/testthat/uniparc_fallback/rest.uniprot.org/uniprotkb/P04406.json.json
+# tests/mocks/up/rest.uniprot.org/uniprotkb/P04406.json.json
 # {
 #     "entryType": "UniProtKB reviewed (Swiss-Prot)",
 #     "primaryAccession": "P04406",

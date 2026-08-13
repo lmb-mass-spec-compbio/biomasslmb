@@ -6,6 +6,9 @@
 \usage{
 mnar_index(...)
 }
+\arguments{
+\item{...}{arguments passed on to \code{\link{condition_miss_index}}}
+}
 \description{
 \code{mnar_index()} has been renamed to \code{\link{condition_miss_index}()}
 to better reflect that the index summarises missingness predictable from

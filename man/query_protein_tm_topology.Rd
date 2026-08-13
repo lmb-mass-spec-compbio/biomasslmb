@@ -18,6 +18,8 @@ query_protein_tm_topology(uniprotIDs, verbosity = 0)
 Given a set of UniProt IDs, this function returns the information regarding transmembrane domains and topology.
 }
 \examples{
+\dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 query_protein_tm_topology(uniprotIDs)
+}
 }

@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{TMT QC PSM-level quantification and summarisation to protein-level abundance}
+  %\VignetteIndexEntry{TMT - comparing protein summarisation approaches}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

@@ -1,3 +1,12 @@
+# Select the most recently-updated UniParc cross-reference that has both a
+# gene name and a protein name (some cross-references, e.g. Ensembl, carry a
+# gene name but no protein name; Protein.names is a required output column).
+pick_best_uniparc_xref <- function(xrefs){
+  named <- Filter(function(x) !is.null(x$geneName) && !is.null(x$proteinName), xrefs)
+  if(length(named)==0) return(NULL)
+  named[[which.max(as.Date(sapply(named, `[[`, "lastUpdated")))]]
+}
+
 get_uniparc_fallback_one <- function(accession){
 
   entry <- httr::content(
@@ -15,12 +24,8 @@ get_uniparc_fallback_one <- function(accession){
     as = "parsed"
   )$uniParcCrossReferences
 
-  # some cross-references (e.g. Ensembl) carry a geneName but no proteinName;
-  # require both since Protein.names is a required output column
-  named <- Filter(function(x) !is.null(x$geneName) && !is.null(x$proteinName), xrefs)
-  if(length(named)==0) return(NULL)
-
-  best <- named[[which.max(as.Date(sapply(named, `[[`, "lastUpdated")))]]
+  best <- pick_best_uniparc_xref(xrefs)
+  if(is.null(best)) return(NULL)
 
   data.frame(
     UniprotID = accession,
@@ -30,6 +35,26 @@ get_uniparc_fallback_one <- function(accession){
     Annotation.Source = "UniParc (retired UniProtKB entry)",
     stringsAsFactors = FALSE
   )
+}
+
+# GET a batch of UniProt JSON entries in parallel via httr2. UniProt doesn't
+# publish a rate limit for these single-entry read endpoints; 10 req/s is
+# comfortably above what get_uniparc_fallback_one()'s one-at-a-time httr::GET
+# calls could ever sustain, while still leaving room below any undocumented
+# server-side limit. on_error = "continue" means a single failed/erroring
+# fetch (e.g. a 404) drops out as NULL rather than aborting the whole batch,
+# matching get_uniparc_fallback_one()'s existing "unresolvable accessions are
+# just omitted" behaviour.
+fetch_uniprot_json_parallel <- function(urls){
+  if(length(urls)==0) return(list())
+
+  reqs <- lapply(urls, uniprotREST::uniprot_request, rate = 10)
+  resps <- httr2::req_perform_parallel(reqs, on_error = "continue")
+
+  lapply(resps, function(resp){
+    if(!inherits(resp, "httr2_response")) return(NULL)
+    httr2::resp_body_json(resp)
+  })
 }
 
 #' Recover annotations for retired UniProtKB accessions via UniParc
@@ -57,6 +82,12 @@ get_uniparc_fallback_one <- function(accession){
 #' empty/`"deleted"` from a prior `uniprot_map()` call, not a full accession
 #' list.
 #'
+#' The two lookups this requires (UniProtKB entry, then UniParc entry) are
+#' each done for all `accessions` in parallel via `httr2::req_perform_parallel()`,
+#' rather than one accession at a time, since this is the dominant runtime
+#' cost of \code{\link{get_uniprot_details}} for inputs with many retired
+#' accessions.
+#'
 #' @param accessions `character vector` UniProt accessions to resolve via UniParc.
 #' @return `data.frame` with columns `UniprotID`, `Gene.Names`,
 #' `Gene.Names.First`, `Protein.names`, `Annotation.Source`. Accessions that
@@ -69,15 +100,48 @@ get_uniparc_fallback_one <- function(accession){
 #' }
 get_uniparc_fallback <- function(accessions){
 
-  results <- Filter(Negate(is.null), lapply(accessions, get_uniparc_fallback_one))
+  empty_result <- data.frame(
+    UniprotID = character(), Gene.Names = character(),
+    Gene.Names.First = character(), Protein.names = character(),
+    Annotation.Source = character(), stringsAsFactors = FALSE
+  )
 
-  if(length(results)==0){
-    return(data.frame(
-      UniprotID = character(), Gene.Names = character(),
-      Gene.Names.First = character(), Protein.names = character(),
-      Annotation.Source = character(), stringsAsFactors = FALSE
-    ))
-  }
+  if(length(accessions)==0) return(empty_result)
+
+  kb_entries <- fetch_uniprot_json_parallel(
+    sprintf("https://rest.uniprot.org/uniprotkb/%s.json", accessions)
+  )
+
+  upis <- vapply(kb_entries, function(entry){
+    if(is.null(entry) || !identical(entry$entryType, "Inactive")) return(NA_character_)
+    upi <- entry$extraAttributes$uniParcId
+    if(is.null(upi)) NA_character_ else upi
+  }, character(1))
+
+  needs_uniparc <- !is.na(upis)
+  if(!any(needs_uniparc)) return(empty_result)
+
+  sel_accessions <- accessions[needs_uniparc]
+  uc_entries <- fetch_uniprot_json_parallel(
+    sprintf("https://rest.uniprot.org/uniparc/%s.json", upis[needs_uniparc])
+  )
+
+  results <- Map(function(accession, entry){
+    if(is.null(entry)) return(NULL)
+    best <- pick_best_uniparc_xref(entry$uniParcCrossReferences)
+    if(is.null(best)) return(NULL)
+    data.frame(
+      UniprotID = accession,
+      Gene.Names = best$geneName,
+      Gene.Names.First = best$geneName,
+      Protein.names = best$proteinName,
+      Annotation.Source = "UniParc (retired UniProtKB entry)",
+      stringsAsFactors = FALSE
+    )
+  }, sel_accessions, uc_entries)
+
+  results <- Filter(Negate(is.null), results)
+  if(length(results)==0) return(empty_result)
 
   do.call(rbind, results)
 }
@@ -99,6 +163,11 @@ get_uniparc_fallback <- function(accessions){
 #' Some accessions come back from `uniprot_map()` as multiple rows (they have
 #' subsequently been 'demerged'); these are collapsed to one row per
 #' accession, with `;`-separated values where the demerged rows differed.
+#' @param check_complete `string`, one of `"error"` (default), `"warn"`, or
+#' `"none"`. Passed to `uniprotREST::uniprot_map()`, which compares the
+#' number of submitted accessions against the number mapped plus the number
+#' UniProt reports as failed, to catch ID mapping jobs that silently return a
+#' truncated result. See `?uniprotREST::uniprot_map` for details.
 #'
 #' @return `data.frame` with one row per accession and columns `UniprotID`,
 #' `Entry.Name`, `Reviewed`, `Protein.names`, `Gene.Names`, `Organism`,
@@ -113,13 +182,14 @@ get_uniparc_fallback <- function(accessions){
 #' \dontrun{
 #' get_uniprot_details(c('O76024', 'Q03135', 'A0A5G2QPJ4'))
 #' }
-get_uniprot_details <- function(accessions, verbosity=0){
+get_uniprot_details <- function(accessions, verbosity=0, check_complete='error'){
 
   uniprot2details_raw <- uniprotREST::uniprot_map(
     accessions,
     from='UniProtKB_AC-ID',
     method='stream',
-    verbosity=verbosity) %>%
+    verbosity=verbosity,
+    check_complete=check_complete) %>%
     dplyr::rename('UniprotID'=From) %>%
     select(-Entry) %>%
     mutate(Gene.Names.First=gsub(' .*','', Gene.Names))

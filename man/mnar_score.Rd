@@ -6,6 +6,9 @@
 \usage{
 mnar_score(...)
 }
+\arguments{
+\item{...}{arguments passed on to \code{\link{condition_miss_score}}}
+}
 \description{
 \code{mnar_score()} has been renamed to \code{\link{condition_miss_score}()}
 to better reflect that the score measures missingness predictable from

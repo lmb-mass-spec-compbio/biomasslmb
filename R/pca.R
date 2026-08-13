@@ -12,6 +12,8 @@
 #' @param shape_by `string`. ColData column to shape points by
 #' @param x `numeric`. Principle component to plot on x-axis
 #' @param y `numeric`. Principle component to plot on x-axis
+#' @param ... additional arguments passed onto `pcaMethods::pca` (when
+#' `allowing_missing=TRUE`) or `stats::prcomp` (when `allowing_missing=FALSE`)
 #' @return Returns a _ggplot_ object.
 #' @export
 plot_pca <- function(obj,

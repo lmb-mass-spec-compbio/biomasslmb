@@ -17,12 +17,13 @@ RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 biocViews: Software, Proteomics, QuantitativeProteomics
 BiocVersion: 3.22
-Remotes: 
+Remotes:
     moodymudskipper/cutr,
-    csdaw/uniprotREST
-Depends: 
-    R (>= 3.5.0)
-Imports: 
+    TomSmithCGAT/uniprotREST@check-complete-response
+Depends:
+    R (>= 4.1.0)
+Imports:
+    AnnotationDbi,
     Biostrings,
     cleaver,
     corrplot,
@@ -30,13 +31,36 @@ Imports:
     dplyr,
     genefilter,
     ggplot2,
+    GO.db,
+    goseq,
     grDevices,
     httr,
+    httr2,
+    iq,
+    magrittr,
+    MatrixGenerics,
+    methods,
     naniar,
     purrr,
     QFeatures,
     robustbase,
+    S4Vectors,
+    stats,
+    SummarizedExperiment,
+    tibble,
     tidyr,
     uniprotREST,
+    UpSetR,
+    utils
+Suggests:
+    httptest,
+    httptest2,
+    knitr,
+    matrixStats,
+    MsCoreUtils,
+    pcaMethods,
+    rmarkdown,
+    testthat (>= 3.0.0),
     usethis
+Config/testthat/edition: 3
 URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/

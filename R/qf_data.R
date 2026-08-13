@@ -5,6 +5,13 @@
 #' @keywords datasets
 "tmt_qf"
 
+#' LFQ-DDA data
+#'
+#' @description Qfeature containing LFQ-DDA data processed in the `LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance` vignette
+#'
+#' @keywords datasets
+"lfq_qf"
+
 #' DIA data
 #'
 #' @description Qfeature containing DIA data processed in the `LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance` vignette

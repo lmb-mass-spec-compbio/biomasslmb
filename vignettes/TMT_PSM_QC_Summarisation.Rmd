@@ -269,7 +269,7 @@ plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
 
 In this case, because we have removed all missing values, the last two experiments have identical counts for the number of samples for each protein. From these two plots, we can see that the filtering to ensure that all proteins have \>1 PSM removed only a few PSMs, but many proteins. Whether this is appropriate will depend on your data in hand.
 
-```{r, include = FALSE}
+```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes
 usethis::use_data(tmt_qf, overwrite=TRUE)
 ```

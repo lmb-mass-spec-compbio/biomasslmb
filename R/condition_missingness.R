@@ -6,7 +6,7 @@
 #'
 #' This is a utility used internally by \code{condition_miss_score()} and
 #' \code{global_condition_miss_score()}, but is exported for use in any context
-#' where you need a clean sample set with complete group annotations — for
+#' where you need a clean sample set with complete group annotations -- for
 #' example, before building a design matrix or running differential abundance
 #' testing.
 #'
@@ -41,7 +41,7 @@
 #' @export
 filter_complete_groups <- function(obj, i, group_cols) {
 
-  # ── Input validation ──────────────────────────────────────────────────────────
+  # -- Input validation ----------------------------------------------------------
 
   check_q(obj)
   check_se_exists(obj, i)
@@ -56,7 +56,7 @@ filter_complete_groups <- function(obj, i, group_cols) {
     ))
   }
 
-  # ── Subset colData to this assay's samples ────────────────────────────────────
+  # -- Subset colData to this assay's samples ------------------------------------
 
   mat        <- SummarizedExperiment::assay(obj[[i]])
   sample_ids <- colnames(mat)
@@ -70,7 +70,7 @@ filter_complete_groups <- function(obj, i, group_cols) {
 
   cd_assay <- cd[sample_ids, , drop = FALSE]
 
-  # ── Identify and remove samples with NA in any group column ───────────────────
+  # -- Identify and remove samples with NA in any group column -------------------
 
   na_mask <- rowSums(is.na(cd_assay[, group_cols, drop = FALSE])) > 0
   removed <- rownames(cd_assay)[na_mask]
@@ -97,13 +97,13 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #' Score features by how well missingness can be predicted by experimental condition
 #'
 #' For each feature, fits a logistic regression of binary missingness against
-#' one or more experimental group variables from colData. Tjur's R²
+#' one or more experimental group variables from colData. Tjur's R^2
 #' (discrimination coefficient) of this model is used as a per-feature score:
 #' high values indicate that missingness is structured by experimental condition
 #' (condition-structured), while values near zero indicate missingness is
 #' unrelated to condition (condition-independent).
 #'
-#' Note: in proteomics, all missingness is partly intensity-dependent — low-
+#' Note: in proteomics, all missingness is partly intensity-dependent -- low-
 #' abundance features are more likely to be missing regardless of condition.
 #' This function measures the additional, condition-specific component: whether
 #' missingness is systematically higher in some conditions than others for a
@@ -127,7 +127,7 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #' @return A list with the following elements:
 #'   \describe{
 #'     \item{scores}{Named numeric vector of per-feature condition missingness
-#'       scores (Tjur's R²).}
+#'       scores (Tjur's R^2).}
 #'     \item{summary}{A data.frame with per-feature details: n_observed,
 #'       n_missing, miss_frac, condition_miss_score, condition_miss_class.}
 #'     \item{global}{A named numeric vector with dataset-level summaries:
@@ -139,20 +139,20 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #'   }
 #'
 #' @details
-#' The score for each feature is Tjur's R² (discrimination coefficient)
+#' The score for each feature is Tjur's R^2 (discrimination coefficient)
 #' from a logistic regression:
 #'
 #'   missing_indicator ~ group
 #'
 #' where missing_indicator is 1 if the value is missing and 0 if observed,
-#' and group is a factor combining the specified colData columns. Tjur's R² is
+#' and group is a factor combining the specified colData columns. Tjur's R^2 is
 #' computed as the difference in mean predicted probabilities between missing
 #' and observed values:
 #'
-#'   Tjur's R² = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
+#'   Tjur's R^2 = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
 #'
-#' It ranges from 0 (no discrimination — condition-independent) to 1 (perfect
-#' discrimination — condition-structured). Logistic regression is used in
+#' It ranges from 0 (no discrimination -- condition-independent) to 1 (perfect
+#' discrimination -- condition-structured). Logistic regression is used in
 #' preference to a linear model as it is the correct model for a binary outcome.
 #'
 #' If multiple group_cols are provided they are combined into a single
@@ -160,12 +160,12 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #' of levels is treated as a distinct group.
 #'
 #' Classification thresholds (condition_miss_class):
-#'   - "condition_structured" : Tjur's R² >= 0.5
-#'   - "mixed"                : Tjur's R² in [0.2, 0.5)
-#'   - "condition_independent": Tjur's R² <  0.2
+#'   - "condition_structured" : Tjur's R^2 >= 0.5
+#'   - "mixed"                : Tjur's R^2 in [0.2, 0.5)
+#'   - "condition_independent": Tjur's R^2 <  0.2
 #'   - "uninformative"        : excluded due to min_observed / min_missing filters
 #'
-#' These thresholds are heuristic — inspect the score distribution before
+#' These thresholds are heuristic -- inspect the score distribution before
 #' applying fixed cutoffs to your dataset.
 #'
 #' @examples
@@ -181,7 +181,7 @@ filter_complete_groups <- function(obj, i, group_cols) {
 #'
 #' # Inspect per-feature results
 #' hist(result$scores, breaks = 40,
-#'      xlab = "Condition missingness score (Tjur's R²)",
+#'      xlab = "Condition missingness score (Tjur's R^2)",
 #'      main = "Missingness structure by condition")
 #' print(result$global)
 #' head(result$summary)
@@ -196,7 +196,7 @@ condition_miss_score <- function(obj,
                                  min_missing   = 1,
                                  store_results = TRUE) {
 
-  # ── Input validation ──────────────────────────────────────────────────────────
+  # -- Input validation ----------------------------------------------------------
 
   check_q(obj)
   check_se_exists(obj, i)
@@ -218,7 +218,7 @@ condition_miss_score <- function(obj,
     stop("`min_missing` must be a positive integer.")
   }
 
-  # ── Extract assay and construct group factor ──────────────────────────────────
+  # -- Extract assay and construct group factor ----------------------------------
 
   se         <- obj[[i]]
   mat        <- SummarizedExperiment::assay(se)
@@ -253,7 +253,7 @@ condition_miss_score <- function(obj,
          "Check that your group_cols have sufficient variation.")
   }
 
-  # ── Per-feature scoring ───────────────────────────────────────────────────────
+  # -- Per-feature scoring -------------------------------------------------------
 
   miss_mat <- is.na(mat)
   sep_env  <- new.env(parent = emptyenv())
@@ -267,7 +267,7 @@ condition_miss_score <- function(obj,
 
     # Perfect separation: missingness is fully determined by group
     # (e.g. always missing in condition A, never in condition B).
-    # glm will not converge in this case; Tjur's R² = 1 is correct.
+    # glm will not converge in this case; Tjur's R^2 = 1 is correct.
     per_group_var <- tapply(as.numeric(m), group, stats::var)
     if (all(per_group_var == 0, na.rm = TRUE)) return(1.0)
 
@@ -283,19 +283,19 @@ condition_miss_score <- function(obj,
       }
     )
     preds <- stats::fitted(mod)
-    mean(preds[m]) - mean(preds[!m])  # Tjur's R²
+    mean(preds[m]) - mean(preds[!m])  # Tjur's R^2
   }, numeric(1))
 
   if (sep_env$count > 0L) {
     message(sprintf(
-      "%d feature(s) showed near-complete separation (missingness almost fully determined by group). Tjur's R² for these features will be close to 1 — this indicates strongly condition-structured missingness and is expected.",
+      "%d feature(s) showed near-complete separation (missingness almost fully determined by group). Tjur's R^2 for these features will be close to 1 -- this indicates strongly condition-structured missingness and is expected.",
       sep_env$count
     ))
   }
 
   names(scores) <- rownames(mat)
 
-  # ── Per-feature summary table ─────────────────────────────────────────────────
+  # -- Per-feature summary table -------------------------------------------------
 
   n_obs_vec  <- rowSums(!miss_mat)
   n_miss_vec <- rowSums(miss_mat)
@@ -318,7 +318,7 @@ condition_miss_score <- function(obj,
     stringsAsFactors     = FALSE
   )
 
-  # ── Dataset-level summary ─────────────────────────────────────────────────────
+  # -- Dataset-level summary -----------------------------------------------------
 
   n_total  <- nrow(summary_df)
   n_inform <- sum(condition_miss_class != "uninformative")
@@ -342,7 +342,7 @@ condition_miss_score <- function(obj,
     global["prop_condition_independent"] * 100
   ))
 
-  # ── Optionally write results into rowData ─────────────────────────────────────
+  # -- Optionally write results into rowData -------------------------------------
 
   if (store_results) {
     rd                       <- as.data.frame(SummarizedExperiment::rowData(se))
@@ -369,12 +369,12 @@ condition_miss_score <- function(obj,
 #'   mod_intensity : missing ~ intensity
 #'   mod_full      : missing ~ intensity + group
 #'
-#' The incremental Tjur's R² (full - intensity) is the primary quantity of
+#' The incremental Tjur's R^2 (full - intensity) is the primary quantity of
 #' interest: it measures the missingness that can be predicted from experimental
 #' condition beyond what feature abundance alone would predict.
 #'
-#' Note: in proteomics, intensity-dependent missingness is universal — all
-#' datasets will show a non-zero intensity-only Tjur R². The incremental term
+#' Note: in proteomics, intensity-dependent missingness is universal -- all
+#' datasets will show a non-zero intensity-only Tjur R^2. The incremental term
 #' isolates the additional, condition-specific component.
 #'
 #' @param obj A QFeatures object.
@@ -396,11 +396,11 @@ condition_miss_score <- function(obj,
 #'
 #' @return A list with the following elements:
 #'   \describe{
-#'     \item{tjur_intensity_only}{Numeric. Tjur's R² of the intensity-only
+#'     \item{tjur_intensity_only}{Numeric. Tjur's R^2 of the intensity-only
 #'       model. The discrimination between missing and observed explained by
-#'       feature abundance alone — the universal intensity-dependent baseline
+#'       feature abundance alone -- the universal intensity-dependent baseline
 #'       present in all proteomics data.}
-#'     \item{tjur_incremental}{Numeric. The increase in Tjur's R² when
+#'     \item{tjur_incremental}{Numeric. The increase in Tjur's R^2 when
 #'       condition is added on top of intensity. This is the primary quantity
 #'       of interest: condition-predictable missingness beyond what intensity
 #'       already explains. Near zero means missingness is purely
@@ -410,13 +410,13 @@ condition_miss_score <- function(obj,
 #'       explainable missingness (tjur_full) that is condition-predictable rather
 #'       than intensity-driven. Ranges from 0 (all intensity-driven) to 1 (all
 #'       condition-predictable).}
-#'     \item{tjur_full}{Numeric. Tjur's R² of the full model
+#'     \item{tjur_full}{Numeric. Tjur's R^2 of the full model
 #'       (intensity + condition). Equal to tjur_intensity_only +
 #'       tjur_incremental.}
 #'     \item{lrt_chi2}{Numeric. Chi-squared statistic from the likelihood
 #'       ratio test of the full vs intensity-only model.}
 #'     \item{lrt_df}{Integer. Degrees of freedom for the LRT.}
-#'     \item{lrt_pvalue}{Numeric. P-value for the LRT — tests whether
+#'     \item{lrt_pvalue}{Numeric. P-value for the LRT -- tests whether
 #'       condition adds significant explanatory power over intensity alone.}
 #'     \item{model_intensity}{The fitted intensity-only \code{glm} object.}
 #'     \item{model_full}{The fitted full \code{glm} object.}
@@ -427,7 +427,7 @@ condition_miss_score <- function(obj,
 #'   }
 #'
 #' @details
-#' Tjur's R² (discrimination coefficient) is computed as:
+#' Tjur's R^2 (discrimination coefficient) is computed as:
 #'
 #'   mean(P(missing | truly missing)) - mean(P(missing | truly observed))
 #'
@@ -452,12 +452,12 @@ condition_miss_score <- function(obj,
 #'   tjur_full = tjur_intensity_only + tjur_incremental
 #'
 #' A large tjur_intensity_only with small tjur_incremental means missingness
-#' is driven by abundance uniformly across conditions — the typical baseline.
+#' is driven by abundance uniformly across conditions -- the typical baseline.
 #' A substantial tjur_incremental means certain features are specifically
 #' depleted in particular conditions beyond what their overall abundance
 #' would predict.
 #'
-#' \strong{Important limitation — cancellation of opposing condition effects:}
+#' \strong{Important limitation -- cancellation of opposing condition effects:}
 #'
 #' Because the group coefficients are estimated once across all features
 #' simultaneously, this function measures whether one condition tends to have
@@ -476,17 +476,17 @@ condition_miss_score <- function(obj,
 #' value in the dataset is condition-structured.
 #'
 #' If your experiment may contain features with opposing condition-missingness
-#' patterns — which is common when comparing multiple biological conditions —
+#' patterns -- which is common when comparing multiple biological conditions --
 #' use \code{\link{condition_miss_index}} on the output of
 #' \code{\link{condition_miss_score}} instead.
-#' \code{condition_miss_index} aggregates absolute per-feature Tjur R² scores
+#' \code{condition_miss_index} aggregates absolute per-feature Tjur R^2 scores
 #' and is immune to this cancellation problem.
 #' \code{global_condition_miss_score} is best suited to experiments where you
 #' expect missingness to be directionally consistent across features (e.g. one
 #' condition is globally lower abundance).
 #'
 #' @references
-#' Tjur T (2009). Coefficients of determination in logistic regression models —
+#' Tjur T (2009). Coefficients of determination in logistic regression models --
 #' a new proposal: the coefficient of discrimination.
 #' The American Statistician, 63(4), 366-372.
 #'
@@ -495,7 +495,7 @@ condition_miss_score <- function(obj,
 #' idx <- global_condition_miss_score(obj, i = "peptides", group_cols = "condition")
 #'
 #' # Primary quantities
-#' cat("Intensity-only Tjur R²:  ", round(idx$tjur_intensity_only,  3), "\n")
+#' cat("Intensity-only Tjur R^2:  ", round(idx$tjur_intensity_only,  3), "\n")
 #' cat("Incremental (condition): ", round(idx$tjur_incremental,     3), "\n")
 #' cat("Condition fraction:      ", round(idx$tjur_condition_fraction, 3), "\n")
 #' cat("LRT p-value:             ", format.pval(idx$lrt_pvalue),        "\n")
@@ -516,7 +516,7 @@ global_condition_miss_score <- function(obj,
                                         subset_features = TRUE,
                                         log_transform   = FALSE) {
 
-  # ── Input validation ──────────────────────────────────────────────────────────
+  # -- Input validation ----------------------------------------------------------
 
   check_q(obj)
   check_se_exists(obj, i)
@@ -531,7 +531,7 @@ global_condition_miss_score <- function(obj,
     ))
   }
 
-  # ── Extract assay matrix and group factor ─────────────────────────────────────
+  # -- Extract assay matrix and group factor -------------------------------------
 
   filtered <- filter_complete_groups(obj, i, group_cols)
   mat      <- filtered$mat
@@ -549,7 +549,7 @@ global_condition_miss_score <- function(obj,
     stop("At least 2 group levels are required.")
   }
 
-  # ── Optionally subset to informative features ─────────────────────────────────
+  # -- Optionally subset to informative features ---------------------------------
 
   if (subset_features) {
     n_obs  <- rowSums(!is.na(mat))
@@ -569,12 +569,12 @@ global_condition_miss_score <- function(obj,
   n_features <- nrow(mat_use)
   n_samples  <- ncol(mat_use)
 
-  # ── Build long-format data frame ──────────────────────────────────────────────
+  # -- Build long-format data frame ----------------------------------------------
   #
   # One row per (feature, sample) combination:
   #   missing   : binary outcome (1 = missing, 0 = observed)
-  #   group     : fixed effect — experimental condition
-  #   intensity : fixed effect — per-feature mean observed intensity, scaled to
+  #   group     : fixed effect -- experimental condition
+  #   intensity : fixed effect -- per-feature mean observed intensity, scaled to
   #               mean 0 sd 1. Repeated for each sample as it is a feature-level
   #               summary. Log2-transformed first if log_transform = TRUE.
 
@@ -596,17 +596,17 @@ global_condition_miss_score <- function(obj,
     stringsAsFactors = FALSE
   )
 
-  # ── Fit two pooled logistic regressions ──────────────────────────────────────
+  # -- Fit two pooled logistic regressions --------------------------------------
   #
   # Pooled (no random effects) to avoid the per-feature random intercept
   # absorbing the intensity signal it is meant to measure. This is analogous
   # to how DPC curves are fitted.
   #
   # mod_intensity : missing ~ intensity
-  #   Baseline — how much missingness is explained by feature abundance alone.
+  #   Baseline -- how much missingness is explained by feature abundance alone.
   #
   # mod_full      : missing ~ intensity + group
-  #   Adds condition. Incremental Tjur R² is the condition-predictable signal.
+  #   Adds condition. Incremental Tjur R^2 is the condition-predictable signal.
 
   sep_env       <- new.env(parent = emptyenv())
   sep_env$count <- 0L
@@ -633,21 +633,21 @@ global_condition_miss_score <- function(obj,
 
   if (sep_env$count > 0L) {
     message(sprintf(
-      "Near-complete separation detected in %d model fit(s) — some features have missingness almost fully determined by intensity or group. Fitted probabilities close to 0 or 1 are expected for strongly condition-structured features and do not affect Tjur's R².",
+      "Near-complete separation detected in %d model fit(s) -- some features have missingness almost fully determined by intensity or group. Fitted probabilities close to 0 or 1 are expected for strongly condition-structured features and do not affect Tjur's R^2.",
       sep_env$count
     ))
   }
 
-  # ── Likelihood ratio test: does condition add explanatory power? ──────────────
+  # -- Likelihood ratio test: does condition add explanatory power? --------------
 
   lrt        <- anova(mod_intensity, mod_full, test = "Chisq")
   lrt_chi2   <- lrt$Deviance[2]
   lrt_df     <- lrt$Df[2]
   lrt_pvalue <- lrt[["Pr(>Chi)"]][2]
 
-  # ── Tjur's R² for both models ─────────────────────────────────────────────────
+  # -- Tjur's R^2 for both models -------------------------------------------------
   #
-  # Tjur's R² = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
+  # Tjur's R^2 = mean(P(missing | truly missing)) - mean(P(missing | truly observed))
   # Ranges from 0 (no discrimination) to 1 (perfect discrimination).
 
   .tjur_r2 <- function(mod, missing_vec) {
@@ -664,12 +664,12 @@ global_condition_miss_score <- function(obj,
   else
     NA_real_
 
-  # ── Interpret ─────────────────────────────────────────────────────────────────
+  # -- Interpret -----------------------------------------------------------------
 
   interpretation <- sprintf(paste(
-    "Intensity-only Tjur R²  = %.3f: discrimination between missing and",
+    "Intensity-only Tjur R^2  = %.3f: discrimination between missing and",
     "observed explained by feature abundance alone (intensity-dependent baseline).",
-    "Incremental Tjur R²     = %.3f: additional discrimination explained by",
+    "Incremental Tjur R^2     = %.3f: additional discrimination explained by",
     "experimental condition beyond intensity (condition-predictable signal).",
     "Condition fraction       = %.3f: %.1f%% of explainable missingness is",
     "condition-predictable rather than purely intensity-driven.",
@@ -683,15 +683,15 @@ global_condition_miss_score <- function(obj,
   )
 
   message(sprintf(
-    "Intensity-only Tjur R²: %.4f | Incremental (condition) Tjur R²: %.4f | Condition fraction: %.3f",
+    "Intensity-only Tjur R^2: %.4f | Incremental (condition) Tjur R^2: %.4f | Condition fraction: %.3f",
     tjur_intensity_only, tjur_incremental, tjur_condition_fraction
   ))
   message(sprintf(
-    "LRT: chi²(df=%d) = %.2f, p = %s",
+    "LRT: chi^2(df=%d) = %.2f, p = %s",
     lrt_df, lrt_chi2, format.pval(lrt_pvalue, digits = 3)
   ))
 
-  # ── Return ────────────────────────────────────────────────────────────────────
+  # -- Return --------------------------------------------------------------------
 
   invisible(list(
     tjur_intensity_only     = tjur_intensity_only,
@@ -712,7 +712,7 @@ global_condition_miss_score <- function(obj,
 
 #' Summarise per-feature condition missingness scores into a dataset-level index
 #'
-#' Aggregates the per-feature Tjur R² scores produced by
+#' Aggregates the per-feature Tjur R^2 scores produced by
 #' \code{condition_miss_score()} into a single value in 0-1 representing how
 #' strongly experimental condition predicts missingness across the dataset.
 #'
@@ -730,7 +730,7 @@ global_condition_miss_score <- function(obj,
 #'   mean score. One of:
 #'   \describe{
 #'     \item{"miss_frac"}{(Default) Weight each feature by its missingness
-#'       fraction. Features with more missing values contribute more — they
+#'       fraction. Features with more missing values contribute more -- they
 #'       represent a larger share of the imputation/modelling challenge.}
 #'     \item{"equal"}{Unweighted mean across all informative features.}
 #'   }
@@ -748,7 +748,7 @@ global_condition_miss_score <- function(obj,
 #'       index. Values near 0 indicate missingness that is not predictable from
 #'       condition; values near 1 indicate missingness that is strongly
 #'       structured by experimental condition.}
-#'     \item{weighted_mean_score}{Numeric. The weighted mean Tjur R² across
+#'     \item{weighted_mean_score}{Numeric. The weighted mean Tjur R^2 across
 #'       informative features, before any coverage penalty is applied.}
 #'     \item{coverage}{Numeric. Fraction of features that were informative
 #'       (had scoreable missingness).}
@@ -763,7 +763,7 @@ global_condition_miss_score <- function(obj,
 #' The index is computed as follows:
 #'
 #' 1. Uninformative features (NA score) are excluded.
-#' 2. The weighted mean Tjur R² is computed across informative features,
+#' 2. The weighted mean Tjur R^2 is computed across informative features,
 #'    using \code{miss_frac} or equal weights depending on \code{weight_by}.
 #' 3. If \code{coverage_penalty = TRUE}, the result is multiplied by the
 #'    fraction of all features that were informative.
@@ -798,7 +798,7 @@ condition_miss_index <- function(summary_df,
                                  weight_by        = c("miss_frac", "equal"),
                                  coverage_penalty = TRUE) {
 
-  # ── Input validation ──────────────────────────────────────────────────────────
+  # -- Input validation ----------------------------------------------------------
 
   weight_by <- match.arg(weight_by)
 
@@ -806,9 +806,9 @@ condition_miss_index <- function(summary_df,
   missing_cols  <- setdiff(required_cols, colnames(summary_df))
   if (length(missing_cols) > 0) {
     stop(sprintf(
-      "summary_df is missing required column(s): %s\n",
-      "Pass the $summary element from condition_miss_score() directly.",
-      paste(missing_cols, collapse = ", ")
+      "summary_df is missing required column(s): %s\n%s",
+      paste(missing_cols, collapse = ", "),
+      "Pass the $summary element from condition_miss_score() directly."
     ))
   }
 
@@ -816,7 +816,7 @@ condition_miss_index <- function(summary_df,
     stop("`coverage_penalty` must be a single logical value (TRUE or FALSE).")
   }
 
-  # ── Separate informative and uninformative features ───────────────────────────
+  # -- Separate informative and uninformative features ---------------------------
 
   n_total       <- nrow(summary_df)
   informative   <- summary_df[summary_df$condition_miss_class != "uninformative", ]
@@ -838,7 +838,7 @@ condition_miss_index <- function(summary_df,
     ))
   }
 
-  # ── Compute weighted mean Tjur R² across informative features ─────────────────
+  # -- Compute weighted mean Tjur R^2 across informative features -----------------
 
   scores <- informative$condition_miss_score
 
@@ -856,12 +856,12 @@ condition_miss_index <- function(summary_df,
 
   weighted_mean <- stats::weighted.mean(scores, w = weights)
 
-  # ── Apply coverage penalty ────────────────────────────────────────────────────
+  # -- Apply coverage penalty ----------------------------------------------------
 
   coverage <- n_informative / n_total
   index    <- if (coverage_penalty) weighted_mean * coverage else weighted_mean
 
-  # ── Messaging ─────────────────────────────────────────────────────────────────
+  # -- Messaging -----------------------------------------------------------------
 
   message(sprintf(
     "Condition missingness index: %.4f | Weighted mean score: %.4f | Coverage: %.1f%% (%d / %d features informative)%s",
@@ -881,7 +881,7 @@ condition_miss_index <- function(summary_df,
 }
 
 
-# ── Deprecated aliases ────────────────────────────────────────────────────────
+# -- Deprecated aliases --------------------------------------------------------
 
 #' Deprecated: use condition_miss_score()
 #'
@@ -891,7 +891,7 @@ condition_miss_index <- function(summary_df,
 #' identical; this wrapper calls the new function and will be removed in a
 #' future release.
 #'
-#' @inheritParams condition_miss_score
+#' @param ... arguments passed on to \code{\link{condition_miss_score}}
 #' @seealso \code{\link{condition_miss_score}}
 #' @export
 mnar_score <- function(...) {
@@ -907,7 +907,7 @@ mnar_score <- function(...) {
 #' the classical sense. All arguments are identical; this wrapper calls the new
 #' function and will be removed in a future release.
 #'
-#' @inheritParams global_condition_miss_score
+#' @param ... arguments passed on to \code{\link{global_condition_miss_score}}
 #' @seealso \code{\link{global_condition_miss_score}}
 #' @export
 mnar_global_score <- function(...) {
@@ -928,7 +928,7 @@ mnar_global_score <- function(...) {
 #' (\code{condition_miss_score}, \code{condition_miss_class}) rather than the
 #' old \code{mnar_score} / \code{mnar_class} names.
 #'
-#' @inheritParams condition_miss_index
+#' @param ... arguments passed on to \code{\link{condition_miss_index}}
 #' @seealso \code{\link{condition_miss_index}}
 #' @export
 mnar_index <- function(...) {

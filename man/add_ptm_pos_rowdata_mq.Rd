@@ -17,6 +17,8 @@ add_ptm_pos_rowdata_mq(
 \item{ptms_to_retain}{\code{character} vector with PTMs to retain. Inspect values in rowData(obj)$Modified.sequence to get correct PTM name}
 
 \item{ptm_encoding_pos}{\code{character} name vector describing whether modifification comes before (-1) or after (1) amino acid in Modified.sequence column values.}
+
+\item{verbose}{\code{logical} Describe the number of PTMs detected}
 }
 \value{
 Returns a \code{SummarizedExperiment} with an additional column in the RowData describing the position of the PTMs with respect to the peptide sequence

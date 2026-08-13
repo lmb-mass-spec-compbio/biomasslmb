@@ -7,8 +7,10 @@
 #' @return `data.frame` object.
 #' @export
 #' @examples
+#' \dontrun{
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' query_protein_tm_topology(uniprotIDs)
+#' }
 query_protein_tm_topology <- function(uniprotIDs, verbosity=0){
 
   uniprotREST::uniprot_map(
@@ -35,21 +37,25 @@ get_tm_info <- function(trans_info_string){
   start <- as.numeric(sapply(start_stop, '[[', 1))
   end <- as.numeric(sapply(start_stop, '[[', 2))
 
-  tm_lengths <- end-start
+  # UniProt ranges are inclusive, so 1..20 spans 20 residues
+  tm_lengths <- end-start+1
 
 
   tm_types <- gsub('^ /note=', '', sapply(strsplit(trans_info_string, ';', 3), '[[', 2))
   tm_types_set <- unique(tm_types)
+
+  # Tested against the uncollapsed vector: once tm_types_set has been pasted
+  # into a single ';'-delimited string this only matches proteins whose
+  # segments are all beta stranded
+  if('Beta stranded' %in% tm_types_set){
+    return(rep(NA, 5))
+  }
 
   start <- paste(start, collapse=';')
   end <- paste(end, collapse=';')
   tm_lengths <- paste(tm_lengths, collapse=';')
   tm_types <- paste(tm_types, collapse=';')
   tm_types_set <- paste(sort(tm_types_set), collapse=';')
-
-  if('Beta stranded' %in% tm_types_set){
-    return(rep(NA, 5))
-  }
 
   return(c(start, end, tm_lengths, tm_types, tm_types_set))
 }
@@ -58,13 +64,15 @@ get_tm_info <- function(trans_info_string){
 #'
 #' @description Parse the Transmembrane column from the output of query_protein_tm_topology to add columns decscribing the transmembrane domains.
 #'
-#' @param query_resul `data.frame` output of query_protein_tm_topology
+#' @param query_result `data.frame` output of query_protein_tm_topology
 #' @return `data.frame` object.
 #' @export
 #' @examples
+#' \dontrun{
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' query_result <- query_protein_tm_topology(uniprotIDs)
 #' query_result_parsed <- add_tm_info(query_result)
+#' }
 add_tm_info <- function(query_result){
 
   trans_info_split <- strsplit(gsub('^TRANSMEM ', '', query_result$Transmembrane), split='; TRANSMEM ')
@@ -95,10 +103,13 @@ get_topology <- function(topology_string){
   start_stop <- strsplit(start_stop, '\\.\\.')
 
   start <- as.numeric(sapply(start_stop, '[[', 1))
+  # A domain given as a bare position ("21", no "..") is a single residue, so
+  # it starts and ends at the same place
   end <- as.numeric(sapply(
-    start_stop, FUN = function(x) ifelse(length(x)>1, x[2], as.numeric(x[1])+1)))
+    start_stop, FUN = function(x) ifelse(length(x)>1, x[2], x[1])))
 
-  top_lengths <- end-start
+  # UniProt ranges are inclusive, so 1..20 spans 20 residues
+  top_lengths <- end-start+1
 
   start <- paste(start, collapse=';')
   end <- paste(end, collapse=';')
@@ -111,13 +122,15 @@ get_topology <- function(topology_string){
 #'
 #' @description Parse the Topological.domain column from the output of query_protein_tm_topology to add columns decscribing the topology
 #'
-#' @param query_resul `data.frame` output of query_protein_tm_topology
+#' @param result `data.frame` output of query_protein_tm_topology
 #' @return `data.frame` object.
 #' @export
 #' @examples
+#' \dontrun{
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' query_result <- query_protein_tm_topology(uniprotIDs)
 #' query_result_parsed <- add_topology_info(query_result)
+#' }
 add_topology_info <- function(result){
   topology_info_split <- strsplit(gsub('^TOPO_DOM ', '', result$Topological.domain), split='; TOPO_DOM ')
 
@@ -140,8 +153,10 @@ add_topology_info <- function(result){
 #' @return `data.frame` object.
 #' @export
 #' @examples
+#' \dontrun{
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' get_protein_tm_topology(uniprotIDs)
+#' }
 get_protein_tm_topology <- function(uniprotIDs, verbosity=0){
   query_result <- query_protein_tm_topology(uniprotIDs, verbosity=verbosity)
   add_topology_info(add_tm_info(query_result))

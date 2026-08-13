@@ -5,15 +5,17 @@
 #' can be helpful when using GO over-representation/enrichment tools that do not
 #' consider the GO term heirarchy. Note that expansion will significantly increase the run-time
 #'
-#' @param uniprotIDs `character vector` Uniprot IDs
+#' @param UniprotID `character vector` Uniprot IDs
 #' @param expand_terms `logical` Should GO terms be expanded to include all ancestors
 #' @param verbosity `integer` Verbosity level for uniprotREST::uniprot_map
 #' @return `data.frame` object.
 #' @export
 #' @importFrom uniprotREST uniprot_map
 #' @examples
+#' \dontrun{
 #' uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 #' get_go_terms(uniprotIDs, expand_terms=TRUE)
+#' }
 get_go_terms <- function(UniprotID, expand_terms=FALSE, verbosity=0){
 
   go_res <- uniprot_map(

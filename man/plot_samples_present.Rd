@@ -9,7 +9,9 @@ plot_samples_present(samples_present, rowvars, breaks = NULL)
 \arguments{
 \item{samples_present}{\code{data.frame} output from \code{get_samples_present}}
 
-\item{rowVars}{\verb{character vector} row variables on which the tallying was grouped by}
+\item{rowvars}{\verb{character vector} row variables on which the tallying was grouped by}
+
+\item{breaks}{\verb{numeric vector} breaks for the 'Samples' fill scale. If NULL (default), breaks are determined automatically}
 }
 \value{
 \code{ggplot} object.

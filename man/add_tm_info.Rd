@@ -7,7 +7,7 @@
 add_tm_info(query_result)
 }
 \arguments{
-\item{query_resul}{\code{data.frame} output of query_protein_tm_topology}
+\item{query_result}{\code{data.frame} output of query_protein_tm_topology}
 }
 \value{
 \code{data.frame} object.
@@ -16,7 +16,9 @@ add_tm_info(query_result)
 Parse the Transmembrane column from the output of query_protein_tm_topology to add columns decscribing the transmembrane domains.
 }
 \examples{
+\dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 query_result <- query_protein_tm_topology(uniprotIDs)
 query_result_parsed <- add_tm_info(query_result)
+}
 }

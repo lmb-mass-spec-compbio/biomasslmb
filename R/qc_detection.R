@@ -45,7 +45,8 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 #' was present in for each level of filtering. This function plots the output of `get_samples_present`
 #'
 #' @param samples_present `data.frame` output from `get_samples_present`
-#' @param rowVars `character vector` row variables on which the tallying was grouped by
+#' @param rowvars `character vector` row variables on which the tallying was grouped by
+#' @param breaks `numeric vector` breaks for the 'Samples' fill scale. If NULL (default), breaks are determined automatically
 #' @return `ggplot` object.
 #' @export
 plot_samples_present <- function(samples_present, rowvars, breaks=NULL){

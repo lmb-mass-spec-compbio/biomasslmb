@@ -1,0 +1,13 @@
+{
+    "entryType": "Inactive",
+    "primaryAccession": "A0A5G2QPJ4",
+    "uniProtkbId": "A0A5G2QPJ4_PIG",
+    "annotationScore": 0.0,
+    "inactiveReason": {
+        "inactiveReasonType": "DELETED",
+        "deletedReason": "Deleted from sequence source (ENSEMBL)"
+    },
+    "extraAttributes": {
+        "uniParcId": "UPI0020B0616E"
+    }
+}

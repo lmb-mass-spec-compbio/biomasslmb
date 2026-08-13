@@ -2,6 +2,8 @@
 # biomasslmb
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/lmb-mass-spec-compbio/biomasslmb/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lmb-mass-spec-compbio/biomasslmb/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/lmb-mass-spec-compbio/biomasslmb/graph/badge.svg)](https://app.codecov.io/gh/lmb-mass-spec-compbio/biomasslmb)
 <!-- badges: end -->
 
 `biomasslmb` is an R package which provide functions to pipe together proteomics 

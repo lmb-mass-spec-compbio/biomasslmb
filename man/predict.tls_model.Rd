@@ -6,6 +6,18 @@
 \usage{
 \method{predict}{tls_model}(object, newdata, se.fit = FALSE, ...)
 }
+\arguments{
+\item{object}{\code{tls_model} object as returned by \code{tls_fit}}
+
+\item{newdata}{\code{data.frame} with an \code{x} column, or a \code{numeric} vector of x values}
+
+\item{se.fit}{\code{logical} Not supported for TLS; an error is raised if TRUE}
+
+\item{...}{ignored, present for consistency with the \code{predict} generic}
+}
+\value{
+\code{numeric} vector of predicted y values.
+}
 \description{
 Predict method for tls_model
 }

@@ -16,6 +16,7 @@ UniProt releases are published approximately every 8 weeks.
 This function checks what the current UniProt release is.
 }
 \examples{
+\dontrun{
 # print release number to console
 check_uniprot_release()
 
@@ -23,5 +24,6 @@ check_uniprot_release()
 rls <- check_uniprot_release()
 
 paste0("folder/filename_", rls, ".fasta")
+}
 
 }

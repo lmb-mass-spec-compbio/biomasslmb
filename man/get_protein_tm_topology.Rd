@@ -20,6 +20,8 @@ the information regarding transmembrane domains (TMDs) and topology and then par
 this information to define additional columns describining the TMDs and topology
 }
 \examples{
+\dontrun{
 uniprotIDs <- c('O76024', 'Q03135', 'Q96T23')
 get_protein_tm_topology(uniprotIDs)
+}
 }

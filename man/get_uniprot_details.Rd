@@ -4,7 +4,7 @@
 \alias{get_uniprot_details}
 \title{Get UniProt annotation details, with UniParc fallback for retired accessions}
 \usage{
-get_uniprot_details(accessions, verbosity = 0)
+get_uniprot_details(accessions, verbosity = 0, check_complete = "error")
 }
 \arguments{
 \item{accessions}{\verb{character vector} UniProt accessions.}
@@ -13,6 +13,12 @@ get_uniprot_details(accessions, verbosity = 0)
 Some accessions come back from \code{uniprot_map()} as multiple rows (they have
 subsequently been 'demerged'); these are collapsed to one row per
 accession, with \verb{;}-separated values where the demerged rows differed.}
+
+\item{check_complete}{\code{string}, one of \code{"error"} (default), \code{"warn"}, or
+\code{"none"}. Passed to \code{uniprotREST::uniprot_map()}, which compares the
+number of submitted accessions against the number mapped plus the number
+UniProt reports as failed, to catch ID mapping jobs that silently return a
+truncated result. See \code{?uniprotREST::uniprot_map} for details.}
 }
 \value{
 \code{data.frame} with one row per accession and columns \code{UniprotID},

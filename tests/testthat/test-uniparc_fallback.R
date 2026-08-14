@@ -76,3 +76,38 @@ test_that("get_uniprot_details annotates a live accession and falls back to UniP
     expect_equal(fallback_row$Gene.Names, "CADM1")
   })
 })
+
+# collapse_uniprot_details_multi_accession() is pure data-wrangling on an
+# already-fetched get_uniprot_details() result -- no network call, so no
+# mocking needed. Uses a small hand-built uniprot2details in place of a real
+# get_uniprot_details() result.
+
+test_that("collapse_uniprot_details_multi_accession maps single-accession details onto multi-accession IDs", {
+  uniprot2details <- data.frame(
+    UniprotID = c("A", "B"),
+    Gene.Names = c("GENEA", "GENEB"),
+    Annotation.Source = c("UniProtKB (live)", "UniProtKB (live)"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- collapse_uniprot_details_multi_accession(uniprot2details, c("A", "A; B"))
+
+  expect_equal(nrow(result), 2)
+
+  single_row <- result[result$UniprotID == "A", ]
+  expect_equal(single_row$Gene.Names, "GENEA")
+  expect_equal(single_row$Annotation.Source, "UniProtKB (live)")
+
+  multi_row <- result[result$UniprotID == "A; B", ]
+  expect_setequal(strsplit(multi_row$Gene.Names, ";")[[1]], c("GENEA", "GENEB"))
+})
+
+test_that("collapse_uniprot_details_multi_accession de-duplicates repeated protein_ids", {
+  uniprot2details <- data.frame(
+    UniprotID = "A", Gene.Names = "GENEA", stringsAsFactors = FALSE
+  )
+
+  result <- collapse_uniprot_details_multi_accession(uniprot2details, c("A", "A"))
+
+  expect_equal(nrow(result), 1)
+})

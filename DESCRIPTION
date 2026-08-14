@@ -53,11 +53,14 @@ Imports:
     UpSetR,
     utils
 Suggests:
+    ggrepel,
     httptest,
     httptest2,
     knitr,
+    limma,
     matrixStats,
     MsCoreUtils,
+    openxlsx,
     pcaMethods,
     rmarkdown,
     testthat (>= 3.0.0),

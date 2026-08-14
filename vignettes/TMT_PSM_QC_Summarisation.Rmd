@@ -26,7 +26,7 @@ Because TMT quantifies from the same MS1 ion for all samples, this standardises 
 
 However, TMT does suffer from ratio compression, which should be avoiding by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
 
-Here, we will QC and filter the PSM level abundances from PD before summarising them to protein-level abundances.
+Two search engines are in common use for identifying and quantifying TMT PSMs: Proteome Discoverer (PD) and MaxQuant (MQ). The QC and filtering principles are the same regardless of search engine, but the column names and some of the available QC metrics differ. Below, we work through the full pipeline once using PD output, then repeat it using MQ output, highlighting where the two diverge.
 
 # Load required packages
 
@@ -40,49 +40,60 @@ library(tidyr)
 library(dplyr)
 ```
 
-# Defining the contaminant proteins
+# Part A: Proteome Discoverer (PD) input
 
-We need to remove contaminant proteins. These were defined here using the cRAP database. Below, we parse the contaminants fasta to extract the IDs for the proteins in both 'cRAP' format and Uniprot IDs.
+## The experimental design
+
+`psm_tmt_clock` and `tmt_clock_design` are datasets available from the `biomasslmb` package, derived from a real TMT12plex experiment comparing `Control` and `Mutant` samples (6 replicates each). `psm_tmt_clock` is the PD PSM-level output, truncated to a subset of proteins for a manageable vignette. `tmt_clock_design` gives the experimental design: which sample each TMT tag corresponds to, and its `Condition` and `Replicate`.
+
+```{r}
+knitr::kable(tmt_clock_design)
+```
+
+Unlike a `data.frame` read from a single PD output file, real experiments nearly always have an associated design table like this (often as a spreadsheet from whoever ran the samples), which needs to be read in and used both to make sense of the TMT tags and, later, to group samples for exploration and statistical testing.
+
+## Read in input data
+
+We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
+
+`psm_tmt_clock` contains the PSM-level output from PD for this experiment, with the abundance columns already renamed to match the sample names used in `tmt_clock_design`. We pass `tmt_clock_design` as the `colData`, so the experimental design travels with the quantification data.
 
 ```{r}
 
-crap_fasta_inf <- system.file(
-  "extdata", "cRAP_20190401.fasta.gz", 
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+                                   colData = tmt_clock_design,
+                                   quantCols = rownames(tmt_clock_design),
+                                   name = "psms_raw")
+
+# QFeatures::readQFeatures only attaches colData at the QFeatures level;
+# we also want it directly on the PSM-level SummarizedExperiment so that
+# functions which plot/model a single assay (e.g. plot_quant) can use it.
+colData(tmt_qf[["psms_raw"]]) <- colData(tmt_qf)
+
+```
+
+
+## Defining the contaminant proteins
+
+We need to remove contaminant proteins. This search was performed against the '0602_Universal Contaminants' database (the contaminants database currently in routine use, superseding the older cRAP database used elsewhere in this package). Below, we parse the contaminants fasta to extract the protein IDs, in the `Cont_<UniProt accession>` format PD reports them in. Since PD sometimes assigns the bare UniProt accession (without the `Cont_` prefix) as the master protein even for a contaminant hit, we match on both forms.
+
+```{r}
+
+contaminant_fasta_inf <- system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz",
   package = "biomasslmb"
 )
 
-# Extract the protein IDs associated with each cRAP protein
-crap_accessions <- biomasslmb::get_crap_fasta_accessions(crap_fasta_inf)
+# Extract the protein IDs associated with each contaminant protein
+contaminant_accessions <- biomasslmb::get_crap_fasta_accessions(contaminant_fasta_inf)
+contaminant_accessions <- c(contaminant_accessions, sub('^Cont_', '', contaminant_accessions))
 
-print(head(crap_accessions))
-```
-
-# Read in input data
-
-We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.In this case, we are not adding any experimental details to the `QFeatures` object, so the `ColData` will be empty.
-
-`psm_tmt_total` is a data set available from the `biomasslmb` package containing the PSM-level output from Proteome Discoverer (PD) for an experiment with 10 samples (each one being a separate TMT tags). It is a truncated file containing the first 5,000 PSMs only. Here, we will not include any details about the experimental design. Usually, these would be included by providing a `data.frame` to the `colData` argument. See `?readQFeatures` for full details on how to read the quantification data in a `QFeatures` object.
-
-```{r}
-
-tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
-                                   quantCols = 36:45, 
-                                   name = "psms_raw")
-
-
-
-```
-
-We have `r sum(assay(tmt_qf[['psms_raw']])==0, na.rm=TRUE)` quantification values which are exactly zero. These should be replaced with NA, since mass spectrometry is not capable of asserting that the protein had zero abundance in the sample.
-
-```{r}
-tmt_qf[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf[['psms_raw']])
-
+print(head(contaminant_accessions))
 ```
 
 We first perform routine filtering to remove PSMs that:
 
--   Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated cRAP'.
+-   Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated' contaminants.
 -   Don't have a unique master protein.
 
 ```{r}
@@ -90,16 +101,17 @@ We first perform routine filtering to remove PSMs that:
 # - Remove PSMs from contaminant proteins
 # - Remove PSMs where protein ID is empty or not unique
 tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']],
-                                             contaminant_proteins=crap_accessions,
+                                             contaminant_proteins=contaminant_accessions,
                                              filter_contaminant=TRUE,
                                              filter_associated_contaminant=TRUE,
-                                             unique_master=TRUE, )
-```
+                                             unique_master=TRUE)
 
+colData(tmt_qf[['psms_filtered']]) <- colData(tmt_qf)
+```
 
 # Normalise
 
-Next, we plot the peptide intensities to check they are approximately the same using `biomasslmb::plot_quant`.
+Next, we plot the peptide intensities to check they are approximately the same using `biomasslmb::plot_quant`. Colouring by `Condition` also lets us check the two conditions are not obviously different at this stage, before any normalisation or filtering.
 
 ```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
 
@@ -108,26 +120,30 @@ biomasslmb::plot_quant(tmt_qf[['psms_filtered']],
                        log2transform=TRUE,
                        method='density') +
   theme_biomasslmb() +
+  aes(colour=Condition, group=sample) +
   xlab('PSM abundance (log2)')
 
 ```
 
-Since the same amount of sample was labelled in each case, it's reasonable to use 'diff.median' normalisation with `QFeatures::normalize`. First though, we need to log-transform the abundances so the normalisation works as expected. We exponentiate the quantification values back to the original scale (reverse the log-transformation) afterwards, since the downstream steps including summarisation to protein require non-transformed values
+Since the same amount of sample was labelled in each case, it's reasonable to use 'diff.median' normalisation with `QFeatures::normalize`. First though, we need to log-transform the abundances so the normalisation works as expected. We exponentiate the quantification values back to the original scale (reverse the log-transformation) afterwards, since the downstream steps including summarisation to protein require non-transformed values.
 
 ```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
 
 # Normalise the log2-transformed abundances using diff.median
 tmt_qf[['psms_filtered_norm']] <- QFeatures::normalize(
-  logTransform(tmt_qf[['psms_filtered']], base=2), method='diff.median') 
+  logTransform(tmt_qf[['psms_filtered']], base=2), method='diff.median')
 
 # Exponentiate the quantification values back to the initial scale.
 assay(tmt_qf[['psms_filtered_norm']]) <- 2^assay(tmt_qf[['psms_filtered_norm']])
+
+colData(tmt_qf[['psms_filtered_norm']]) <- colData(tmt_qf)
 
 # Plot the peptide-level quantification distributions per sample
 biomasslmb::plot_quant(tmt_qf[['psms_filtered_norm']],
                        log2transform=TRUE,
                        method='density') +
   theme_biomasslmb() +
+  aes(colour=Condition, group=sample) +
   xlab('PSM abundance (log2)')
 
 ```
@@ -152,14 +168,15 @@ We can also look into this relationship at the tag level using `plot_missing_SN_
 plot_missing_SN_per_sample(tmt_qf[['psms_filtered_norm']], bins = 20)
 ```
 
-Based on the above, we will filter the PSMs to only retain those with S:N \> 10 using `filter_TMT_PSMs` since these PSMs are clearly much closer to the limit of detection for the MS and therefore likely to contain less accurate quantification data. Note that this only necessitates removing \~ 1/20 of the PSMs in this case. Using the same function, we will also remove PSMs with interference/co-isolation \>50% since these are also likely to contain less accurate quantification data.
+Based on the above, we will filter the PSMs to only retain those with S:N \> 10 using `filter_TMT_PSMs` since these PSMs are clearly much closer to the limit of detection for the MS and therefore likely to contain less accurate quantification data. Using the same function, we will also remove PSMs with interference/co-isolation \>50% since these are also likely to contain less accurate quantification data.
 
 ```{r}
 # Then filter PSMs to remove low S:N and/or high interference
 tmt_qf[['psms_filtered_sn']] <- filter_TMT_PSMs(tmt_qf[['psms_filtered_norm']],
                                                 inter_thresh=50, sn_thresh=10)
+colData(tmt_qf[['psms_filtered_sn']]) <- colData(tmt_qf)
 ```
-We will also remove peptides that are not rank 1 according to the search engine
+We will also remove peptides that are not rank 1 according to the search engine.
 
 ```{r}
 
@@ -172,9 +189,6 @@ biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
                          'Master.Protein.Accessions',
                          "Removing peptides that are not rank 1")
 
-
-
-
 ```
 
 # Summarising to protein-level abundances
@@ -182,6 +196,25 @@ biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
 Now that we have inspected the PSM-level quantification and filtered the PSMs, we can summarise the PSMs to protein-level abundances.
 
 For PSM to protein summarisation with TMT quantification, simply summing together the PSM-level abundances provides accurate estimates, so long as there are no missing values. If many missing values are present, the `MsCoreUtils::robustSummary` method may be preferred, since it is able to summarise accurately, even in the presence of missing values [@http://zotero.org/users/5634351/items/FZN3QTTZ]. For a comparison of the two summarisation approaches, see the `TMT - comparing protein summarisation approaches` vignette.
+
+## Exploring missing values
+
+Before deciding how to handle missing values, it's worth checking how much missingness there is, and whether it's random or structured by experimental condition. Condition-structured missingness (e.g. a PSM detected in every `Control` sample but no `Mutant` sample) can indicate a real biological or technical difference between conditions, and should make you wary of simply discarding those PSMs, whereas missingness scattered independently of condition is more likely to just reflect the stochastic nature of PSM detection.
+
+`plot_missing_upset` visualises the most common patterns of missingness across samples.
+
+```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
+plot_missing_upset(tmt_qf, i = 'psms_filtered_rank')
+```
+
+`condition_miss_score` complements this by fitting, for each PSM, a logistic regression of missingness against a `colData` grouping column, and returning Tjur's R² as a per-feature score: values near 1 mean a PSM's missingness pattern is well explained by `Condition`, values near 0 mean it looks unrelated to `Condition`. `condition_miss_index` aggregates these per-feature scores into a single dataset-level value between 0 and 1.
+
+```{r}
+miss_res <- condition_miss_score(tmt_qf, i = 'psms_filtered_rank', group_cols = 'Condition')
+condition_miss_index(miss_res$summary)$index
+```
+
+Only a small fraction of PSMs have any missing values at all (`r miss_res$global['n_features_informative']` out of `r miss_res$global['n_features_total']`), and the condition missingness index is close to zero, so we have no evidence that the missingness we do have is structured by `Condition`. On that basis, we'll proceed with the simplest approach: remove PSMs with any missing value, rather than reaching for `robustSummary` or imputation strategies designed to handle structured missingness (see Part B below for a dataset where that trade-off comes out differently).
 
 Here, we will use the simple sum summarisation. First, we need to consider the missing values. If we leave the missing values in, we either need to allow some protein quantifications to be `NA`, or else ignore the missing values in the summarisation. The latter would potentially mean different PSMs are summed for the a given protein across the samples, making a given protein's summarised abundances across the samples less accurately estimated. Here, we will therefore remove all PSMs with missing values.
 
@@ -204,12 +237,13 @@ Finally, we perform the summarisation.
 
 ```{r}
 # Aggregate to protein-level abundances (using QFeatures function)
-tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
-                                       i = "psms_filtered_forSum", 
+tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
+                                       i = "psms_filtered_forSum",
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein",
                                        fun = base::colSums)
 
+colData(tmt_qf[['protein']]) <- colData(tmt_qf)
 ```
 
 ```{r}
@@ -219,7 +253,7 @@ tmt_qf[['protein']] <- QFeatures::logTransform(
 
 ## Inspecting the number of PSMs and proteins through the processing steps
 
-Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many PSMs/proteins were retained at each level of the processing. We can use the `biomasslmb::get_samples_present` and `biomasslmb::plot_samples_present` functions for this. First though, we need to decide which 'experiments' we want to plot and define a named character vector since the QFeatures names are not sufficiently clear by themselves
+Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many PSMs/proteins were retained at each level of the processing. We can use the `biomasslmb::get_samples_present` and `biomasslmb::plot_samples_present` functions for this. First though, we need to decide which 'experiments' we want to plot and define a named character vector since the QFeatures names are not sufficiently clear by themselves.
 
 Below, we inspect the experiment names.
 
@@ -227,7 +261,7 @@ Below, we inspect the experiment names.
 names(tmt_qf)
 ```
 
-In this case, we don't want to plot the `psms_filterered_norm`, since that's just the normalised quantification present in `psms_filtered` and no PSMs were removed in that step.
+In this case, we don't want to plot the `psms_filtered_norm`, since that's just the normalised quantification present in `psms_filtered` and no PSMs were removed in that step.
 
 ### Samples per PSM
 
@@ -246,10 +280,8 @@ rename_cols <- c('All PSMs' = 'psms_raw' ,
 rowvars <- c('Sequence', 'Modifications', 'RT.in.min')
 
 samples_present <- get_samples_present(tmt_qf[,,unname(rename_cols)], rowvars, rename_cols)
-plot_samples_present(samples_present, rowvars, breaks=seq(2,10,2)) + ylab('PSM')
+plot_samples_present(samples_present, rowvars, breaks=seq(2,12,2)) + ylab('PSM')
 
-
-   
 ```
 
 ### Samples per Protein
@@ -264,14 +296,155 @@ rename_cols_prot <- c(rename_cols, 'Protein'='protein')
 rowvars_prot <- c('Master.Protein.Accessions')
 
 samples_present <- get_samples_present(tmt_qf, rowvars_prot, rename_cols_prot)
-plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
+plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,12,2))
 ```
 
-In this case, because we have removed all missing values, the last two experiments have identical counts for the number of samples for each protein. From these two plots, we can see that the filtering to ensure that all proteins have \>1 PSM removed only a few PSMs, but many proteins. Whether this is appropriate will depend on your data in hand.
+From these two plots, we can see that the filtering to ensure that all proteins have \>1 PSM removed only a few PSMs, but more proteins. Whether this is appropriate will depend on your data in hand.
 
 ```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes
 usethis::use_data(tmt_qf, overwrite=TRUE)
+```
+
+# Part B: MaxQuant (MQ) input
+
+The same principles apply when the PSMs come from MaxQuant instead of PD, but the input has a different shape: the `evidence.txt` file uses different column names (`Leading.razor.protein` instead of `Master.Protein.Accessions`, `Reporter.intensity.corrected.*` instead of `Abundance.*`), and it does not report the PD-specific QC metrics (signal:noise, interference, SPS-MM) used above. Below, we work through the same pipeline on a real MaxQuant TMT18plex dataset: an immunoprecipitation comparing a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each.
+
+## Read in input data and design
+
+`psm_tmt_per2_mq` and `tmt_per2_mq_design` are the MaxQuant analogues of `psm_tmt_clock`/`tmt_clock_design` above: `psm_tmt_per2_mq` is the `evidence.txt` PSM-level output (truncated to a subset of proteins), and `tmt_per2_mq_design` gives the `Condition`/`Replicate` for each sample.
+
+```{r}
+knitr::kable(tmt_per2_mq_design)
+```
+
+```{r}
+
+tmt_qf_mq <- QFeatures::readQFeatures(assayData = psm_tmt_per2_mq,
+                                      colData = tmt_per2_mq_design,
+                                      quantCols = rownames(tmt_per2_mq_design),
+                                      name = "psms_raw")
+
+colData(tmt_qf_mq[['psms_raw']]) <- colData(tmt_qf_mq)
+
+tmt_qf_mq[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf_mq[['psms_raw']])
+
+```
+
+## Defining the contaminant proteins
+
+MaxQuant has its own contaminants FASTA convention (`CON__` prefixed accessions). `get_maxquant_cont_accessions` extracts these from the contaminants FASTA bundled with the package, in the same way `get_crap_fasta_accessions` did for the PD contaminants FASTA above.
+
+```{r}
+contaminant_proteins <- get_maxquant_cont_accessions()
+```
+
+We filter contaminants and non-unique master proteins in the same way as for PD, using `filter_features_mq_dda` in place of `filter_features_pd_dda`.
+
+```{r}
+tmt_qf_mq[['psms_filtered']] <- filter_features_mq_dda(
+  tmt_qf_mq[['psms_raw']],
+  contaminant_proteins = contaminant_proteins,
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = TRUE)
+
+colData(tmt_qf_mq[['psms_filtered']]) <- colData(tmt_qf_mq)
+```
+
+## Normalise (or not)
+
+Since this is an immunoprecipitation, the IP samples are expected to have a genuinely different protein composition to the controls: the bait and its interactors are specifically enriched. Standard normalisation assumes overall protein content is equivalent between samples and would partially erode this real biological difference, so — unlike the whole-proteome comparison in Part A — we do not normalise here.
+
+```{r, warning=FALSE, fig.width=7, fig.height=5, out.width="75%"}
+plot_quant(tmt_qf_mq[['psms_filtered']], log2transform=TRUE, method='density') +
+  theme_biomasslmb() +
+  aes(colour=Condition, group=sample) +
+  xlab('PSM abundance (log2)')
+```
+
+## Removing low quality PSMs
+
+`filter_TMT_PSMs` still removes PSMs with no quantification values at all, but with `from_PD = FALSE` it skips the PD-specific `Quan.Info`/`PSM.Ambiguity` checks, and the interference/S:N/SPS-MM thresholds are left at their 'no filtering' defaults since MaxQuant's `evidence.txt` does not report these metrics in a directly comparable way. We also need to point it at the MaxQuant protein column, `Leading.razor.protein`.
+
+```{r}
+tmt_qf_mq[['psms_filtered_interference']] <- filter_TMT_PSMs(
+  tmt_qf_mq[['psms_filtered']],
+  inter_thresh = 100, sn_thresh = 0, spsmm_thresh = 0,
+  master_protein_col = 'Leading.razor.protein',
+  from_PD = FALSE)
+
+colData(tmt_qf_mq[['psms_filtered_interference']]) <- colData(tmt_qf_mq)
+```
+
+## Exploring missing values
+
+As in Part A, we check the missingness structure before deciding how to handle it, using `plot_missing_upset` and `condition_miss_score`/`condition_miss_index` (see Part A for a fuller explanation of these functions).
+
+```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
+plot_missing_upset(tmt_qf_mq, i = 'psms_filtered_interference')
+```
+
+```{r}
+miss_res_mq <- condition_miss_score(tmt_qf_mq, i = 'psms_filtered_interference', group_cols = 'Condition')
+condition_miss_index(miss_res_mq$summary)$index
+```
+
+Unlike Part A, a meaningful fraction of PSMs here have missing values (`r miss_res_mq$global['n_features_informative']` out of `r miss_res_mq$global['n_features_total']`), consistent with this being an IP rather than a whole-proteome comparison: a protein absent from the control pulldown is expected to be missing in every `Control` replicate but present in every `IP` replicate. The condition missingness index is still modest, so this isn't yet a dominant pattern at the PSM level, but it's enough to make blanket removal of any PSM with a missing value an unattractive option here.
+
+## Summarising to protein-level abundances
+
+Since missing values here are more likely to be genuinely informative (a protein absent from the control pulldown) than in Part A, instead of removing every PSM with any missing value, we retain PSMs with a modest number of missing values and use `MsCoreUtils::robustSummary`, which handles missing values appropriately during aggregation (see the `TMT - comparing protein summarisation approaches` vignette for a direct comparison with `sum`).
+
+```{r}
+tmt_qf_mq[['psms_filtered_interference']] <- QFeatures::logTransform(
+  tmt_qf_mq[['psms_filtered_interference']], base = 2)
+
+tmt_qf_mq[['psms_filtered_forSummary']] <- QFeatures::filterNA(
+  tmt_qf_mq[['psms_filtered_interference']], 8/12)
+
+biomasslmb:::message_parse(rowData(tmt_qf_mq[['psms_filtered_forSummary']]),
+                           'Leading.razor.protein',
+                           "Removing PSMs with excessive missing values")
+```
+
+```{r}
+tmt_qf_mq <- QFeatures::aggregateFeatures(
+  tmt_qf_mq,
+  i = "psms_filtered_forSummary",
+  fcol = "Leading.razor.protein",
+  name = "protein",
+  fun = MsCoreUtils::robustSummary)
+
+colData(tmt_qf_mq[['protein']]) <- colData(tmt_qf_mq)
+```
+
+## Inspecting the number of PSMs and proteins through the processing steps
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, out.width='75%'}
+rename_cols_mq <- c('All PSMs' = 'psms_raw',
+                    'Quantified, contaminants removed' = 'psms_filtered',
+                    'PSMs with quantification' = 'psms_filtered_interference',
+                    'Max 8/12 missing values' = 'psms_filtered_forSummary')
+
+rowvars_mq <- c('Sequence', 'Modifications')
+
+samples_present_mq <- get_samples_present(
+  tmt_qf_mq[,,unname(rename_cols_mq)], rowvars_mq, rename_cols_mq)
+plot_samples_present(samples_present_mq, rowvars_mq, breaks=seq(2,12,2)) + ylab('PSM')
+```
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, out.width='75%'}
+rename_cols_mq_prot <- c(rename_cols_mq, 'Protein' = 'protein')
+rowvars_mq_prot <- c('Leading.razor.protein')
+
+samples_present_mq_prot <- get_samples_present(tmt_qf_mq, rowvars_mq_prot, rename_cols_mq_prot)
+plot_samples_present(samples_present_mq_prot, rowvars_mq_prot, breaks=seq(2,12,2))
+```
+
+```{r, eval = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(tmt_qf_mq, overwrite=TRUE)
 ```
 
 ## Summary
@@ -281,11 +454,10 @@ Here, we have QCed the PSMs and filtered them in the following steps:
 -   Remove PSMs that are likely from contaminants
 -   Remove PSMs without a unique 'master protein'
 -   Remove PSMs without any quantification values
--   Normalise the abundance values so they have the same median value in all samples
--   Remove PSMs with very low signal:noise
--   Remove PSMs with high interference
+-   For the whole-proteome comparison (Part A), normalise the abundance values so they have the same median value in all samples; for the IP comparison (Part B), skip normalisation since the conditions are expected to differ in overall composition
+-   Where available (PD), remove PSMs with very low signal:noise and high interference
 
-We then summarised the PSM level abundances with two approaches, `sum` and `robustSummary`, before comparing the protein-level abundances obtained with each of them. `robustSummary` handles missing values and therefore enables more proteins to be quantified. `sum` is sensitive to outliers with very high abundance, while `robust` is more sensitive to outliers with very low abundance.
+We then summarised the PSM level abundances to protein level: with `sum` for the complete, whole-proteome PD data, and with `robustSummary` for the IP MaxQuant data where missing values needed to be retained. See the `TMT - comparing protein summarisation approaches` vignette for a direct comparison of the two approaches, and the `Visualisations` vignette for how to explore and statistically test the resulting protein-level data using the experimental design attached here.
 
 ```{r}
 sessionInfo()

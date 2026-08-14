@@ -5,7 +5,7 @@
 suppressPackageStartupMessages(library(QFeatures))
 psm <- tmt_qf[["psms_raw"]]
 qf <- QFeatures(list(psms = psm))
-colData(qf)$condition <- rep(c("A", "B"), 5)
+colData(qf)$condition <- rep(c("A", "B"), length.out = ncol(qf))
 
 test_that("theme_biomasslmb returns a ggplot theme and toggles aspect ratio / border", {
   th <- theme_biomasslmb()

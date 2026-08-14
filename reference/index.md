@@ -40,6 +40,9 @@
   medians from a reference dataset
 - [`check_uniprot_release()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/check_uniprot_release.md)
   : Check the current UniProt release
+- [`collapse_uniprot_details_multi_accession()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/collapse_uniprot_details_multi_accession.md)
+  : Map per-accession UniProt details onto protein IDs with multiple
+  accessions
 - [`condition_miss_index()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/condition_miss_index.md)
   : Summarise per-feature condition missingness scores into a
   dataset-level index

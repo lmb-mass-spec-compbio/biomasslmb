@@ -40,9 +40,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="biomasslmb-development-version">biomasslmb (development version)<a class="anchor" aria-label="anchor" href="#biomasslmb-development-version"></a></h2>
-<ul><li>
-<code>Remotes:</code> temporarily points <code>uniprotREST</code> at <code>TomSmithCGAT/uniprotREST@check-complete-response</code> instead of <code>csdaw/uniprotREST</code>, to pick up the <code>check_complete</code> argument to <code>uniprot_map()</code> (detects UniProt ID mapping jobs that silently return a truncated result). This is an unmerged fork branch, not a released feature. <strong>Switch <code>Remotes:</code> back to <code>csdaw/uniprotREST</code> once that PR is accepted upstream.</strong>
-</li>
+<ul><li><p>New <code><a href="../reference/collapse_uniprot_details_multi_accession.html">collapse_uniprot_details_multi_accession()</a></code> maps a <code><a href="../reference/get_uniprot_details.html">get_uniprot_details()</a></code> result onto protein IDs that bundle several accessions (e.g. Proteome Discoverer’s <code>Master.Protein.Accessions</code>), collapsing back to one row per original ID.</p></li>
+<li><p><code>Remotes:</code> temporarily points <code>uniprotREST</code> at <code>TomSmithCGAT/uniprotREST@check-complete-response</code> instead of <code>csdaw/uniprotREST</code>, to pick up the <code>check_complete</code> argument to <code>uniprot_map()</code> (detects UniProt ID mapping jobs that silently return a truncated result). This is an unmerged fork branch, not a released feature. <strong>Switch <code>Remotes:</code> back to <code>csdaw/uniprotREST</code> once that PR is accepted upstream.</strong></p></li>
 </ul></div>
   </main></div>
 

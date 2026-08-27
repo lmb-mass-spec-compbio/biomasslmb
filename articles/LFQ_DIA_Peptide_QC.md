@@ -541,14 +541,14 @@ sessionInfo()
 #> [61] checkmate_2.3.4         scales_1.4.0            xtable_1.8-8           
 #> [64] glue_1.8.1              lazyeval_0.2.3          tools_4.5.3            
 #> [67] robustbase_0.99-7       annotate_1.88.0         fs_2.1.0               
-#> [70] XML_3.99-0.23           grid_4.5.3              MsCoreUtils_1.22.1     
+#> [70] XML_3.99-0.24           grid_4.5.3              MsCoreUtils_1.22.1     
 #> [73] AnnotationDbi_1.72.0    naniar_1.1.0            cli_3.6.6              
 #> [76] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
-#> [79] gtable_0.3.6            DEoptimR_1.2-0          sass_0.4.10            
+#> [79] gtable_0.3.6            DEoptimR_1.2-1          sass_0.4.10            
 #> [82] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
 #> [85] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
 #> [88] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.8             
-#> [91] bit64_4.8.2             MASS_7.3-65
+#> [91] bit64_4.8.4             MASS_7.3-65
 ```
 
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.

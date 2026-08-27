@@ -502,17 +502,17 @@ sessionInfo()
 #>  [61] survival_3.8-6          Biostrings_2.78.0       pillar_1.11.1          
 #>  [64] corrplot_0.95           checkmate_2.3.4         scales_1.4.0           
 #>  [67] xtable_1.8-8            glue_1.8.1              Hmisc_5.2-6            
-#>  [70] lazyeval_0.2.3          tools_4.5.3             data.table_1.18.4      
+#>  [70] lazyeval_0.2.3          tools_4.5.3             data.table_1.18.6.1    
 #>  [73] robustbase_0.99-7       annotate_1.88.0         fs_2.1.0               
-#>  [76] XML_3.99-0.23           grid_4.5.3              cutr_0.0.0.9000        
+#>  [76] XML_3.99-0.24           grid_4.5.3              cutr_0.0.0.9000        
 #>  [79] colorspace_2.1-3        MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
 #>  [82] htmlTable_2.5.0         Formula_1.2-6           naniar_1.1.0           
 #>  [85] cli_3.6.6               textshaping_1.0.5       S4Arrays_1.10.1        
-#>  [88] AnnotationFilter_1.34.0 gtable_0.3.6            DEoptimR_1.2-0         
+#>  [88] AnnotationFilter_1.34.0 gtable_0.3.6            DEoptimR_1.2-1         
 #>  [91] sass_0.4.10             digest_0.6.39           SparseArray_1.10.10    
 #>  [94] htmlwidgets_1.6.4       farver_2.1.2            memoise_2.0.1          
 #>  [97] htmltools_0.5.9         pkgdown_2.2.1           lifecycle_1.0.5        
-#> [100] httr_1.4.8              bit64_4.8.2             MASS_7.3-65
+#> [100] httr_1.4.8              bit64_4.8.4             MASS_7.3-65
 ```
 
 McAlister, Graeme C., David P. Nusinow, Mark P. Jedrychowski, et al.

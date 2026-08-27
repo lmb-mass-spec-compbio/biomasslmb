@@ -9,7 +9,7 @@ element may itself be several accessions joined by `sep` – the
 `protein_ids` element is split into its constituent accessions, the
 matching rows of `uniprot2details` are looked up, then re-collapsed back
 to one row per original (possibly multi-accession) `protein_ids`
-element, with `;`-separated values where the constituent accessions'
+element, with `sep`-separated values where the constituent accessions'
 details differ. Does not call
 [`get_uniprot_details`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.md)
 itself, so the same `uniprot2details` result can also be used on its
@@ -42,14 +42,16 @@ collapse_uniprot_details_multi_accession(
 - sep:
 
   `string` delimiter separating accessions within a `protein_ids`
-  element. Default `"; "`, matching Proteome Discoverer's
+  element, and also used to join differing values in the collapsed
+  output. Default `"; "`, matching Proteome Discoverer's
   `Master.Protein.Accessions` column.
 
 ## Value
 
 `data.frame` with one row per unique `protein_ids` element and the same
-columns as `uniprot2details`, with `;`-separated values where the
-constituent accessions' details differ.
+columns as `uniprot2details`. Where the constituent accessions agree on
+a value it appears once; where they differ the distinct values are
+joined by `sep`.
 
 ## Examples
 

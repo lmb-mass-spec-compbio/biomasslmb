@@ -1,11 +1,11 @@
 ---
-title: "TMT - comparing protein summarisation approaches"
+title: "Comparing protein summarisation approaches"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{TMT - comparing protein summarisation approaches}
+  %\VignetteIndexEntry{Comparing protein summarisation approaches}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -17,10 +17,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-Here, we will consider different protein summarisation approaches for TMT data: `sum`, `median` and `MsCoreUtils::robustSummary`. (`mean` is not considered separately: it's just `sum` divided by the number of contributing PSMs, so it produces the same abundance profile across samples as `sum`, only rescaled.) The comparison between summarisation approaches is informative in two distinct ways, which we consider separately using the two datasets from the `TMT QC PSM-level quantification and summarisation to protein-level abundance` vignette:
+Here, we will consider different approaches for summarising lower-level quantification (PSMs for TMT, peptides for LFQ) to protein-level abundance: `sum`, `median` and `MsCoreUtils::robustSummary`. (`mean` is not considered separately: it's just `sum` divided by the number of contributing features, so it produces the same abundance profile across samples as `sum`, only rescaled.) These are general considerations for bottom-up proteomics, independent of the quantification technology: the same weighting and missing-value behaviours apply whether the lower-level features are PSMs or peptides. The comparison between summarisation approaches is informative in two distinct ways, which we consider separately using three datasets, two from the [TMT QC](TMT_PSM_QC_Summarisation.html) vignette and one from the [LFQ-DDA QC](LFQ_DDA_Peptide_QC_Summarisation.html) vignette:
 
-- **How the methods weight individual PSMs.** Even with complete data, `sum` and `robustSummary`/`median` can produce different protein-level estimates, since they don't treat the underlying PSMs equally. We explore this using `tmt_qf`, the whole-proteome PD dataset, which has very little missingness.
-- **How the methods handle missing values.** `sum` requires complete data (or values need to be discarded/ignored), whereas `robustSummary` can make use of PSMs with some missing values. We explore this using `tmt_qf_mq`, the MaxQuant IP dataset, where missingness is common and potentially informative.
+- **How the methods weight individual features.** Even with complete data, `sum` and `robustSummary`/`median` can produce different protein-level estimates, since they don't treat the underlying features equally. We explore this using `tmt_qf`, the whole-proteome TMT PD dataset, which has very little missingness.
+- **How the methods handle missing values.** `sum` requires complete data (or values need to be discarded/ignored), whereas `robustSummary` can make use of features with some missing values. We explore this first using `tmt_qf_mq`, the TMT MaxQuant IP dataset, where missingness is common and potentially informative, and then again using `lfq_qf`, an LFQ-DDA TurboID (proximity biotinylation) dataset, to confirm the same conclusion holds when the lower-level features are peptides from a different quantification technology rather than TMT PSMs.
 
 # Load required packages
 
@@ -378,11 +378,140 @@ compare_protein_abundances_mq %>%
 
 `robustSummary` shows a much clearer separation between `IP` and `Control` than `sum` does. This is because `sum`'s estimate is diluted by the two complete PSMs alone, which disagree with each other on direction, whereas `robustSummary` also draws on the missing-value PSM - the one PSM that is unambiguously enriched in the IP samples, and is precisely why it goes undetected in two of the `Control` channels.
 
+# Part 3: The same missing-value trade-off with LFQ peptides
+
+Parts 1 and 2 both used TMT PSMs as the lower-level feature. To confirm the missing-value conclusion from Part 2 isn't specific to TMT, we repeat the same comparison using `lfq_qf`, the LFQ-DDA TurboID (proximity biotinylation) dataset from the [LFQ-DDA QC](LFQ_DDA_Peptide_QC_Summarisation.html) vignette, where the lower-level feature is a peptide rather than a PSM. As in that vignette, missingness here is common and condition-informative: a genuine proximity partner of the bait is expected to be reliably detected in the biotin-labelled replicates but frequently missing from the (mostly background) unlabelled control replicates.
+
+`lfq_qf[['peptides_filtered']]` (the peptides used for summarisation in the QC vignette) is stored on the log2 scale, since that's what `robustSummary` requires. For a `sum` comparison we need the values back on their original scale.
+
+```{r}
+lfq_qf[['peptides_filtered_forSum']] <- lfq_qf[['peptides_filtered']]
+assay(lfq_qf[['peptides_filtered_forSum']]) <- 2^assay(lfq_qf[['peptides_filtered_forSum']])
+```
+
+As in Part 2, we apply the same rule to both approaches: keep only proteins with at least 2 retained peptides. The two approaches again differ only in how much missingness a peptide is allowed to have before it's discarded: none, for `sum`; up to 4/6, for `robustSummary` (the same threshold used in the QC vignette).
+
+```{r}
+min_peps <- 2
+
+lfq_qf[['peptides_filtered_forSum']] <- QFeatures::filterNA(
+  lfq_qf[['peptides_filtered_forSum']], 0)
+lfq_qf[['peptides_filtered_forSum']] <- biomasslmb::filter_features_per_protein(
+  lfq_qf[['peptides_filtered_forSum']], min_features = min_peps)
+```
+
+Now we summarise both to protein level. `lfq_qf[['peptides_for_summarisation']]` is the same peptide set (at most 4/6 missing, at least `r min_peps` peptides per protein) used for `robustSummary` in the QC vignette.
+
+```{r, warning=FALSE}
+lfq_qf <- QFeatures::aggregateFeatures(
+  lfq_qf, i = 'peptides_filtered_forSum', fcol = 'Master.Protein.Accessions',
+  name = 'protein_lfq_sum', fun = base::colSums)
+lfq_qf[['protein_lfq_sum']] <- QFeatures::logTransform(lfq_qf[['protein_lfq_sum']], base = 2)
+
+set.seed(42)
+lfq_qf <- QFeatures::aggregateFeatures(
+  lfq_qf, i = 'peptides_for_summarisation', fcol = 'Master.Protein.Accessions',
+  name = 'protein_lfq_robust', fun = MsCoreUtils::robustSummary, maxit = 10000)
+```
+
+```{r, fig.height=4, fig.width=3, out.width='35%'}
+n_sum_lfq <- nrow(lfq_qf[['protein_lfq_sum']])
+n_robust_lfq <- nrow(QFeatures::filterNA(lfq_qf[['protein_lfq_robust']]))
+
+data.frame(method = factor(c('Sum', 'Robust'), levels = c('Sum', 'Robust')),
+          n_proteins = c(n_sum_lfq, n_robust_lfq)) %>%
+  ggplot(aes(method, n_proteins, fill = method)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = n_proteins), vjust = -0.5) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  scale_fill_manual(values = get_cat_palette(2), guide = 'none') +
+  theme_biomasslmb(border = FALSE) +
+  ylab('Proteins quantified') + xlab('')
+```
+
+As in the TMT MaxQuant IP dataset, tolerating peptides with some missing values lets `robustSummary` retain more proteins (`r n_robust_lfq`) than requiring complete peptides for `sum` (`r n_sum_lfq`). We can again identify the proteins that are only quantified via `robustSummary`, and inspect the peptides for one of them directly.
+
+```{r}
+sum_proteins_lfq <- rownames(lfq_qf[['protein_lfq_sum']])
+robust_proteins_lfq <- rownames(QFeatures::filterNA(lfq_qf[['protein_lfq_robust']]))
+
+rescued_proteins_lfq <- setdiff(robust_proteins_lfq, sum_proteins_lfq)
+length(rescued_proteins_lfq)
+```
+
+```{r}
+rd_lfq <- rowData(lfq_qf[['peptides_for_summarisation']])
+mat_lfq <- assay(lfq_qf[['peptides_for_summarisation']])
+
+example_protein_lfq <- rescued_proteins_lfq[vapply(rescued_proteins_lfq, function(p) {
+  pep_rows <- which(rd_lfq$Master.Protein.Accessions == p)
+  length(pep_rows) == 2 && any(is.na(mat_lfq[pep_rows, ]))
+}, logical(1))][1]
+
+retain_peps_lfq <- rd_lfq$Master.Protein.Accessions == example_protein_lfq
+round(2^mat_lfq[retain_peps_lfq, ], 1)
+```
+
+One peptide is missing in every `Control` replicate, while the other is complete. With `sum`, the incomplete peptide fails the zero-missing-values filter and is discarded, leaving only 1 peptide for this protein - below our minimum of `r min_peps`, so the protein is dropped entirely. With `robustSummary`, both peptides are retained (the incomplete one has few enough missing values to pass the 4/6 threshold), giving 2 peptides to summarise from and allowing the protein to be quantified - exactly the same mechanism as the TMT example above, just with peptides in place of PSMs.
+
+```{r}
+compare_protein_abundances_lfq <- biomasslmb:::qfeatures_long(
+  lfq_qf[,,c('protein_lfq_sum', 'protein_lfq_robust')]) %>%
+  data.frame() %>%
+  mutate(method=recode_values(
+    assay,
+    'protein_lfq_sum'~'Sum',
+    'protein_lfq_robust'~'Robust'))
+
+plot_pep_and_protein_lfq <- function(protein_of_interest) {
+
+  to_plot_compare <- compare_protein_abundances_lfq %>%
+    filter(rowname == protein_of_interest)
+
+  QFeatures::filterFeatures(
+    lfq_qf,
+    VariableFilter("Master.Protein.Accessions",
+                   protein_of_interest,
+                   condition = "=="))[['peptides_for_summarisation']] %>%
+    biomasslmb:::qfeatures_long() %>%
+    ggplot(aes(x = colname, y = value)) +
+    geom_line(aes(group = rowname), colour = 'grey') +
+    geom_point(colour = 'grey') +
+    geom_line(data = to_plot_compare,
+              aes(x = colname, y = value, colour = method, group = method)) +
+    scale_colour_manual(values = get_cat_palette(4),
+                        name = 'Protein summarisation method') +
+    theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    labs(
+      title = protein_of_interest,
+      x = '',
+      y = 'Peptide/Protein abundance (log2)'
+    )
+}
+```
+
+```{r, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
+plot_pep_and_protein_lfq(example_protein_lfq)
+```
+
+The complete peptide (grey) is present throughout the biotin replicates and absent from the control replicates, and the `robustSummary` protein-level estimate (blue) follows it into the control replicates too, drawing on the partially-missing peptide rather than discarding the protein outright as `sum` must.
+
+```{r}
+both_proteins_lfq <- intersect(sum_proteins_lfq, robust_proteins_lfq)
+cors_lfq <- sapply(both_proteins_lfq, function(p) {
+  cor(assay(lfq_qf[['protein_lfq_sum']])[p, ], assay(lfq_qf[['protein_lfq_robust']])[p, ])
+})
+sort(cors_lfq)
+```
+
+Where both methods do manage to quantify a protein here, they agree closely (lowest correlation `r round(min(cors_lfq), 2)`) - unlike the TMT IP example above, this dataset doesn't happen to contain a case where an outlier peptide flips the direction of the summarised profile. The rescuing of otherwise-discarded proteins, rather than disagreement on jointly-quantified ones, is the dominant effect here, and its size (`r n_robust_lfq` vs `r n_sum_lfq` proteins) is if anything larger than in the TMT IP dataset - consistent with LFQ peptides typically carrying more missing values than TMT PSMs to begin with.
+
 ## Summary
 
-`sum`/`mean` are more sensitive to the abundances for the highest intensity PSMs, which are likely to be the most accurately quantified. However, they are therefore also more sensitive to outlier values with very high abundance. `robustSummary` handles missing values and therefore enables more proteins to be quantified, but it is more sensitive to low intensity PSMs, which may be less accurately quantified, and treats all PSMs more equally regardless of abundance.
+`sum`/`mean` are more sensitive to the abundances for the highest intensity features, which are likely to be the most accurately quantified. However, they are therefore also more sensitive to outlier values with very high abundance. `robustSummary` handles missing values and therefore enables more proteins to be quantified, but it is more sensitive to low intensity features, which may be less accurately quantified, and treats all features more equally regardless of abundance.
 
-For typical TMT datasets with very low missing values (Part 1), `sum`/`mean` are likely to be the best approach: retaining more proteins isn't a meaningful benefit when there's little missingness to tolerate in the first place, so it's simpler to work with complete data throughout. Where missing values are more common, and especially where they may be informative rather than incidental - such as the IP dataset in Part 2 - `robustSummary` is the better choice, since it recovers proteins that `sum` would otherwise have to discard and uses more information from the PSM-level quantification.
+These are general properties of the summarisation methods, not artefacts of any one quantification technology: Part 3 showed the same missing-value trade-off from Part 2 reproduced with LFQ peptides in place of TMT PSMs, and if anything more pronounced, since LFQ typically has more missing values to begin with. For datasets with very low missing values (Part 1), `sum`/`mean` are likely to be the best approach: retaining more proteins isn't a meaningful benefit when there's little missingness to tolerate in the first place, so it's simpler to work with complete data throughout. Where missing values are more common, and especially where they may be informative rather than incidental - such as the IP dataset in Part 2 and the TurboID dataset in Part 3 - `robustSummary` is the better choice, since it recovers proteins that `sum` would otherwise have to discard and uses more information from the lower-level quantification, regardless of whether that quantification comes from TMT PSMs or LFQ peptides.
 
 ```{r}
 sessionInfo()

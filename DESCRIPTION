@@ -53,7 +53,9 @@ Imports:
     UpSetR,
     utils
 Suggests:
+    arrow,
     ggrepel,
+    hexbin,
     httptest,
     httptest2,
     knitr,
@@ -62,6 +64,7 @@ Suggests:
     MsCoreUtils,
     openxlsx,
     pcaMethods,
+    readxl,
     rmarkdown,
     testthat (>= 3.0.0),
     usethis

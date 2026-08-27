@@ -825,5 +825,77 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "Wang2022",
+		"type": "article-journal",
+		"container-title": "EMBO Molecular Medicine",
+		"DOI": "10.15252/emmm.202216643",
+		"issue": "11",
+		"page": "e16643",
+		"title": "The human host response to monkeypox infection: a proteomic case series study",
+		"volume": "14",
+		"author": [
+			{
+				"family": "Wang",
+				"given": "Ziyue"
+			},
+			{
+				"family": "Tober-Lau",
+				"given": "Pinkus"
+			},
+			{
+				"family": "Farztdinov",
+				"given": "Vadim"
+			},
+			{
+				"family": "Lemke",
+				"given": "Oliver"
+			},
+			{
+				"family": "Schwecke",
+				"given": "Torsten"
+			},
+			{
+				"family": "Steinbrecher",
+				"given": "Sarah"
+			},
+			{
+				"family": "Muenzner",
+				"given": "Julia"
+			},
+			{
+				"family": "Kriedemann",
+				"given": "Helene"
+			},
+			{
+				"family": "Sander",
+				"given": "Leif Erik"
+			},
+			{
+				"family": "Hartl",
+				"given": "Johannes"
+			},
+			{
+				"family": "Mülleder",
+				"given": "Michael"
+			},
+			{
+				"family": "Ralser",
+				"given": "Markus"
+			},
+			{
+				"family": "Kurth",
+				"given": "Florian"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2022",
+					11
+				]
+			]
+		}
 	}
 ]

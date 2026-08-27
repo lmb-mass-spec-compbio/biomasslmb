@@ -5,6 +5,11 @@
   the function isn't specific to the cRAP database. The old name is kept as a
   wrapper that forwards to the new function and emits a deprecation message.
 
+* New `collapse_uniprot_details_multi_accession()` maps a
+  `get_uniprot_details()` result onto protein IDs that bundle several
+  accessions (e.g. Proteome Discoverer's `Master.Protein.Accessions`),
+  collapsing back to one row per original ID.
+
 * `Remotes:` temporarily points `uniprotREST` at
   `TomSmithCGAT/uniprotREST@check-complete-response` instead of
   `csdaw/uniprotREST`, to pick up the `check_complete` argument to

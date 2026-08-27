@@ -32,7 +32,7 @@ library(limma)
 
 # Part A: LFQ-DIA whole-proteome comparison
 
-`dia_qf` is the blood plasma dataset from the [LFQ-DIA QC](LFQ_DIA_Peptide_QC.html) vignette [@Wang2022]: a case series comparing MPXV infection, COVID-19 and healthy controls, summarised to protein level with `robustSummary`. The clinical group of each sample is in the `group` column. Here we focus on the MPXV-vs-control comparison, so we restrict to those samples up front.
+`dia_qf` is the blood plasma dataset from the [LFQ-DIA QC](LFQ_DIA_Precursor_QC_Summarisation.html) vignette [@Wang2022]: a case series comparing MPXV infection, COVID-19 and healthy controls, summarised to protein level with `robustSummary`. The clinical group of each sample is in the `group` column. Here we focus on the MPXV-vs-control comparison, so we restrict to those samples up front.
 
 ```{r}
 names(dia_qf)

@@ -5,12 +5,12 @@
 \alias{dia_qf}
 \title{DIA data}
 \format{
-An object of class \code{QFeatures} of length 5.
+An object of class \code{QFeatures} of length 6.
 }
 \usage{
 dia_qf
 }
 \description{
-Qfeature containing DIA data processed in the \verb{LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance} vignette
+Qfeature containing DIA data processed in the \verb{LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance} vignette
 }
 \keyword{datasets}

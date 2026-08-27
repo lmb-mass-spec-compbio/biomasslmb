@@ -1,11 +1,11 @@
 ---
-title: "LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance"
+title: "LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance}
+  %\VignetteIndexEntry{LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -24,8 +24,6 @@ DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN),
 The data used in this vignette is a real DIA-NN `report.parquet` output for a plasma proteomics case series comparing Mpox (MPXV) infection, COVID-19, and healthy controls [@Wang2022]. It is also used, with accompanying teaching material, in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Unlike the truncated demonstration files used elsewhere in `biomasslmb`, this dataset is used here in full - it is small enough not to need subsetting
 
 # Load required packages
-
-To clarify which functionality is provided by which package, we will use `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
 
 ```{r, message=FALSE}
 library(QFeatures)

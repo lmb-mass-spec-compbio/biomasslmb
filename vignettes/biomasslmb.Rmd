@@ -1,0 +1,144 @@
+---
+title: "Getting started: which workflow do I need?"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Getting started: which workflow do I need?}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+`biomasslmb` covers the path from search engine output to a list of differentially abundant proteins. This article is a map of that path: it explains what the other vignettes assume, which of them applies to your experiment, and which decisions along the way are worth thinking about rather than accepting a default. It contains almost no analysis itself — each stage links to the vignette that works through it in full.
+
+# What the package assumes
+
+
+**You have search engine output, not raw spectra.** The starting point is a PSM, peptide or precursor level table from Proteome Discoverer, MaxQuant, Spectronaut or DIA-NN. Everything upstream of that — the search itself, FDR control at the spectrum level, the choice of sequence database — happens elsewhere.
+
+**Everything lives in a `QFeatures` object.** Each processing step adds a *new* assay rather than overwriting the previous one, and assay links record which features contributed to which. A finished object therefore holds the whole history of the analysis, from the raw features to the protein-level quantification, and you can always step back to ask where a protein-level value came from. This is why the vignettes accumulate assays with names like `psms_filtered_sn` and `peptides_for_summarisation` rather than reassigning one matrix.
+
+**The destination is protein-level quantification and statistical testing.** Peptide- and site-level analyses are possible and are covered separately, but the default path summarises to protein level before testing.
+
+# How to read the code in these vignettes
+
+To clarify which functionality is provided by which package, the vignettes write calls as `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
+
+# Which material to refer to?
+
+Which vignette you need depends on two independent things: how the data were acquired, and what kind of experiment it was.
+
+**Acquisition type** determines the QC and filtering you need, because the artefacts differ. It selects one of three vignettes:
+
+| Acquisition | Input | Vignette |
+|---|---|---|
+| TMT | PSM-level (PD or MaxQuant) | [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) |
+| LFQ-DDA | Peptide groups (PD or MaxQuant) | [LFQ-DDA peptide QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html) |
+| LFQ-DIA | Precursors (DIA-NN or Spectronaut) | [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) |
+
+**Experimental design** determines how the resulting quantification should be normalised and tested. A whole-proteome comparison, an enrichment experiment (IP, BioID, TurboID) and a PTM experiment ask different things of the same protein-level matrix:
+
+- **Whole proteome.** Most proteins are unchanged between conditions, missing values usually mean the protein was present but not detected, and a two-sided test against the other condition is what you want. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette works through this case.
+- **Enrichment.** Most of the quantified proteome may be bait-dependent, so the assumption that underpins median normalisation fails. Absence from the control is frequently real absence rather than failed detection, which changes what imputation means. Testing is often one-sided.
+- **PTM.** Site-level changes are confounded with changes in the abundance of the underlying protein, so the phospho (or other PTM) data need normalising to the total proteome with `get_medians()` and `center_normalise_to_ref()` before the site-level result means anything.
+
+The two axes are independent: a TMT IP and an LFQ-DIA whole-proteome comparison use different QC vignettes and different statistical treatments, and each combination occurs in practice.
+
+# The stages, in order
+
+Analyses typicall follow the same sequence regardless of which combination above applies.
+
+**0. Protein annotation.** Retrieve UniProt annotations for the accessions in your data before anything else, and cache them, so that every later step can use gene names, protein descriptions and GO terms. `get_uniprot_details()` retrieves the annotations, `collapse_uniprot_details_multi_accession()` handles protein groups with several accessions, and `get_go_terms(expand_terms = TRUE)` retrieves GO terms with ancestor terms included. Retired accessions that no longer resolve are recovered with `get_uniparc_fallback()`. See [protein annotation](protein_annotation.html).
+
+**1. QC, filtering and summarisation.** Remove contaminants and low-confidence identifications, log-transform, normalise, and summarise features to protein-level abundance. This is the acquisition-specific stage — use the vignette from the table above.
+
+**2. Exploration and statistical testing.** Check that the experiment worked before testing it: confirm the bait or protein(s) of interest behaves as expected, look at sample correlations and `plot_pca()`, then apply a testability filter and test. The conventional filter retains proteins with at least two quantified replicates in at least one condition. See [data exploration and statistical testing](exploration_and_statistical_testing.html).
+
+**3. Functional enrichment.** Test whether the differentially abundant proteins are enriched for particular GO terms, correcting for the length bias inherent in shotgun proteomics with a goseq probability weighting function. `estimate_overrep()` performs the enrichment, `remove_redundant_go()` collapses the parent and child terms that otherwise dominate the output, and `plot_go()` displays it.
+
+# The decisions worth thinking about
+
+Every analysis makes choices about summarisation, missing values, testing and normalisation. They are not independent of each other, and there is no single set of correct answers, so it is worth understanding what each one assumes.
+
+## Summarisation, missing values and testing are one decision
+
+The obvious reading is that you pick a summarisation method, then decide what to do about missing values, then choose a test. Some of the available approaches do work that way, but the model-based ones do not:
+
+- **Separate steps.** Summarise with `robustSummary` or by summing, decide on imputation at the protein level, then test with `limma`. Each step is independent and inspectable.
+- **limpa** couples all three. It takes peptide-level data, fits a detection probability curve relating detectability to abundance, produces protein-level estimates *with standard errors*, and carries that uncertainty into the linear model. It replaces summarisation, imputation and the model fit together.
+- **missBayes** couples the last two. It takes unimputed protein-level quantification and models the missingness explicitly as part of the test. Note that it fits every protein, so a result can concern a protein that a `limma` analysis would never have tested at all.
+
+Because a `QFeatures` object holds parallel assays, these are not mutually exclusive: you can summarise with `robustSummary` and with limpa into the same object and compare the outcomes.
+
+## The conventional starting point depends on acquisition type
+
+Missingness differs by acquisition type, and since summarisation choices are largely a response to missingness, so do the conventions:
+
+| | Summarisation | Missing values | Testing |
+|---|---|---|---|
+| TMT | sum PSMs (`base::colSums`) | little within a plex; between plexes handled by bridge correction | `limma` |
+| LFQ-DDA | `robustSummary` | the live decision | `limma`, or model-based |
+| LFQ-DIA | `robustSummary` | live, though less severe than DDA | `limma`, or model-based |
+
+Within a TMT plex, all samples are quantified in the same MS run, so after signal-to-noise filtering the data are close to complete, and reporter ion intensities are additive across the PSMs of a protein. Summing them is both simpler and better justified than a robust method designed to tolerate missing values. TMT's missing value problem appears *between* plexes, and bridge or pooled reference channels address it directly.
+
+LFQ quantifies each sample in a separate run, so missing values are pervasive and are related to abundance. `robustSummary` and limpa's detection probability curve are both responses to that problem. Applying them to within-plex TMT data addresses a problem that is not there. The [summarisation methods](summarisation_methods.html) vignette compares `sum` and `robustSummary` directly, on the same data.
+
+Three things should make you depart from the conventional path:
+
+1. **Severity of missingness.** Diagnose it rather than assuming: `mnar_score()` and `condition_miss_score()` quantify how far missingness is related to abundance, and `plot_missing_upset()` and `plot_missing_SN()` show its structure.
+2. **Experimental design.** In an enrichment experiment, absence from the control is usually meaningful, so imputing it discards the signal you are looking for.
+3. **What you need to do next.** limpa's output is a `limma` fit. Analyses that need a quantification matrix instead — circadian rhythm fitting with MetaCycle or a cosinor model, kinetic models fitted with `nls`, thermal proteome profiling — cannot consume it, whatever its merits for handling missing values.
+
+## Normalisation: what do you assume is unchanged?
+
+Every normalisation asserts that some set of proteins does not differ between samples, and then removes any difference observed in that set. The options differ only in how honest they are about which set that is.
+
+- **Reference set.** `get_medians()` and `center_normalise_to_ref()` normalise to a subset you define: the total proteome for a phospho experiment, a spike-in, or a set of proteins independent of the bait in an enrichment experiment. The assumption is explicit, and you can check whether it holds.
+- **Bridge or pooled channel.** For multi-plex TMT, the reference is a channel present in every plex rather than a set of proteins. This is what removes plex effects.
+- **All proteins.** `diff.median` normalisation assumes most proteins are unchanged. For a whole-proteome comparison between similar conditions this is reasonable. For an enrichment experiment or a strong perturbation it can be badly wrong, and it fails silently.
+
+# Example data
+
+The package ships processed `QFeatures` objects for each acquisition type, each produced by the corresponding vignette, so you can experiment with a realistic object without running the QC first.
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+```
+
+The assay names record the processing each one has been through:
+
+```{r}
+lapply(list(tmt_qf = tmt_qf, lfq_qf = lfq_qf, dia_qf = dia_qf), names)
+```
+
+A `QFeatures` object also carries the experimental design in its `colData`, which is what the exploration and testing functions use:
+
+```{r}
+tmt_qf
+```
+
+To start from raw search engine output instead, the corresponding input files are in `extdata`:
+
+```{r}
+dir(system.file("extdata", package = "biomasslmb"))
+```
+
+`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq` and their design tables provide PSM-level starting points with accompanying experimental designs.
+
+# Where to go next
+
+If you are starting an analysis, go to the vignette for your acquisition type and work forwards. If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, and the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette covers the testing stage for both a whole-proteome and an enrichment design.
+
+# Getting help
+
+These vignettes describe the common cases, and many experiments are not common cases. If you are unsure which route applies to your data, or you have a design the vignettes do not cover, please get in touch with Tom Smith (tsmith@mrc-lmb.cam.ac.uk) rather than guessing — it is far easier to help at the design or analysis stage than to unpick a decision afterwards.

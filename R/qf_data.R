@@ -14,7 +14,7 @@
 
 #' DIA data
 #'
-#' @description Qfeature containing DIA data processed in the `LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance` vignette
+#' @description Qfeature containing DIA data processed in the `LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance` vignette
 #'
 #' @keywords datasets
 "dia_qf"

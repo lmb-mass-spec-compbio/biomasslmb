@@ -35,17 +35,13 @@ You can install the development version of biomasslmb like so:
 remotes::install_github("lmb-mass-spec-compbio/biomasslmb", dependencies = TRUE)
 ```
 
-## Examples
+## Getting started
 
-See the vignettes for examples of how to use the package:
-
-- `TMT_PSM_QC_Summarisation` — PSM-level QC and summarisation to protein-level abundance for TMT data
-- `summarisation_methods` — comparing sum/mean/median/robustSummary approaches, for TMT and LFQ data
-- `exploration_and_statistical_testing` — exploring protein-level data and testing for differential abundance
-- `LFQ_DDA_Peptide_QC_Summarisation` — peptide-level QC for LFQ DDA data
-- `LFQ_DIA_Peptide_QC` — peptide-level QC for LFQ DIA data
-
-They are also available via the 'articles' tab
+The ['Get started'](https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/biomasslmb.html) 
+article explains what the package assumes, which vignette applies to your experiment, and which 
+analysis decisions are worth thinking about rather than accepting a default. From there, the 
+vignette for your acquisition type works through a complete analysis. All of the vignettes are 
+available via the 'articles' tab 
 [here](https://lmb-mass-spec-compbio.github.io/biomasslmb).
 
 Much of the initial code is a re-working of 

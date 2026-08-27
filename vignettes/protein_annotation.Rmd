@@ -1,0 +1,266 @@
+---
+title: "Protein annotation: UniProt details, GO terms and topology"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Protein annotation: UniProt details, GO terms and topology}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+annotation_cache <- readRDS(system.file(
+  "extdata", "protein_annotation_cache.rds",
+  package = "biomasslmb"
+))
+```
+
+Search engine output identifies a protein by its UniProt accession and, at best, whatever description string was in the FASTA. Almost everything downstream needs more than that: gene symbols to label a volcano plot, GO terms to run an enrichment test, transmembrane topology to ask whether the proteins gained in a membrane fraction are the ones you would expect. That annotation has to be fetched from UniProt.
+
+It is worth fetching it as its own step, before any QC or filtering. The annotations depend only on which proteins were *detected*, not on how the data are subsequently filtered, normalised or summarised to protein level. Retrieving them once and caching the result means the rest of the pipeline can be re-run — after changing a filtering threshold, say — without querying UniProt again.
+
+The queries below are shown as you would run them, but the results displayed were retrieved from UniProt release `r annotation_cache$release` and cached, so that building this vignette does not depend on UniProt being reachable. Running the same calls yourself will return the current release's annotations, which may differ.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(dplyr)
+```
+
+# Collecting the accessions to annotate
+
+We use the peptide-level Proteome Discoverer (PD) output from the [LFQ-DDA vignette](LFQ_DDA_Peptide_QC_Summarisation.html) — reading the raw search output rather than the processed `QFeatures` object, since the point of annotating first is that this step does not depend on the processing.
+
+```{r}
+pep_inf <- system.file(
+  "extdata", "lfq_dda_pd_PeptideGroups.txt",
+  package = "biomasslmb"
+)
+
+infdf <- read.delim(pep_inf)
+```
+
+PD reports a `Master.Protein.Accessions` value for each peptide. Where a peptide cannot be assigned unambiguously to one protein — most often because it is shared between near-identical paralogues or isoforms — PD reports several accessions in a single field, joined by `"; "`. We therefore need two sets of identifiers: the protein groups exactly as the search engine reports them, which is what we will eventually join back onto the data, and the individual accessions, which is what UniProt can actually be queried with.
+
+```{r}
+protein_groups <- unique(infdf$Master.Protein.Accessions)
+
+accessions <- protein_groups %>%
+  strsplit('; ') %>%
+  unlist() %>%
+  unique()
+
+length(protein_groups)
+length(accessions)
+```
+
+The second number is the larger, and the difference is the number of extra accessions contributed by multi-protein groups.
+
+Other search engines report the same thing under a different column name and, importantly, a different separator: MaxQuant uses `Leading.razor.protein` with `";"` (no space), and DIA-NN uses `Protein.Group`, also with `";"`. The separator matters, because it is what you split on here and what you pass to `collapse_uniprot_details_multi_accession()` below.
+
+# UniProt protein details
+
+`get_uniprot_details()` retrieves the entry name, protein name(s), gene name(s), organism and sequence length for each accession. It also derives `Gene.Names.First`, the first of the possibly space-separated gene names UniProt returns, which is the primary symbol and the one you want for plot labels.
+
+```{r, eval=FALSE}
+uniprot2details <- biomasslmb::get_uniprot_details(accessions)
+```
+
+```{r, echo=FALSE}
+uniprot2details <- annotation_cache$uniprot2details
+```
+
+```{r}
+head(as.data.frame(uniprot2details))
+```
+
+Two complications are handled for you.
+
+**Demerged accessions.** An accession that has since been split into several current entries — because the original was found to represent more than one distinct protein — returns several rows. These are collapsed into one row per queried accession, with the differing fields joined by `;`.
+
+**Retired accessions.** A search is run against a FASTA snapshot of UniProt taken at search time, which may be months or years old by the time you annotate. Accessions deleted from UniProtKB since then come back from a plain ID mapping with a blank gene name and `Protein.names == "deleted"`, even though the protein may be a perfectly real hit. For those, `get_uniprot_details()` follows the entry to UniParc and recovers the last known annotation. The `Annotation.Source` column records which route each row took:
+
+```{r}
+table(uniprot2details$Annotation.Source)
+```
+
+None of the accessions in this dataset are retired, so all of them resolved directly. Where one has been, the fallback looks like this — `A0A5G2QPJ4` is a pig entry that has since been deleted, and its gene and protein names are recovered from UniParc:
+
+```{r, eval=FALSE}
+uniparc_example <- biomasslmb::get_uniprot_details(c('O76024', 'A0A5G2QPJ4'))
+```
+
+```{r, echo=FALSE}
+uniparc_example <- annotation_cache$uniparc_example
+```
+
+```{r}
+uniparc_example %>%
+  select(UniprotID, Gene.Names.First, Protein.names, Annotation.Source) %>%
+  as.data.frame()
+```
+
+## Checking the result is complete
+
+UniProt's ID mapping service occasionally returns a truncated cached response, in which a few hundred accessions silently lose their annotation with no error. `get_uniprot_details()` guards against this with `check_complete = 'error'` (the default), which compares the number of accessions submitted against the number mapped plus the number UniProt reports as failed, and raises an error if they disagree.
+
+That check passing does not mean every accession got an annotation — accessions UniProt explicitly reports as failed are simply absent from the result. Here, eleven are missing:
+
+```{r}
+setdiff(accessions, uniprot2details$UniprotID)
+```
+
+These are the contaminant proteins. The search database prefixes contaminant accessions with `Cont_`, which is not a UniProt accession, so UniProt cannot map them. That is harmless as long as you are aware of it, because contaminants are removed during QC anyway — but it is the reason the annotation table has fewer rows than the accession vector you passed in, and it is worth checking that the accessions that dropped out are ones you expected to lose.
+
+# Annotating protein groups
+
+`uniprot2details` has one row per individual accession, so it cannot be joined directly against data keyed by PD's multi-accession `Master.Protein.Accessions` strings. `collapse_uniprot_details_multi_accession()` builds that table: it splits each group into its accessions, looks each one up, and re-collapses to one row per group, with every constituent accession contributing one value to every column so that the parts stay positionally aligned across columns.
+
+```{r}
+uniprot2groups <- biomasslmb::collapse_uniprot_details_multi_accession(
+  uniprot2details, protein_groups, sep = '; '
+)
+
+uniprot2groups %>%
+  filter(grepl('; ', UniprotID)) %>%
+  select(UniprotID, Gene.Names.First) %>%
+  head() %>%
+  as.data.frame()
+```
+
+Pass the separator your search engine uses: `sep = ';'` for MaxQuant and DIA-NN.
+
+A group is only returned if every one of its accessions was annotated, so the contaminant groups drop out here too:
+
+```{r}
+length(protein_groups)
+nrow(uniprot2groups)
+```
+
+# Adding the annotations to a `QFeatures` object
+
+The annotations are joined onto the assay by matching row names, which for a protein-level assay produced by PD are the `Master.Protein.Accessions` strings. Matching rather than merging keeps the assay's rows in their existing order and leaves an `NA` for anything unannotated, rather than silently dropping it.
+
+```{r}
+protein_se <- lfq_qf[['protein']]
+
+annotation_ix <- match(rownames(protein_se), uniprot2groups$UniprotID)
+
+rowData(protein_se)$Gene.Names.First <- uniprot2groups$Gene.Names.First[annotation_ix]
+rowData(protein_se)$Protein.names <- uniprot2groups$Protein.names[annotation_ix]
+
+lfq_qf[['protein']] <- protein_se
+
+rowData(lfq_qf[['protein']])[1:5, c('Gene.Names.First', 'Protein.names')] %>%
+  as.data.frame()
+```
+
+Every row matched here, since the contaminants were removed from `lfq_qf` during QC:
+
+```{r}
+sum(is.na(annotation_ix))
+```
+
+DIA-NN output is the exception to all of this: it carries `Genes` and `Protein.Names` columns of its own, taken from the search FASTA, and the [exploration and statistical testing](exploration_and_statistical_testing.html) vignette uses them directly. They are convenient, but they are frozen at whatever release the FASTA came from, and they do not include GO terms or topology, so a UniProt query is still needed for anything beyond labelling.
+
+# GO terms
+
+`get_go_terms()` returns one row per protein per GO term.
+
+```{r, eval=FALSE}
+go_res <- biomasslmb::get_go_terms(accessions)
+```
+
+```{r, echo=FALSE}
+go_res <- annotation_cache$go_res
+```
+
+```{r}
+head(as.data.frame(go_res))
+```
+
+GO terms form a hierarchy running from specific to general, and a protein annotated with a specific term is implicitly also described by every broader term above it. Enrichment tools that do not walk the hierarchy themselves will therefore miss enrichment of a broad term simply because the proteins were only ever annotated with its more specific children. `expand_terms = TRUE` adds all ancestor terms explicitly, which is what you want when the result is destined for GO over-representation testing.
+
+```{r, eval=FALSE}
+go_res_all <- biomasslmb::get_go_terms(accessions, expand_terms = TRUE)
+```
+
+```{r, echo=FALSE}
+go_res_all <- annotation_cache$go_res_all
+```
+
+```{r}
+head(as.data.frame(go_res_all))
+```
+
+Expansion is much the slower call, and it changes the shape of the output as well as its size: the unexpanded result has a `GO_desc` column, while the expanded result has `TERM` and `ONTOLOGY` columns looked up from `GO.db`. The `UNIPROTKB` and `GO.ID` columns are common to both, and are the two columns that the enrichment functions take as their `gene2cat` mapping.
+
+```{r}
+nrow(go_res)
+nrow(go_res_all)
+```
+
+Not every protein has GO annotation — unreviewed entries frequently have none — so the mapping covers fewer proteins than you queried:
+
+```{r}
+length(unique(go_res_all$UNIPROTKB))
+```
+
+Note that GO terms are keyed by individual accession, not by protein group, so a multi-accession group needs a decision about which of its accessions' terms to use before enrichment testing.
+
+# Transmembrane domains and topology
+
+`get_protein_tm_topology()` retrieves UniProt's transmembrane and topological domain features and parses them into columns describing each protein's membrane topology: the number of transmembrane segments, their start and end positions, and which side of the membrane the N- and C-termini and each loop are on.
+
+```{r, eval=FALSE}
+tm_topology <- biomasslmb::get_protein_tm_topology(
+  c('P48962', 'P51881', 'P62827')
+)
+```
+
+```{r, echo=FALSE}
+tm_topology <- annotation_cache$tm_topology
+```
+
+```{r}
+tm_topology %>%
+  select(UniprotID, Length, n_tms, tm_start, tm_end, n_term, c_term) %>%
+  as.data.frame()
+```
+
+The two ADP/ATP translocases are six-pass mitochondrial inner membrane carriers; the third protein is soluble, so its topology columns are `NA`. Proteins whose segments are all beta-stranded are also returned as `NA`, since the start/end parsing assumes alpha-helical segments.
+
+# Caching the annotations
+
+Save the results so the rest of the analysis can read them rather than re-querying, and record which UniProt release they came from — releases are published roughly every eight weeks, and annotations retrieved months apart are not necessarily identical.
+
+```{r, eval=FALSE}
+biomasslmb::check_uniprot_release()
+
+saveRDS(uniprot2details, 'uniprot2details.rds')
+saveRDS(uniprot2groups, 'uniprot2groups.rds')
+saveRDS(go_res_all, 'go_res_all.rds')
+```
+
+# Things that catch people out
+
+**The separator differs between search engines.** PD uses `"; "`, MaxQuant and DIA-NN use `";"`. Splitting on the wrong one leaves the multi-accession groups intact, so they are passed to UniProt as single unrecognised identifiers and come back unannotated.
+
+**Contaminant accessions carry a prefix.** `Cont_P13646` is not a UniProt accession and will not map. This is the same prefix mismatch that silently leaves contaminants in the data if you filter on unprefixed accessions.
+
+**A complete-looking result is not a complete result.** `check_complete` catches a truncated response, but accessions UniProt reports as failed are absent from the output with no warning. Compare the accessions in against the accessions out.
+
+**Search engine gene names are frozen.** The gene and protein names in the search output come from the FASTA, and so reflect UniProt as it was at search time. Where they disagree with a fresh query, the fresh query is the current answer — which is also why it is worth recording the release the annotations came from.
+
+# Where to go next
+
+With annotations in hand, the acquisition-specific QC and summarisation vignette for your data is the next step — see [Getting started](biomasslmb.html) for which one applies. The GO mapping produced here is the input to functional enrichment testing, performed after differential abundance testing in [data exploration and statistical testing](exploration_and_statistical_testing.html).

@@ -26,8 +26,6 @@ Despite the pitfalls of LFQ, the data analysis is still relatively straightforwa
 
 # Load required packages
 
-To clarify which functionality is provided by which package, we will use `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
-
 ```{r, message=FALSE}
 library(QFeatures)
 library(biomasslmb)

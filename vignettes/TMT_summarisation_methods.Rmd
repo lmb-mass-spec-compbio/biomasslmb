@@ -17,11 +17,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-Here, we will consider different protein summarisation approaches for TMT data, depending on whether missing values need to be retained. The comparison between summarisation approaches is also informative when considering what it means to summarise from PSMs to protein-level abundances.
+Here, we will consider different protein summarisation approaches for TMT data: `sum`, `median` and `MsCoreUtils::robustSummary`. (`mean` is not considered separately: it's just `sum` divided by the number of contributing PSMs, so it produces the same abundance profile across samples as `sum`, only rescaled.) The comparison between summarisation approaches is informative in two distinct ways, which we consider separately using the two datasets from the `TMT QC PSM-level quantification and summarisation to protein-level abundance` vignette:
 
-
-For PSM to protein summarisation with TMT quantification, simply summing together the PSM-level abundances provides accurate estimates, so long as there are no missing values.  If many missing values are present, the `MsCoreUtils::robustSummary` method may be preferred, since it is able 
-to summarise accurately, even in the presence of missing values [@http://zotero.org/users/5634351/items/FZN3QTTZ]. 
+- **How the methods weight individual PSMs.** Even with complete data, `sum` and `robustSummary`/`median` can produce different protein-level estimates, since they don't treat the underlying PSMs equally. We explore this using `tmt_qf`, the whole-proteome PD dataset, which has very little missingness.
+- **How the methods handle missing values.** `sum` requires complete data (or values need to be discarded/ignored), whereas `robustSummary` can make use of PSMs with some missing values. We explore this using `tmt_qf_mq`, the MaxQuant IP dataset, where missingness is common and potentially informative.
 
 # Load required packages
 
@@ -35,11 +34,13 @@ library(tidyr)
 library(dplyr)
 ```
 
-`tmt_qf` is a `QFeatures` object available from the `biomasslmb` package which was generated in the `TMT QC PSM-level quantification and summarisation to protein-level abundance` vignette. It already contains protein-level quantification from a simple 'sum' summarisation, where missing values were removed and proteins with a single PSM were removed. Here, we will compare this with the 'robust' summaristion, which requires some additional steps to ensure it is performed appropriately.
+# Part 1: How the methods weight individual PSMs
+
+`tmt_qf` already contains protein-level quantification from a simple `sum` summarisation (`protein`), where missing values were removed and proteins with a single PSM were removed. Here, we compare this against `robustSummary` and `median`.
 
 ## Summarisation with robustSummary
 
-With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs with at most 5/10 missing values 
+With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs with at most 5/10 missing values.
 
 ```{r}
 tmt_qf[['psms_filtered_forRobust']] <- QFeatures::filterNA(
@@ -51,7 +52,7 @@ Next, we remove PSMs for proteins with fewer than 2 PSMs.
 ```{r}
 
 min_psms <- 2
- 
+
 tmt_qf[['psms_filtered_forRobust']] <- biomasslmb::filter_features_per_protein(
   tmt_qf[['psms_filtered_forRobust']], min_features = min_psms)
 
@@ -66,10 +67,10 @@ tmt_qf[['psms_filtered_forRobust']] <- QFeatures::logTransform(
 
 Now we can summarise with `robustSummary`
 
-```{r}
+```{r, warning=FALSE}
 # Aggregate to protein-level abundances (using QFeatures function)
-tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
-                                       i = "psms_filtered_forRobust", 
+tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
+                                       i = "psms_filtered_forRobust",
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein_robust",
                                        fun = MsCoreUtils::robustSummary,
@@ -78,37 +79,17 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
 
 ```
 
-Prior to summaristaion, we removed PSMs from proteins with fewer than 2 PSMs. However, since we left in PSMs with missing values, it's possible for some protein-level abundances to be derived from just a single PSM. We can use the `get_protein_no_quant_mask` from `biomasslmb` to identify where the protein abundances will be derived from fewer than `n` features (PSMs). We can then give this mask to `mask_protein_level_quant` to replace these quantification values with NA.
- 
-```{r, fig.height=5, fig.width=5, out.width='50%'}
-# plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
-protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
-  tmt_qf[['psms_filtered_forRobust']], min_features=2, plot=TRUE) 
+## Summarisation with median
 
-tmt_qf[['protein_robust']] <- biomasslmb::mask_protein_level_quant(
-  tmt_qf[['protein_robust']], protein_retain_mask)
-```
-
-## Summarisation with median or mean
-
-We will also include summarisation with mean and median, since these are typical approaches for summarising across observations and will aid the interpretation when we compare the summasiation approaches. We will use the PSMs with missing values filtered, even though `mean` and `median` can handle missing values with `na.rm=TRUE`, since ignoring missing values is inappropriate for summarisation of PSMs to proteins with these methods.
+We will also include summarisation with median, since it's a typical approach for summarising across observations and will aid the interpretation when we compare the summarisation approaches. We will use the PSMs with missing values filtered, even though `median` can handle missing values with `na.rm=TRUE`, since ignoring missing values is inappropriate for summarisation of PSMs to proteins with this method.
 
 ```{r}
 
-tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
-                                       i = "psms_filtered_forSum", 
-                                       fcol = "Master.Protein.Accessions",
-                                       name = "protein_mean",
-                                       fun = base::colMeans, na.rm=TRUE)
-
-tmt_qf <- QFeatures::aggregateFeatures(tmt_qf, 
-                                       i = "psms_filtered_forSum", 
+tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
+                                       i = "psms_filtered_forSum",
                                        fcol = "Master.Protein.Accessions",
                                        name = "protein_median",
                                        fun = matrixStats::colMedians, na.rm=TRUE)
-
-tmt_qf[['protein_mean']] <- QFeatures::logTransform(
-  tmt_qf[['protein_mean']], base=2)
 
 tmt_qf[['protein_median']] <- QFeatures::logTransform(
   tmt_qf[['protein_median']], base=2)
@@ -116,65 +97,22 @@ tmt_qf[['protein_median']] <- QFeatures::logTransform(
 
 ## Comparing the summarisation approaches
 
-We can see that performing the robust summarisation allows us to retain more proteins, since we can still use the PSMs with a low number of missing values.
-
-```{r}
-nrow(tmt_qf[['protein']])
-nrow(tmt_qf[['protein_robust']])
-```
-
-However, with sum summarisation, we have complete quantification data (no missing values), whereas with `robustSummary`, we will proteins with missing values in some samples. In this case, the protein-level data is `r round(100*(1-mean(is.na(assay(tmt_qf[['protein_robust']])))), 2)` % complete, so the impact of the missing values on the downstream analysis will be minimal. We can inspect missing values using the `QFeatures::nNA` function, or just `is.na` on the quantitative data matrix.
-
-```{r}
-QFeatures::nNA(tmt_qf[['protein']])$nNAcols
-QFeatures::nNA(tmt_qf[['protein_robust']])$nNAcols
-
-
-message(sprintf('%.2f %% missing values', 100*mean(
-  is.na(assay(tmt_qf[['protein_robust']])))))
-
-```
-
-To better understand the difference between how the two summarisation methods use the available data, we can inspect the single protein which has no missing values with `robustSummary`, but is not summarised with `sum`. 
-
-```{r}
-# Identify the proteins with no missing values present only following robustSummary
-protein_robust_proteins <- rownames(filterNA(tmt_qf[['protein_robust']]))
-protein_sum_proteins <- rownames(filterNA(tmt_qf[['protein']]))
-
-no_missing_robustSummary_only <- setdiff(protein_robust_proteins, protein_sum_proteins)
-print(no_missing_robustSummary_only)
-```
-
-If we inspect the PSM level abundances for this protein, we see that there are 3 PSMs, of which the first two contain missing values in a single sample. Thus, we have only one complete PSM, which is insufficient for confident summarisation using `sum`. However, all 3 PSMs have sufficiently few missing values to be used with the `robustSummary` method and all samples have at least two non missing values across the 3 PSMs, so this protein is quantified in all samples with `robustSummary`.
+As established in the QC vignette, this dataset has very few missing values to begin with. As a result, allowing `robustSummary` to tolerate missing PSMs makes no difference to which proteins are retained here. See Part 2 below, where we use the MaxQuant IP dataset (`tmt_qf_mq`), which has much more missingness, to see that trade-off in action. Here, we can instead ask how much the protein-level abundance estimates from each method actually agree.
 
 ```{r}
 
-retain_psms <- rowData(
-  tmt_qf[['psms_filtered_sn']])$Master.Protein.Accessions==no_missing_robustSummary_only
-
-assay(tmt_qf[['psms_filtered_sn']][retain_psms,])
-
-
-```
-
-
-We can directly compare the protein-level abundance estimates to explore where these two summarisation methods differ in their estimates.
-
-```{r}
-
-# Single object with protein inference from both methods 
+# Single object with protein inference from both methods
 compare_protein_abundances <- biomasslmb:::qfeatures_long(
-  tmt_qf[,,c('protein', 'protein_robust', 'protein_median', 'protein_mean')]) %>%
+  tmt_qf[,,c('protein', 'protein_robust', 'protein_median')]) %>%
   data.frame() %>%
   mutate(method=recode_values(
     assay,
     'protein'~'Sum',
     'protein_robust'~'Robust',
-    'protein_median'~'Median',
-    'protein_mean'~'Mean'))
+    'protein_median'~'Median'))
 
 ```
+
 We want to identify the proteins with the lowest correlation for abundances across the samples between summarisation methods so we can inspect the difference between them.
 
 ```{r}
@@ -191,15 +129,18 @@ proteins_of_interest <- compare_protein_abundances %>%
   pull(rowname)
 ```
 
-Below, we define a function to plot the PSM and protein level abundances for a single protein.
+Below, we define a function to plot the PSM-level abundances (on their original scale) and the protein-level abundances from each summarisation method (normalised to mean abundance, so the methods are directly comparable) for a single protein, as two separate plots.
 
 ```{r}
 plot_pep_and_protein <- function(protein_of_interest) {
-  
-  to_plot_compare <- compare_protein_abundances %>% 
-    filter(rowname == protein_of_interest)
-  
-  QFeatures::filterFeatures(
+
+  to_plot_compare <- compare_protein_abundances %>%
+    filter(rowname == protein_of_interest) %>%
+    group_by(method) %>%
+    mutate(value = value - mean(value)) %>%
+    ungroup()
+
+  pep_plot <- QFeatures::filterFeatures(
     tmt_qf,
     VariableFilter("Master.Protein.Accessions",
                    protein_of_interest,
@@ -208,10 +149,173 @@ plot_pep_and_protein <- function(protein_of_interest) {
     ggplot(aes(x = colname, y = log2(value))) +
     geom_line(aes(group = rowname), colour = 'grey') +
     geom_point(colour = 'grey') +
+    theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    labs(
+      title = protein_of_interest,
+      x = '',
+      y = 'PSM abundance (log2)'
+    )
+
+  protein_plot <- to_plot_compare %>%
+    ggplot(aes(x = colname, y = value, colour = method, group = method)) +
+    geom_line() +
+    scale_colour_manual(values = get_cat_palette(3),
+                        name = 'Protein summarisation method') +
+    theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    labs(
+      title = protein_of_interest,
+      x = '',
+      y = 'Protein abundance (log2, mean-normalised)'
+    ) +
+    guides(color = guide_legend(override.aes = list(linewidth = 2) ) )
+
+  list(peptide = pep_plot, protein = protein_plot)
+}
+```
+
+In the peptide-level plots below, each grey line is a single PSM's abundance on its original scale. In the protein-level plots, each summarisation method's abundance profile is mean-normalised, so the methods sit on a comparable scale and can be compared directly. The important thing to focus on is the abundance profile across the tags for any one summarisation method or PSM.
+
+```{r, plot.show='hold', out.width='45%', fig.width=7, fig.height=7, warning=FALSE, message=FALSE}
+for(poi in proteins_of_interest) {
+  plots <- plot_pep_and_protein(poi)
+  print(plots$peptide)
+  print(plots$protein)
+}
+```
+
+
+In all cases, the protein-level quantification values are relatively similar for most tags, with differences between the approaches typically restricted to one or two tags where the PSMs disagree on the relative abundances between the samples.
+
+Since `sum` simply adds together the abundance values across the PSMs for a given tag and the abundance values may span multiple orders of magnitude, the protein-level abundance pattern across the tags is weighted towards the most abundant PSMs. This is likely to be a positive attribute, since the most abundant PSMs will be more accurately quantified. However, the summarisation is also sensitive to high abundance outliers. `robustSummary` and `median`, by contrast, are less sensitive to any single PSM, but treat all PSMs more equally regardless of abundance.
+
+We can see this directly for one of the proteins above. For each PSM of a given protein, we can correlate its abundance profile across the tags with the `sum`-summarised protein profile; a PSM that disagrees with the majority of the other PSMs will have low, or negative, correlation.
+
+```{r}
+poi <- proteins_of_interest[grepl("^Q9C", proteins_of_interest)][1]
+
+rd <- rowData(tmt_qf[['psms_filtered_sn']])
+psm_mask <- rd$Master.Protein.Accessions == poi
+psm_values <- log2(assay(tmt_qf[['psms_filtered_sn']])[psm_mask, , drop = FALSE])
+sum_profile <- assay(tmt_qf[['protein']])[poi, ]
+
+sort(apply(psm_values, 1, function(x) cor(x, sum_profile, use = "complete.obs")))
+```
+
+The PSM with the lowest (most negative) correlation is in the same broad abundance range as several of the other PSMs for this protein, so it isn't simply down-weighted by `sum` for being low intensity: because this method combines all PSMs, its disagreement with the majority still shows up in the summarised profile, whereas `robustSummary` and `median` are less influenced by a single disagreeing PSM.
+
+The median is less sensitive to outliers than the mean, but ignores much of the quantitative data since it's only affected by the 'middle' PSMs. In the most extreme instances, median just simplifies the PSM level abundances down to a single representative 'middle' PSM.
+
+# Part 2: How the methods handle missing values
+
+For Part 2, we switch to `tmt_qf_mq`, the MaxQuant IP dataset from the QC vignette. Unlike `tmt_qf`, missing values here are common and potentially informative (a protein absent from the control pulldown is genuinely missing, not just undetected by chance), so this is a better dataset for comparing how `sum` and `robustSummary` cope with missingness.
+
+`tmt_qf_mq[['psms_filtered_interference']]` (the PSMs used for summarisation in the QC vignette) is stored on the log2 scale, since that's what `robustSummary` requires. For a `sum` comparison we need the values back on their original scale.
+
+```{r}
+tmt_qf_mq[['psms_filtered_interference_raw']] <- tmt_qf_mq[['psms_filtered_interference']]
+assay(tmt_qf_mq[['psms_filtered_interference_raw']]) <- 2^assay(tmt_qf_mq[['psms_filtered_interference_raw']])
+```
+
+For a fair comparison, we apply the same rule used in Part 1 to both approaches: keep only proteins with at least 2 retained PSMs. The two approaches differ only in how much missingness a PSM is allowed to have before it's discarded: none, for `sum`; up to 8/12, for `robustSummary` (the same threshold used in the QC vignette).
+
+```{r}
+tmt_qf_mq[['psms_filtered_forSum_mq']] <- QFeatures::filterNA(
+  tmt_qf_mq[['psms_filtered_interference_raw']], 0)
+tmt_qf_mq[['psms_filtered_forSum_mq']] <- biomasslmb::filter_features_per_protein(
+  tmt_qf_mq[['psms_filtered_forSum_mq']], min_features = min_psms,
+  master_protein_col = 'Leading.razor.protein')
+
+tmt_qf_mq[['psms_filtered_forRobust_mq']] <- QFeatures::filterNA(
+  tmt_qf_mq[['psms_filtered_interference']], 8/12)
+tmt_qf_mq[['psms_filtered_forRobust_mq']] <- biomasslmb::filter_features_per_protein(
+  tmt_qf_mq[['psms_filtered_forRobust_mq']], min_features = min_psms,
+  master_protein_col = 'Leading.razor.protein')
+```
+
+Now we summarise both to protein level.
+
+```{r, warning=FALSE}
+tmt_qf_mq <- QFeatures::aggregateFeatures(
+  tmt_qf_mq, i = 'psms_filtered_forSum_mq', fcol = 'Leading.razor.protein',
+  name = 'protein_mq_sum', fun = base::colSums)
+tmt_qf_mq[['protein_mq_sum']] <- QFeatures::logTransform(tmt_qf_mq[['protein_mq_sum']], base = 2)
+
+tmt_qf_mq <- QFeatures::aggregateFeatures(
+  tmt_qf_mq, i = 'psms_filtered_forRobust_mq', fcol = 'Leading.razor.protein',
+  name = 'protein_mq_robust', fun = MsCoreUtils::robustSummary, maxit = 1000)
+```
+
+```{r, fig.height=4, fig.width=3, out.width='35%'}
+n_sum <- nrow(tmt_qf_mq[['protein_mq_sum']])
+n_robust <- nrow(tmt_qf_mq[['protein_mq_robust']])
+
+data.frame(method = factor(c('Sum', 'Robust'), levels = c('Sum', 'Robust')),
+          n_proteins = c(n_sum, n_robust)) %>%
+  ggplot(aes(method, n_proteins, fill = method)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = n_proteins), vjust = -0.5) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  scale_fill_manual(values = get_cat_palette(2), guide = 'none') +
+  theme_biomasslmb(border = FALSE) +
+  ylab('Proteins quantified') + xlab('')
+```
+
+Tolerating PSMs with some missing values lets `robustSummary` retain more proteins (`r n_robust`) than requiring complete PSMs for `sum` (`r n_sum`). We can identify the proteins that are only quantified via `robustSummary`.
+
+```{r}
+sum_proteins_mq <- rownames(tmt_qf_mq[['protein_mq_sum']])
+robust_proteins_mq <- rownames(QFeatures::filterNA(tmt_qf_mq[['protein_mq_robust']]))
+
+rescued_proteins <- setdiff(robust_proteins_mq, sum_proteins_mq)
+length(rescued_proteins)
+```
+
+To understand why, we inspect the PSMs for one of these `r length(rescued_proteins)` proteins directly: one with exactly 2 retained PSMs (the minimum allowed), where at least one PSM has missing values.
+
+```{r}
+rd_mq <- rowData(tmt_qf_mq[['psms_filtered_forRobust_mq']])
+mat_mq <- assay(tmt_qf_mq[['psms_filtered_forRobust_mq']])
+
+example_protein <- rescued_proteins[vapply(rescued_proteins, function(p) {
+  psm_rows <- which(rd_mq$Leading.razor.protein == p)
+  length(psm_rows) == 2 && any(is.na(mat_mq[psm_rows, ]))
+}, logical(1))][2]
+
+retain_psms <- rd_mq$Leading.razor.protein == example_protein
+round(2^mat_mq[retain_psms, ], 1)
+```
+
+One PSM is missing in most samples, while the other is complete. With `sum`, the incomplete PSM fails the zero-missing-values filter and is discarded, leaving only 1 PSM for this protein - below our minimum of 2, so the protein is dropped entirely. With `robustSummary`, both PSMs are retained (the incomplete one has few enough missing values to pass the 8/12 threshold), giving 2 PSMs to summarise from and allowing the protein to be quantified.
+
+We can visualise this the same way as Part 1: PSM-level abundances in grey, with the summarised protein-level abundance overlaid in colour. Since `sum` has no value at all for this protein, only the `robustSummary` line appears.
+
+```{r}
+compare_protein_abundances_mq <- biomasslmb:::qfeatures_long(
+  tmt_qf_mq[,,c('protein_mq_sum', 'protein_mq_robust')]) %>%
+  data.frame() %>%
+  mutate(method=recode_values(
+    assay,
+    'protein_mq_sum'~'Sum',
+    'protein_mq_robust'~'Robust'))
+
+plot_pep_and_protein_mq <- function(protein_of_interest) {
+
+  to_plot_compare <- compare_protein_abundances_mq %>%
+    filter(rowname == protein_of_interest)
+
+  QFeatures::filterFeatures(
+    tmt_qf_mq,
+    VariableFilter("Leading.razor.protein",
+                   protein_of_interest,
+                   condition = "=="))[['psms_filtered_forRobust_mq']] %>%
+    biomasslmb:::qfeatures_long() %>%
+    ggplot(aes(x = colname, y = value)) +
+    geom_line(aes(group = rowname), colour = 'grey') +
+    geom_point(colour = 'grey') +
     geom_line(data = to_plot_compare,
               aes(x = colname, y = value, colour = method, group = method)) +
-    #geom_point(data = to_plot_compare,  position=position_dodge(width=0.5),
-    #           aes(x = colname, y = value, colour = method)) +
     scale_colour_manual(values = get_cat_palette(4),
                         name = 'Protein summarisation method') +
     theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
@@ -220,34 +324,66 @@ plot_pep_and_protein <- function(protein_of_interest) {
       title = protein_of_interest,
       x = '',
       y = 'PSM/Protein abundance (log2)'
-    ) +
-    guides(color = guide_legend(override.aes = list(linewidth = 2) ) )
+    )
 }
 ```
 
-
-In the plots below, PSM level quantifications are in grey and the summarised protein-level abundances are in colours. You can disregard the y-axis scale when comparing between the methods, or between the protein and peptide level abundances. The important thing to focus on is the abundance profile between the tags for any one summarisation method or PSM.
-
-```{r, plot.show='hold', out.width='45%', fig.width=7, fig.height=7, warning=FALSE, message=FALSE}
-for(poi in proteins_of_interest) print(plot_pep_and_protein(poi))
+```{r, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
+plot_pep_and_protein_mq(example_protein)
 ```
 
+The two PSMs (grey) track each other where both are present, and the `robustSummary` protein-level estimate (blue) follows information presented from both PSMs.
 
-In all cases, the protein-level quantification values are relatively similar for most tags, the differences between the approach typically restricted to one or two tags where the PSMs disagree on the relative abundances between the samples. 
+## Where both methods quantify a protein, but disagree
 
-Since `sum` simply adds together the abundance values across the PSMs for a given tag and the abundance values may be across multiple orders of magnitude, the protein-level abundance pattern across the tags is weighted towards the most abundant PSMs. This is likely to be a positive attribute, since the most abundant PSMs will be more accurately quantified. However, the summarisation is also sensitive to high abundance outliers. 
+`sum` and `robustSummary` can also disagree on proteins that both methods manage to quantify, simply because they draw on different PSMs: `sum` requires complete PSMs, while `robustSummary` also incorporates partially-missing ones. `P27695` is a good example: it has 3 PSMs retained by `robustSummary`, only 2 of which are complete enough to be used by `sum`.
 
-On the other hand, `robustSummary` is less sensitive to outliers, but it treats all PSMs equally. In the forth example (Q9NUQ9) we can see how this can lead to potential inaccuracies when we have only 2 PSMs and one is very low intensity. For example, tag 129C is mid-range intensity compared to the other tags for the abundant PSM, but very low for the less abundant PSM. This has almost no impact on the `sum` summarise protein abundance, but a large impact when we use `robustSummary`.
+```{r}
+example_protein_3psm <- 'P27695'
 
-Note that mean is identical to sum with respect to the relative abundance across the samples, just on a difference scale, since mean is sum/n(PSMs). 
+sum_mat <- assay(tmt_qf_mq[['protein_mq_sum']])
+robust_mat <- assay(tmt_qf_mq[['protein_mq_robust']])
+```
 
-The median is less sensitive to outliers than the mean, but ignores much of the quantitative data since it's only affected by the 'middle' PSMs. In the most extreme instances, median just simplifies the PSM level abundances down to a single representative 'middle' PSM.
+```{r}
+rd_mq2 <- rowData(tmt_qf_mq[['psms_filtered_forRobust_mq']])
+mat_mq2 <- assay(tmt_qf_mq[['psms_filtered_forRobust_mq']])
+psm_rows_2 <- rd_mq2$Leading.razor.protein == example_protein_3psm
+round(2^mat_mq2[psm_rows_2, ], 1)
+```
+
+The third PSM is missing in exactly the two `Control` channels (`Control_4` and `Control_5`) - consistent with genuinely low abundance in the control samples, rather than a random dropout - so `sum` discards it and summarises the protein from the other two, complete, PSMs alone. `robustSummary` retains all three. Since `sum` weights PSMs by their absolute abundance, its profile is dominated by whichever of the two complete PSMs is more abundant, and here those two PSMs disagree on the direction of the IP-vs-Control difference; `robustSummary` also incorporates the partially-missing PSM, which is clearly enriched in the IP samples. The two methods end up describing quite different abundance profiles for the same protein (correlation of `r round(cor(sum_mat[example_protein_3psm, ], robust_mat[example_protein_3psm, ]), 2)` between them).
+
+```{r, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
+plot_pep_and_protein_mq(example_protein_3psm)
+```
+
+We can summarise this more directly by comparing the `Control` and `IP` abundances for each method.
+
+```{r, fig.width=6, fig.height=4.5, warning=FALSE}
+condition_lookup <- setNames(tmt_per2_mq_design$Condition, rownames(tmt_per2_mq_design))
+
+compare_protein_abundances_mq %>%
+  filter(rowname == example_protein_3psm) %>%
+  mutate(condition = condition_lookup[colname]) %>%
+  ggplot(aes(x = method, y = value, colour = condition)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.5), size = 2) +
+  stat_summary(fun = mean, geom = 'crossbar', width = 0.4,
+               position = position_dodge(width = 0.5)) +
+  scale_colour_manual(values = get_cat_palette(2),
+                      name = '') +
+  theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
+  labs(title = example_protein_3psm, x = '', y = 'Protein abundance (log2)')
+```
+
+`robustSummary` shows a much clearer separation between `IP` and `Control` than `sum` does. This is because `sum`'s estimate is diluted by the two complete PSMs alone, which disagree with each other on direction, whereas `robustSummary` also draws on the missing-value PSM - the one PSM that is unambiguously enriched in the IP samples, and is precisely why it goes undetected in two of the `Control` channels.
 
 ## Summary
 
-`sum`/`mean` are more sensitive to the abundances for the highest intensity PSMs, which are likely to be the most accurately quantified. However, they are therefore also more sensitive to outlier values with very high abundance. `robustSummary` handles missing values and therefore enables more proteins to be quantified but it is more sensitive to low intensity PSMs, which may be less accurately quantified. For typical TMT datasets with very low missing values, `sum`/`mean` are likely to be the best approach. Where there are more missing values, consider using `robust` instead.
+`sum`/`mean` are more sensitive to the abundances for the highest intensity PSMs, which are likely to be the most accurately quantified. However, they are therefore also more sensitive to outlier values with very high abundance. `robustSummary` handles missing values and therefore enables more proteins to be quantified, but it is more sensitive to low intensity PSMs, which may be less accurately quantified, and treats all PSMs more equally regardless of abundance.
+
+For typical TMT datasets with very low missing values (Part 1), `sum`/`mean` are likely to be the best approach: retaining more proteins isn't a meaningful benefit when there's little missingness to tolerate in the first place, so it's simpler to work with complete data throughout. Where missing values are more common, and especially where they may be informative rather than incidental - such as the IP dataset in Part 2 - `robustSummary` is the better choice, since it recovers proteins that `sum` would otherwise have to discard and uses more information from the PSM-level quantification.
 
 ```{r}
 sessionInfo()
 ```
-

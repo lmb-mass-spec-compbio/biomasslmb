@@ -13,5 +13,6 @@ get_crap_fasta_accessions(cont_fasta_inf)
 Returns a \code{list} of contaminant IDs
 }
 \description{
-Extract the contaminants protein accessions from a cRAP fasta file
+Renamed to \code{get_contaminant_fasta_accessions()}. Kept here,
+unchanged, for backwards compatibility.
 }

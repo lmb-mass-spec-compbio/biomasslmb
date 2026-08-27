@@ -49,7 +49,7 @@ crap_fasta_inf <- system.file(
 )
 
 # Extract the protein IDs associated with each cRAP protein
-crap_accessions <- biomasslmb::get_crap_fasta_accessions(crap_fasta_inf)
+crap_accessions <- biomasslmb::get_contaminant_fasta_accessions(crap_fasta_inf)
 
 print(head(crap_accessions))
 ```
@@ -197,11 +197,11 @@ biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_forRobust']]),
 
 Now we can summarise with `robustSummary`
 
-```{r}
+```{r, warning=FALSE}
 
 # Aggregate to protein-level abundances (using QFeatures function)
-dia_qf <- QFeatures::aggregateFeatures(dia_qf, 
-                                       i = "peptides_filtered_forRobust", 
+dia_qf <- QFeatures::aggregateFeatures(dia_qf,
+                                       i = "peptides_filtered_forRobust",
                                        fcol = "Protein.Group",
                                        name = "protein",
                                        fun = MsCoreUtils::robustSummary,

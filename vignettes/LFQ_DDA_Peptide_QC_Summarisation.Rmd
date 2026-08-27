@@ -18,9 +18,9 @@ knitr::opts_chunk$set(
 ```
 
 
-Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DDA.
+Label-Free Quantification (LFQ) is the simplest form of quantitative bottom-up proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DDA.
 
-Since each sample is run separately, different peptides will be quantified in each sample and the peptide intensities may not be directly comparable between samples. The common solution to the higher burden of missing values is to use the ‘match-between-runs’ (Cox et al. 2014[UPDATE REF!!!]), or the functionally equivalent ‘Minora’ algorithm employed by Proteome Discoverer (PD). These algorithms use the observed retention times of MS1 ions which were successfully spectrum matched in one sample to identify the likely peptide sequence of MS1 ions that could not be spectrum matched in another sample. However, even with these algorithms, DDA LFQ will still typically have many more missing values than labelled LFQ, e.g TMT.
+Since each sample is run separately, different peptides will be quantified in each sample and the peptide intensities may not be directly comparable between samples. The common solution to the higher burden of missing values is to use the ‘match-between-runs’ (Cox et al. 2014[UPDATE REF!!!]), or the functionally equivalent ‘Minora’ algorithm employed by Proteome Discoverer (PD). These algorithms use the observed retention times of MS1 ions which were successfully spectrum matched in one sample to identify the likely peptide sequence of MS1 ions that could not be spectrum matched in another sample. However, even with these algorithms enabled, DDA LFQ will still typically have many more missing values than labelled proteomics, e.g TMT.
 
 Despite the pitfalls of LFQ, the data analysis is still relatively straightforward, though there are steps that need some careful consideration and quality control assessment.
 
@@ -48,7 +48,7 @@ crap_fasta_inf <- system.file(
 )
 
 # Extract the protein IDs associated with each cRAP protein
-crap_accessions <- biomasslmb::get_crap_fasta_accessions(crap_fasta_inf)
+crap_accessions <- biomasslmb::get_contaminant_fasta_accessions(crap_fasta_inf)
 
 print(head(crap_accessions))
 ```
@@ -257,11 +257,11 @@ biomasslmb:::message_parse(rowData(lfq_qf[['peptides_for_summarisation']]),
 
 Now we can summarise with `robustSummary`
 
-```{r}
+```{r, warning=FALSE}
 set.seed(42)
 
 # Aggregate to protein-level abundances (using QFeatures function)
-lfq_qf <- aggregateFeatures(lfq_qf, 
+lfq_qf <- aggregateFeatures(lfq_qf,
                             i = "peptides_for_summarisation",
                             #i = "peptides_filtered_missing", 
                             fcol = "Master.Protein.Accessions",

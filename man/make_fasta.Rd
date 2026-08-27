@@ -43,7 +43,7 @@ Given a vector of UniProt accessions, this function will:
 # specify some UniProt accessions
 crap_fasta <- system.file("extdata", "cRAP_20190401.fasta.gz",
                           package = "biomasslmb")
-crap <- get_crap_fasta_accessions(crap_fasta)
+crap <- get_contaminant_fasta_accessions(crap_fasta)
 
 \dontrun{
 make_fasta(crap, "2021-01_cRAP.fasta")

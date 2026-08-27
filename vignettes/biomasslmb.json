@@ -787,5 +787,43 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "Frankenfield2022",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.2c00145",
+		"issue": "9",
+		"journalAbbreviation": "J Proteome Res",
+		"page": "2104-2113",
+		"title": "Protein Contaminants Matter: Building Universal Protein Contaminant Libraries for DDA and DIA Proteomics",
+		"volume": "21",
+		"author": [
+			{
+				"family": "Frankenfield",
+				"given": "Ashley M."
+			},
+			{
+				"family": "Ni",
+				"given": "Jiawei"
+			},
+			{
+				"family": "Ahmed",
+				"given": "Mustafa"
+			},
+			{
+				"family": "Hao",
+				"given": "Ling"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2022",
+					7,
+					6
+				]
+			]
+		}
 	}
 ]

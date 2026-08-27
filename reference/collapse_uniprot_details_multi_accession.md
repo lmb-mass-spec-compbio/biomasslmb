@@ -9,8 +9,10 @@ element may itself be several accessions joined by `sep` – the
 `protein_ids` element is split into its constituent accessions, the
 matching rows of `uniprot2details` are looked up, then re-collapsed back
 to one row per original (possibly multi-accession) `protein_ids`
-element, with `sep`-separated values where the constituent accessions'
-details differ. Does not call
+element. Every constituent accession contributes one value to each
+column, joined by `sep`, so a group of `n` accessions yields `n`-part
+`sep`-separated strings that stay positionally aligned across columns.
+Does not call
 [`get_uniprot_details`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_uniprot_details.md)
 itself, so the same `uniprot2details` result can also be used on its
 own, without fetching annotations twice.
@@ -49,9 +51,9 @@ collapse_uniprot_details_multi_accession(
 ## Value
 
 `data.frame` with one row per unique `protein_ids` element and the same
-columns as `uniprot2details`. Where the constituent accessions agree on
-a value it appears once; where they differ the distinct values are
-joined by `sep`.
+columns as `uniprot2details`. For a `protein_ids` element made of `n`
+accessions, each column holds the `n` per-accession values joined by
+`sep`, in the same order across every column.
 
 ## Examples
 

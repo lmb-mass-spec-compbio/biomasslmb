@@ -99,9 +99,10 @@ test_that("collapse_uniprot_details_multi_accession maps single-accession detail
   expect_equal(single_row$Annotation.Source, "UniProtKB (live)")
 
   multi_row <- result[result$UniprotID == "A; B", ]
-  expect_setequal(strsplit(multi_row$Gene.Names, "; ", fixed = TRUE)[[1]], c("GENEA", "GENEB"))
-  # constituent accessions agree here, so the shared value appears once
-  expect_equal(multi_row$Annotation.Source, "UniProtKB (live)")
+  expect_equal(multi_row$Gene.Names, "GENEA; GENEB")
+  # every column carries one value per constituent accession, in the same
+  # order, even when the values are identical
+  expect_equal(multi_row$Annotation.Source, "UniProtKB (live); UniProtKB (live)")
 })
 
 test_that("collapse_uniprot_details_multi_accession de-duplicates repeated protein_ids", {

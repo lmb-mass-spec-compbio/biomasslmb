@@ -25,9 +25,9 @@ collapsed output. Default \code{"; "}, matching Proteome Discoverer's
 }
 \value{
 \code{data.frame} with one row per unique \code{protein_ids} element and
-the same columns as \code{uniprot2details}. Where the constituent accessions
-agree on a value it appears once; where they differ the distinct values
-are joined by \code{sep}.
+the same columns as \code{uniprot2details}. For a \code{protein_ids} element made
+of \code{n} accessions, each column holds the \code{n} per-accession values joined
+by \code{sep}, in the same order across every column.
 }
 \description{
 Takes the \code{data.frame} returned by
@@ -37,11 +37,12 @@ joined by \code{sep} -- the \code{Master.Protein.Accessions} column from Proteom
 Discoverer \code{PeptideGroups.txt} output is the common source of this. Each
 \code{protein_ids} element is split into its constituent accessions, the
 matching rows of \code{uniprot2details} are looked up, then re-collapsed back
-to one row per original (possibly multi-accession) \code{protein_ids} element,
-with \code{sep}-separated values where the constituent accessions' details
-differ. Does not call \code{\link{get_uniprot_details}} itself, so the
-same \code{uniprot2details} result can also be used on its own, without
-fetching annotations twice.
+to one row per original (possibly multi-accession) \code{protein_ids} element.
+Every constituent accession contributes one value to each column, joined
+by \code{sep}, so a group of \code{n} accessions yields \code{n}-part \code{sep}-separated
+strings that stay positionally aligned across columns. Does not call
+\code{\link{get_uniprot_details}} itself, so the same \code{uniprot2details}
+result can also be used on its own, without fetching annotations twice.
 }
 \examples{
 \dontrun{

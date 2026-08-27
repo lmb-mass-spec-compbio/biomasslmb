@@ -226,11 +226,12 @@ get_uniprot_details <- function(accessions, verbosity=0, check_complete='error')
 #' Discoverer `PeptideGroups.txt` output is the common source of this. Each
 #' `protein_ids` element is split into its constituent accessions, the
 #' matching rows of `uniprot2details` are looked up, then re-collapsed back
-#' to one row per original (possibly multi-accession) `protein_ids` element,
-#' with `sep`-separated values where the constituent accessions' details
-#' differ. Does not call \code{\link{get_uniprot_details}} itself, so the
-#' same `uniprot2details` result can also be used on its own, without
-#' fetching annotations twice.
+#' to one row per original (possibly multi-accession) `protein_ids` element.
+#' Every constituent accession contributes one value to each column, joined
+#' by `sep`, so a group of `n` accessions yields `n`-part `sep`-separated
+#' strings that stay positionally aligned across columns. Does not call
+#' \code{\link{get_uniprot_details}} itself, so the same `uniprot2details`
+#' result can also be used on its own, without fetching annotations twice.
 #'
 #' @param uniprot2details `data.frame`, the output of
 #' \code{\link{get_uniprot_details}}, covering (at least) every accession
@@ -243,9 +244,9 @@ get_uniprot_details <- function(accessions, verbosity=0, check_complete='error')
 #' `Master.Protein.Accessions` column.
 #'
 #' @return `data.frame` with one row per unique `protein_ids` element and
-#' the same columns as `uniprot2details`. Where the constituent accessions
-#' agree on a value it appears once; where they differ the distinct values
-#' are joined by `sep`.
+#' the same columns as `uniprot2details`. For a `protein_ids` element made
+#' of `n` accessions, each column holds the `n` per-accession values joined
+#' by `sep`, in the same order across every column.
 #' @export
 #' @examples
 #' \dontrun{
@@ -265,5 +266,5 @@ collapse_uniprot_details_multi_accession <- function(uniprot2details, protein_id
     merge(uniprot2details, by.x='UniprotID_single', by.y='UniprotID') %>%
     select(-UniprotID_single) %>%
     group_by(UniprotID) %>%
-    summarise_all(.funs=function(x) paste(unique(x), collapse=sep))
+    summarise_all(.funs=function(x) paste(x, collapse=sep))
 }

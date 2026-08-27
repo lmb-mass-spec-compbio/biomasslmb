@@ -457,7 +457,7 @@ Here, we have QCed the PSMs and filtered them in the following steps:
 -   For the whole-proteome comparison (Part A), normalise the abundance values so they have the same median value in all samples; for the IP comparison (Part B), skip normalisation since the conditions are expected to differ in overall composition
 -   Where available (PD), remove PSMs with very low signal:noise and high interference
 
-We then summarised the PSM level abundances to protein level: with `sum` for the complete, whole-proteome PD data, and with `robustSummary` for the IP MaxQuant data where missing values needed to be retained. See the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison of the two approaches, and the `Visualisations` vignette for how to explore and statistically test the resulting protein-level data using the experimental design attached here.
+We then summarised the PSM level abundances to protein level: with `sum` for the complete, whole-proteome PD data, and with `robustSummary` for the IP MaxQuant data where missing values needed to be retained. See the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison of the two approaches, and the [Data exploration and statistical testing](exploration_and_statistical_testing.html) vignette for how to explore and statistically test the resulting protein-level data using the experimental design attached here.
 
 ```{r}
 sessionInfo()

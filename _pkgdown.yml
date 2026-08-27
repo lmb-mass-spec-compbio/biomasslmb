@@ -2,3 +2,13 @@ url: https://lmb-mass-spec-compbio.github.io/biomasslmb/
 template:
   bootstrap: 5
 
+articles:
+- title: All vignettes
+  navbar: ~
+  contents:
+  - TMT_PSM_QC_Summarisation
+  - LFQ_DDA_Peptide_QC_Summarisation
+  - LFQ_DIA_Peptide_QC
+  - summarisation_methods
+  - exploration_and_statistical_testing
+

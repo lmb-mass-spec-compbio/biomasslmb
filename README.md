@@ -41,7 +41,7 @@ See the vignettes for examples of how to use the package:
 
 - `TMT_PSM_QC_Summarisation` — PSM-level QC and summarisation to protein-level abundance for TMT data
 - `summarisation_methods` — comparing sum/mean/median/robustSummary approaches, for TMT and LFQ data
-- `visualisations` — exploring protein-level data and testing for differential abundance
+- `exploration_and_statistical_testing` — exploring protein-level data and testing for differential abundance
 - `LFQ_DDA_Peptide_QC_Summarisation` — peptide-level QC for LFQ DDA data
 - `LFQ_DIA_Peptide_QC` — peptide-level QC for LFQ DIA data
 

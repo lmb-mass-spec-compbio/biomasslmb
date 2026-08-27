@@ -1,0 +1,246 @@
+---
+title: "Data exploration and statistical testing"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Data exploration and statistical testing}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Once protein-level abundances have been QCed, filtered and summarised, the next step is to explore the data with respect to the experimental design, then test for differential abundance between conditions. Below, we work through that process twice, using datasets carried over from the QC vignettes: first with `dia_qf` (Part A), an LFQ-DIA whole-proteome comparison of blood plasma from MPXV-infected and healthy individuals; then with `tmt_qf_mq` (Part B), a TMT immunoprecipitation comparing a bait pulldown (`IP`) against a `Control` pulldown. The two designs call for different choices at the statistical testing stage, which we highlight in Part B.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(limma)
+```
+
+# Part A: LFQ-DIA whole-proteome comparison
+
+`dia_qf` is the blood plasma dataset from the [LFQ-DIA QC](LFQ_DIA_Peptide_QC.html) vignette [@Wang2022]: a case series comparing MPXV infection, COVID-19 and healthy controls, summarised to protein level with `robustSummary`. The clinical group of each sample is in the `group` column. Here we focus on the MPXV-vs-control comparison, so we restrict to those samples up front.
+
+```{r}
+names(dia_qf)
+knitr::kable(as.data.frame(colData(dia_qf))[, c('group', 'sex', 'age.group')])
+```
+
+```{r}
+dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
+```
+
+## Sample correlation
+
+A pairwise correlation heatmap is a quick way to check that replicates agree with each other more than they agree with samples from the other condition. `plot_cor_samples` computes the Spearman correlation between samples for a given assay and plots it as a heatmap.
+
+```{r, fig.height=5, fig.width=5}
+plot_cor_samples(dia_prot, 'protein')
+```
+
+## Principal component analysis
+
+`plot_pca` performs a PCA on a given assay and plots two of the components, optionally colouring points by a `colData` column. `robustSummary` doesn't require complete peptides, so `dia_qf[['protein']]` retains some missing values (`r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)` % of the matrix). `stats::prcomp` can't handle missing values, so instead of the default `allowing_missing=FALSE` (which would silently drop every protein with any missing value via `filterNA`), we set `allowing_missing=TRUE`, which uses `pcaMethods::pca` instead. Note that `scale`/`center` are passed on to whichever underlying PCA function is used, so with `pcaMethods::pca` `scale` takes a scaling method name (`'uv'`, unit-variance, is the equivalent of `scale=TRUE` in `stats::prcomp`) rather than `TRUE`/`FALSE`.
+
+```{r, fig.height=4, fig.width=5, out.width='60%'}
+plot_pca(dia_prot, 'protein', colour_by='group', scale='uv', center=TRUE, allowing_missing=TRUE) +
+  theme_biomasslmb(base_size=10)
+```
+
+MPXV and control plasma separate along the first principal component, consistent with the correlation heatmap above.
+
+## Missingness and experimental condition
+
+We're about to test protein-level abundances that contain missing values, so it's worth checking whether that missingness is random or structured by group. Missingness concentrated in one group — a protein consistently absent from the controls, say — both distorts the linear model and can be biologically meaningful in its own right, so it shouldn't be ignored.
+
+`condition_miss_score` fits a per-protein logistic regression of missingness against group and returns Tjur's R² per protein: values near 1 mean a protein's missingness is well explained by group, values near 0 mean it looks unrelated to group. `condition_miss_index` summarises this into a single dataset-level value.
+
+```{r}
+miss_res <- condition_miss_score(dia_qf, i = 'protein', group_cols = 'group')
+condition_miss_index(miss_res$summary)$index
+```
+
+The index is close to zero: for this whole-proteome comparison, protein-level missingness looks unrelated to group — in contrast to the enrichment experiment in Part B, where absence from the control pulldown is exactly the signal of interest. We therefore test the protein-level abundances directly, letting `limma` fit each protein on whichever samples it was quantified in, rather than imputing.
+
+## Differential abundance testing with limma
+
+We use `limma` for differential abundance testing between `control` and `MPXV`. `limma` fits a linear model per protein, then applies an empirical Bayes step which borrows information across all proteins to stabilise the variance estimate — important here since the 6 MPXV replicates give fairly noisy per-protein variance estimates on their own.
+
+We use `treat` rather than plain `eBayes`. `treat` tests the null hypothesis that the absolute fold-change is *below* a threshold (here 1.2-fold), rather than the standard null of exactly no difference — this avoids flagging changes that are statistically detectable but too small to be biologically interesting. `trend=TRUE` lets the variance prior depend on mean abundance; `robust=TRUE` down-weights proteins with unusually extreme variance so they don't distort the shared prior.
+
+We attach gene symbols from the `protein` assay's `rowData` to the results, since they read more clearly than accessions on the volcano plot.
+
+```{r, fig.show='hide'}
+group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
+design <- model.matrix(~group)
+
+fit <- lmFit(assay(dia_prot[['protein']]), design)
+final_model <- treat(fit, fc = 1.2, trend = TRUE, robust = TRUE)
+
+gene_names <- as.data.frame(rowData(dia_qf[['protein']])[, c('Protein.Group', 'Genes')])
+
+limma_results <- topTreat(final_model, coef = 'groupMPXV', number = Inf) %>%
+  tibble::rownames_to_column('Protein') %>%
+  left_join(gene_names, by = c('Protein' = 'Protein.Group')) %>%
+  arrange(P.Value)
+
+table(direction = ifelse(limma_results$logFC < 0, 'Dec.', 'Inc.'),
+      sig = limma_results$adj.P.Val < 0.05)
+```
+
+The FDR adjustment is over the `r nrow(limma_results)` proteins that passed the filtering thresholds in the QC vignette; a stricter or looser peptide/protein filter would change the multiple-testing burden, and hence the adjusted p-values.
+
+## Volcano plot
+
+`plot_volcano` plots log-fold-change against -log10(p-value) directly from a statistical testing results `data.frame`; by default it expects `logFC` and `adj.P.Val` columns, which is exactly what `topTreat` returns.
+
+```{r, fig.width=6, fig.height=6}
+sig_hits <- limma_results %>% filter(adj.P.Val < 0.05) %>% pull(Protein)
+
+plot_volcano(limma_results, sig_col = NULL) +
+  geom_point(data = filter(limma_results, Protein %in% sig_hits),
+             aes(fill = adj.P.Val < 0.05), pch = 21, size = 3) +
+  scale_fill_manual(values = get_cat_palette(2)[2], guide = 'none') +
+  ggrepel::geom_text_repel(
+    data = filter(limma_results, Protein %in% sig_hits),
+    aes(label = Genes), min.segment.length = 0, size = 3)
+```
+
+The significant proteins are dominated by the acute-phase response: positive acute-phase reactants such as `CRP`, `SAA2`, `HP`, `LBP` and `C9` are increased in MPXV plasma, while negative acute-phase reactants such as `APOA1`, `APOA2`, `TTR` and `RBP4` are decreased.
+
+## Inspecting proteins of interest
+
+Before trusting a hit, it's worth looking at the abundance values behind it across the processing pipeline — from precursor level through to the final protein-level estimate — to confirm the result isn't being driven by a single outlying precursor. `plot_protein_assays` plots one or more proteins across any set of assays in the `QFeatures` object.
+
+```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
+top_hit <- head(sig_hits, 1)
+
+plot_protein_assays(
+  dia_prot, top_hit,
+  experiments_to_plot = c('precursors', 'peptides_filtered_norm', 'protein'),
+  protein_id_col = 'Protein.Group',
+  label_col = 'Genes',
+  log2transform_cols = c('precursors')) +
+  aes(colour = colData(dia_prot)[colname, 'group']) +
+  scale_colour_manual(values = get_cat_palette(2), name = 'group') +
+  theme(aspect.ratio = 1/3)
+```
+
+The precursor-level trend is consistent across the processing steps and across the individual precursors contributing to the protein, giving confidence that this is a genuine change rather than an artefact of summarisation.
+
+# Part B: MaxQuant (MQ) input
+
+`tmt_qf_mq` is the immunoprecipitation dataset from the QC vignette: a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each, summarised to protein level with `robustSummary`.
+
+```{r}
+names(tmt_qf_mq)
+knitr::kable(data.frame(colData(tmt_qf_mq)))
+```
+
+## Sample correlation
+
+```{r, fig.height=5, fig.width=5}
+plot_cor_samples(tmt_qf_mq, 'protein')
+```
+
+## Principal component analysis
+
+As in Part A, `robustSummary` doesn't require complete PSMs, so `tmt_qf_mq[['protein']]` retains a small number of missing values (`r round(100*mean(is.na(assay(tmt_qf_mq[['protein']]))), 2)` % of the matrix), and we set `allowing_missing=TRUE` so the PCA runs via `pcaMethods::pca`.
+
+```{r, fig.height=4, fig.width=5, out.width='60%'}
+plot_pca(tmt_qf_mq, 'protein', colour_by='Condition', scale='uv', center=TRUE, allowing_missing=TRUE) +
+  theme_biomasslmb(base_size=10)
+```
+
+IP and Control samples separate clearly, as expected for a specific enrichment.
+
+## Differential abundance testing with limma
+
+The statistical model itself is the same as Part A, but the biological question is different, and that changes what fold-change threshold is appropriate. In Part A, we were looking for shifts in a whole-proteome comparison, so a modest 1.2-fold `treat` threshold made sense. Here, we're trying to identify bona fide interactors of the bait protein: a real interactor should be substantially enriched in the IP relative to the control, not just detectably different. We therefore use a stricter 2-fold threshold.
+
+```{r, fig.show='hide'}
+condition_mq <- factor(tmt_qf_mq[['protein']]$Condition, levels = c('Control', 'IP'))
+design_mq <- model.matrix(~condition_mq)
+
+fit_mq <- lmFit(assay(tmt_qf_mq[['protein']]), design_mq)
+final_model_mq <- treat(fit_mq, fc = 2, trend = TRUE, robust = TRUE)
+
+limma_results_mq <- topTreat(final_model_mq, coef = 'condition_mqIP', number = Inf) %>%
+  tibble::rownames_to_column('Protein') %>%
+  arrange(P.Value)
+
+table(direction = ifelse(limma_results_mq$logFC < 0, 'Dec.', 'Inc.'),
+      sig = limma_results_mq$adj.P.Val < 0.05)
+```
+
+Both enriched and depleted proteins can be statistically significant here, but for identifying interactors we care specifically about enrichment in the IP: a depleted protein doesn't indicate an interaction with the bait, so below we restrict to the significantly *enriched* proteins as our candidate interactors.
+
+```{r}
+sig_hits_mq <- limma_results_mq %>%
+  filter(adj.P.Val < 0.05, logFC > 0) %>%
+  pull(Protein)
+
+length(sig_hits_mq)
+```
+
+## Volcano plot
+
+With `r length(sig_hits_mq)` candidate interactors, labelling every point would make the plot unreadable, so we label only the 10 most significant.
+
+```{r, fig.width=6, fig.height=6}
+top_hits_mq <- head(sig_hits_mq, 10)
+
+plot_volcano(limma_results_mq, sig_col = NULL) +
+  geom_point(data = filter(limma_results_mq, Protein %in% sig_hits_mq),
+             aes(fill = adj.P.Val < 0.05), pch = 21, size = 3) +
+  scale_fill_manual(values = get_cat_palette(2)[2], guide = 'none') +
+  ggrepel::geom_text_repel(
+    data = filter(limma_results_mq, Protein %in% top_hits_mq),
+    aes(label = Protein), min.segment.length = 0, size = 3)
+```
+
+## Inspecting proteins of interest
+
+As in Part A, we inspect the feature-to-protein trend behind the top candidate interactor, here working from PSMs rather than precursors: `psms_raw` and `psms_filtered_interference` in place of `precursors` and `peptides_filtered_norm`, and `Leading.razor.protein` in place of `Protein.Group`.
+
+```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
+top_hit_mq <- head(sig_hits_mq, 1)
+
+plot_protein_assays(
+  tmt_qf_mq, top_hit_mq,
+  experiments_to_plot = c('psms_raw', 'psms_filtered_interference', 'protein'),
+  protein_id_col = 'Leading.razor.protein',
+  label_col = 'Leading.razor.protein',
+  log2transform_cols = c('psms_raw')) +
+  aes(colour = colData(tmt_qf_mq)[colname, 'Condition']) +
+  scale_colour_manual(values = get_cat_palette(2), name = 'Condition') +
+  theme(aspect.ratio = 1/3)
+```
+
+The PSMs consistently show higher abundance in the IP samples than the Control samples, supporting this as a genuine interactor rather than an artefact of a single PSM or a missing-value pattern.
+
+# Summary
+
+Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecipitation (Part B):
+
+-   Checked that replicate samples correlate more strongly with each other than with the other condition, and that PCA separates the conditions — using `allowing_missing=TRUE` in both parts, since `robustSummary` retains some missing values
+-   Checked whether protein-level missingness was structured by experimental condition: unrelated to group in the whole-proteome comparison (Part A), but strongly condition-informative in the immunoprecipitation (see the QC vignette), where a protein absent from the control pulldown is itself the signal of interest
+-   Tested for differential protein abundance with `limma::treat`, using a fold-change threshold appropriate to the biological question: a modest threshold for whole-proteome changes in Part A, and a strict threshold to identify substantially-enriched candidate interactors in Part B
+-   Visualised the results with a volcano plot and inspected the feature-to-protein trend for a top hit
+
+```{r}
+sessionInfo()
+```

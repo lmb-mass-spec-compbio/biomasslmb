@@ -19,9 +19,9 @@ knitr::opts_chunk$set(
 
 Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DIA.
 
-DIA data is typically searched with [DIA-NN](https://github.com/vdemichev/DiaNN), which reports results at the precursor level (a specific peptide sequence, with modifications, at a specific charge state). Since DIA co-fragments many precursors at once, DIA-NN infers identifications either from a project-specific spectral library or via a library predicted in-silico from the sequence database, then rescores them, optionally using match-between-runs (MBR) to borrow confidence across runs. As with DDA, we still need to filter to confident identifications, remove contaminants, handle missing values, and summarise to protein-level abundance before any statistical analysis.
+DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN), which reports results at multiple levels. Here, we will use the data from the precursor level (a specific peptide sequence, with modifications, at a specific charge state). Since DIA co-fragments many precursors at once, DIA-NN infers identifications either from a project-specific spectral library or via a library predicted in-silico from the sequence database, then rescores them, optionally using match-between-runs (MBR) to borrow confidence across runs. As with DDA, we still need to filter to confident identifications, remove contaminants, handle missing values, and summarise to protein-level abundance before any statistical analysis.
 
-The data used in this vignette is a real DIA-NN `report.parquet` output for a plasma proteomics case series comparing Mpox (MPXV) infection, COVID-19, and healthy controls [@Wang2022]. It is also used, with accompanying teaching material, in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Unlike the truncated demonstration files used elsewhere in `biomasslmb`, this dataset is used here in full: it is small enough not to need subsetting, and its long precursor-per-run format makes a synthetic subset impractical to construct while still exercising the code below.
+The data used in this vignette is a real DIA-NN `report.parquet` output for a plasma proteomics case series comparing Mpox (MPXV) infection, COVID-19, and healthy controls [@Wang2022]. It is also used, with accompanying teaching material, in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Unlike the truncated demonstration files used elsewhere in `biomasslmb`, this dataset is used here in full - it is small enough not to need subsetting
 
 # Load required packages
 
@@ -185,7 +185,7 @@ biomasslmb::plot_quant(dia_qf[['peptides_filtered']], log2transform = FALSE, met
 
 ## Normalise
 
-Unlike the proximity-labelling examples elsewhere in `biomasslmb`'s vignettes, this is a whole-plasma-proteome comparison between clinical groups, where we don't expect a systematic difference in overall protein content between groups. Standard normalisation is therefore appropriate here, and we apply median normalisation with `QFeatures::normalize`.
+This is a whole-plasma-proteome comparison between clinical groups, where we don't expect a systematic difference in overall protein content between groups. Standard normalisation is therefore appropriate here, and we apply median normalisation with `QFeatures::normalize`.
 
 ```{r}
 dia_qf <- QFeatures::normalize(
@@ -272,11 +272,10 @@ from fewer than `n` features (peptides). We can then give this mask to
 `mask_protein_level_quant` to replace these quantification values with
 NA.
 
-```{r, warning=FALSE, fig.show='hold', out.width="50%", fig.width=4, fig.height=4}
-# plot = TRUE means we will also get a plot of the number of proteins quantified in each sample
+```{r, warning=FALSE, fig.show='hold', out.width="50%", fig.width=8, fig.height=4}
 protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
   dia_qf[['peptides_for_summarisation']], min_features = min_peps,
-  master_protein_col = 'Protein.Group', plot = TRUE)
+  master_protein_col = 'Protein.Group')
 
 dia_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
   dia_qf[['protein']], protein_retain_mask)
@@ -329,7 +328,7 @@ samples_present <- get_samples_present(dia_qf, rowvars_prot, rename_cols_prot)
 plot_samples_present(samples_present, rowvars_prot, breaks = seq(5, 30, 5))
 ```
 
-From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.
+From these two plots, we can see that the filtering to ensure that all proteins have no missing values and \>1 peptides removed only a few peptides, but many proteins. Whether this is appropriate will depend on your data in hand.
 
 ```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes

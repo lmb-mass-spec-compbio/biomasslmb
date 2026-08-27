@@ -19,13 +19,15 @@ that appears in \code{protein_ids} once split by \code{sep}.}
 containing several UniProt accessions joined by \code{sep}.}
 
 \item{sep}{\code{string} delimiter separating accessions within a
-\code{protein_ids} element. Default \code{"; "}, matching Proteome Discoverer's
+\code{protein_ids} element, and also used to join differing values in the
+collapsed output. Default \code{"; "}, matching Proteome Discoverer's
 \code{Master.Protein.Accessions} column.}
 }
 \value{
 \code{data.frame} with one row per unique \code{protein_ids} element and
-the same columns as \code{uniprot2details}, with \verb{;}-separated values where
-the constituent accessions' details differ.
+the same columns as \code{uniprot2details}. Where the constituent accessions
+agree on a value it appears once; where they differ the distinct values
+are joined by \code{sep}.
 }
 \description{
 Takes the \code{data.frame} returned by
@@ -36,7 +38,7 @@ Discoverer \code{PeptideGroups.txt} output is the common source of this. Each
 \code{protein_ids} element is split into its constituent accessions, the
 matching rows of \code{uniprot2details} are looked up, then re-collapsed back
 to one row per original (possibly multi-accession) \code{protein_ids} element,
-with \verb{;}-separated values where the constituent accessions' details
+with \code{sep}-separated values where the constituent accessions' details
 differ. Does not call \code{\link{get_uniprot_details}} itself, so the
 same \code{uniprot2details} result can also be used on its own, without
 fetching annotations twice.

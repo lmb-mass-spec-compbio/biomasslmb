@@ -227,7 +227,7 @@ get_uniprot_details <- function(accessions, verbosity=0, check_complete='error')
 #' `protein_ids` element is split into its constituent accessions, the
 #' matching rows of `uniprot2details` are looked up, then re-collapsed back
 #' to one row per original (possibly multi-accession) `protein_ids` element,
-#' with `;`-separated values where the constituent accessions' details
+#' with `sep`-separated values where the constituent accessions' details
 #' differ. Does not call \code{\link{get_uniprot_details}} itself, so the
 #' same `uniprot2details` result can also be used on its own, without
 #' fetching annotations twice.
@@ -238,12 +238,14 @@ get_uniprot_details <- function(accessions, verbosity=0, check_complete='error')
 #' @param protein_ids `character vector` protein IDs, each optionally
 #' containing several UniProt accessions joined by `sep`.
 #' @param sep `string` delimiter separating accessions within a
-#' `protein_ids` element. Default `"; "`, matching Proteome Discoverer's
+#' `protein_ids` element, and also used to join differing values in the
+#' collapsed output. Default `"; "`, matching Proteome Discoverer's
 #' `Master.Protein.Accessions` column.
 #'
 #' @return `data.frame` with one row per unique `protein_ids` element and
-#' the same columns as `uniprot2details`, with `;`-separated values where
-#' the constituent accessions' details differ.
+#' the same columns as `uniprot2details`. Where the constituent accessions
+#' agree on a value it appears once; where they differ the distinct values
+#' are joined by `sep`.
 #' @export
 #' @examples
 #' \dontrun{
@@ -263,5 +265,5 @@ collapse_uniprot_details_multi_accession <- function(uniprot2details, protein_id
     merge(uniprot2details, by.x='UniprotID_single', by.y='UniprotID') %>%
     select(-UniprotID_single) %>%
     group_by(UniprotID) %>%
-    summarise_all(.funs=function(x) paste(x, collapse=';'))
+    summarise_all(.funs=function(x) paste(unique(x), collapse=sep))
 }

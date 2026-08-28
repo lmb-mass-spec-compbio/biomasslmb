@@ -96,7 +96,7 @@ LFQ quantifies each sample in a separate run, so missing values are pervasive an
 
 Three things should make you depart from the conventional path:
 
-1. **Severity of missingness.** Diagnose it rather than assuming: `mnar_score()` and `condition_miss_score()` quantify how far missingness is related to abundance, and `plot_missing_upset()` and `plot_missing_SN()` show its structure.
+1. **Severity of missingness.** Diagnose it rather than assuming: `global_condition_miss_score()` separates missingness explained by abundance from missingness explained by condition, `condition_miss_score()` does the same per feature, and `plot_missing_upset()` and `plot_missing_SN()` show its structure. [Handling missing values](handling_missing_values.html) works through the diagnosis and every option that follows from it.
 2. **Experimental design.** In an enrichment experiment, absence from the control is usually meaningful, so imputing it discards the signal you are looking for.
 3. **What you need to do next.** limpa's output is a `limma` fit. Analyses that need a quantification matrix instead — circadian rhythm fitting with MetaCycle or a cosinor model, kinetic models fitted with `nls`, thermal proteome profiling — cannot consume it, whatever its merits for handling missing values.
 

@@ -27,5 +27,6 @@ articles:
 - title: Choosing between options
   navbar: ~
   contents:
+  - handling_missing_values
   - summarisation_methods
 

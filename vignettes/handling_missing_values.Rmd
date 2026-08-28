@@ -1,0 +1,414 @@
+---
+title: "Handling missing values"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Handling missing values}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Every quantitative proteomics dataset has missing values, and every stage of an analysis makes a decision about them — usually implicitly. Filtering features, choosing a summarisation function, imputing or not, and choosing a statistical test are all, in part, choices about what a missing value means.
+
+This article treats them as one decision rather than four. It works through where missing values come from, how to find out what yours look like, what can be done at each stage, and what each option costs. The costs are the point: there is no option here that is free, and the common failure is not picking the wrong one but picking one without noticing that a choice was made.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(limma)
+```
+
+# Where missing values come from
+
+The single most useful fact about missing values in proteomics is that their severity is determined by how the data were acquired, and the difference between acquisition types is not subtle.
+
+Below, a survey of 56 experiments processed by the facility: TMT, LFQ-DDA and LFQ-DIA, across whole-cell, fractionated and enrichment designs. Each experiment contributes its features' mean abundance (min-max scaled within the experiment, so that experiments are comparable) and the fraction of samples in which each feature is missing.
+
+```{r}
+missingness_survey <- readRDS(system.file(
+  'extdata', 'missingness_survey.rds', package = 'biomasslmb'))
+
+survey <- merge(missingness_survey$features,
+                missingness_survey$experiments, by = 'exp')
+
+missingness_survey$experiments %>%
+  count(ms_type, sample_type) %>%
+  pivot_wider(names_from = sample_type, values_from = n, values_fill = 0) %>%
+  knitr::kable()
+```
+
+```{r, fig.height=3, fig.width=8}
+survey %>%
+  ggplot(aes(mean_log_intensity, perc_missing)) +
+  geom_hex(bins = 40) +
+  facet_wrap(~ms_type) +
+  scale_fill_continuous(trans = 'log10', name = 'Features') +
+  theme_biomasslmb(base_size = 9, aspect_square = FALSE) +
+  labs(x = 'Mean abundance (scaled within experiment)',
+       y = 'Fraction of samples missing')
+```
+
+```{r}
+survey %>%
+  group_by(ms_type) %>%
+  summarise(experiments = n_distinct(exp),
+            mean_fraction_missing = round(mean(perc_missing), 3)) %>%
+  knitr::kable()
+```
+
+TMT features are missing in `r round(100*mean(survey$perc_missing[survey$ms_type == 'TMT']), 1)`% of samples on average, against `r round(100*mean(survey$perc_missing[survey$ms_type == 'DDA LFQ']), 1)`% for LFQ-DDA. That is an order of magnitude, and it is a consequence of the design rather than of anyone's data being better: within a TMT plex every sample is quantified from the same MS2 spectrum, so a peptide is either measured in all channels of that plex or in none of them. In LFQ each sample is a separate run, and whether a peptide is selected for fragmentation in a given run is partly stochastic and strongly abundance-dependent.
+
+The panels also differ in *shape*, not just in height. In TMT, most features sit on the zero line across the whole abundance range, with what missingness there is concentrated at low abundance. In LFQ, missingness is spread across the whole abundance range.
+
+That is worth being precise about, because it is easy to state backwards. `global_condition_miss_score()` fits a logistic model of missingness against abundance, and then against abundance plus experimental condition, reporting Tjur's R² for each:
+
+```{r}
+missingness_survey$experiments %>%
+  group_by(ms_type) %>%
+  summarise(
+    abundance_only = round(median(tjur_r2_intensity_only), 3),
+    condition_index = round(median(condition_miss_index), 3)) %>%
+  knitr::kable()
+```
+
+Abundance explains *more* of the missingness in TMT than in LFQ, not less. There is very little TMT missingness, and almost all of it is the low-signal tail. LFQ has a great deal of missingness, and abundance alone accounts for a smaller share of it, because run-to-run sampling and match-between-runs add variation that has nothing to do with how abundant the protein is.
+
+The condition missingness index runs the other way: `r round(median(missingness_survey$experiments$condition_miss_index[missingness_survey$experiments$ms_type == 'TMT']), 3)` for TMT against `r round(median(missingness_survey$experiments$condition_miss_index[missingness_survey$experiments$ms_type == 'DDA LFQ']), 3)` for LFQ-DDA. LFQ missingness is far more often structured by experimental group.
+
+Two conclusions follow, and they set up everything below:
+
+- **Imputation and missingness-aware models are responses to LFQ problems.** `robustSummary`, limpa's detection probability curve and imputation all address across-run missingness. Applying them to within-plex TMT data addresses a problem that is largely not there.
+- **TMT's missing value problem is between plexes, not within them.** A protein quantified in every channel of plex 1 and absent from plex 2 is missing for structural reasons, and the fix is bridge correction and design, not imputation. See [multi-plex TMT](TMT_multiplex.html).
+
+# Diagnosing your own data
+
+Aggregate survey numbers tell you what to expect. They do not tell you what you have, and the point of the diagnostics below is to make the choice that follows an informed one.
+
+We use two of the packaged datasets: `dia_qf`, an LFQ-DIA plasma case series, and `tmt_qf`, a single-plex TMT comparison.
+
+## How much, and in what pattern?
+
+```{r}
+c(dia_precursors = mean(is.na(assay(dia_qf[['peptides_filtered_norm']]))),
+  dia_protein = mean(is.na(assay(dia_qf[['protein']]))),
+  tmt_psms = mean(is.na(assay(tmt_qf[['psms_filtered_norm']]))),
+  tmt_protein = mean(is.na(assay(tmt_qf[['protein']])))) %>%
+  round(3)
+```
+
+The TMT protein assay has no missing values at all, and the DIA one has `r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)`%. Summarisation reduces missingness in both cases, because a protein needs only one quantified feature to get a value — which is itself something to be careful about, and is why the QC vignettes mask protein values derived from too few features.
+
+`plot_missing_upset()` shows which *combinations* of samples are missing together. A few dominant patterns that align with the experimental design mean something different from a long tail of one-off patterns.
+
+```{r, fig.height=5, fig.width=8, warning=FALSE, message=FALSE}
+plot_missing_upset(dia_qf, i = 'protein')
+```
+
+## Is it explained by abundance, or by condition?
+
+These are different problems with different remedies. Abundance-driven missingness is what imputation and detection-probability models are built for. Condition-driven missingness may be the biological signal itself, and imputing it discards the finding.
+
+`global_condition_miss_score()` separates the two, fitting missingness against abundance and then against abundance plus condition:
+
+```{r, message=FALSE}
+dia_global <- global_condition_miss_score(
+  dia_qf, i = 'peptides_filtered_norm', group_cols = 'group')
+
+c(abundance_only = dia_global$tjur_intensity_only,
+  condition_share = dia_global$tjur_condition_fraction,
+  lrt_p = dia_global$lrt_pvalue) %>%
+  signif(3)
+```
+
+Condition contributes a small but statistically detectable share here. That combination — a significant likelihood ratio test on a small effect — is common in a well-powered whole-proteome comparison, and it is the reason the test alone is not the answer: with 54,932 observations almost any structure is detectable, so the size of the contribution matters more than its p-value.
+
+`condition_miss_score()` gives the same idea per feature, which is more actionable, and `condition_miss_index()` reduces it to one number for the dataset.
+
+```{r, message=FALSE}
+miss_res <- condition_miss_score(dia_qf, i = 'protein', group_cols = 'group')
+condition_miss_index(miss_res$summary)$index
+```
+
+Close to zero, so protein-level missingness in this comparison is largely unrelated to clinical group. In an enrichment experiment the same index is high by construction, which is the signal rather than a problem — see [enrichment designs](interactome_designs.html).
+
+## The TMT-specific view
+
+For TMT, the useful feature-level diagnostic is missingness against reporter signal-to-noise. `plot_missing_SN()` bins PSMs by S:N and shows how many channels are missing in each bin.
+
+```{r, fig.height=4, fig.width=7, warning=FALSE, message=FALSE}
+plot_missing_SN(tmt_qf[['psms_filtered']])
+```
+
+Missing channels are concentrated in the low S:N bins and essentially absent from the high ones. This is what makes an S:N threshold the right tool for TMT: it removes the PSMs that produce missing values *and* the PSMs whose measured values are least reliable, in one filter, without any modelling.
+
+# Handling it: feature level
+
+The first opportunity is before summarisation, and it is the one with the best cost-to-benefit ratio, because a feature removed here costs you nothing if the protein has others.
+
+- **TMT: filter on signal-to-noise.** `filter_features_sn()` and the S:N threshold in `filter_TMT_PSMs()`. The plot above is how to choose the threshold.
+- **LFQ: filter on how many samples a feature was quantified in.** `QFeatures::filterNA(pNA = )` sets the tolerance. Being strict here is expensive in LFQ — requiring complete features can remove most of the data — which is why the LFQ vignettes use a permissive threshold and rely on the summarisation step to cope.
+- **Both: require more than one feature per protein.** `filter_features_per_protein()` removes proteins quantified from a single peptide or precursor. A one-feature protein has no internal replication, so nothing about it can be checked, and its missingness pattern is the missingness pattern of one peptide rather than of the protein.
+
+These are covered in context, with thresholds, in the acquisition-specific QC vignettes.
+
+# Handling it: summarisation
+
+The choice between summing features and `MsCoreUtils::robustSummary` is usually presented as a choice of estimator. It is at least as much a choice about missing values.
+
+Summing requires every feature to be present in every sample, or the sum is comparing different sets of peptides between samples. `robustSummary` fits a model that tolerates missing features, so it can use incomplete peptides without that bias. Which you want follows from the acquisition type: within a TMT plex, features are near-complete after S:N filtering, so summing is well defined and conventional; in LFQ, requiring complete features discards most of the data, so `robustSummary` is the conventional choice.
+
+The [summarisation methods](summarisation_methods.html) vignette compares the two directly on the same data, including what happens when each is used where the other belongs.
+
+# Handling it: protein level
+
+This is where the real decision is, and where the three common answers differ most.
+
+We use the MPXV-vs-control comparison from the [testing vignette](exploration_and_statistical_testing.html), which has enough missingness to matter and a known expected answer.
+
+```{r}
+dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
+
+group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
+
+n_quant <- sapply(levels(group), function(g){
+  rowSums(!is.na(assay(dia_prot[['protein']])[, group == g, drop = FALSE]))
+})
+
+testable <- rownames(n_quant)[apply(n_quant, 1, min) >= 2]
+
+c(proteins = nrow(n_quant), testable = length(testable))
+```
+
+## Option 1: impute nothing
+
+Test only the proteins with enough genuine measurements, and accept that the rest are untested. This is the route the testing vignette takes.
+
+```{r, fig.show='hide'}
+design <- model.matrix(~group)
+
+res_none <- assay(dia_prot[['protein']])[testable, ] %>%
+  lmFit(design) %>%
+  treat(fc = 1.2, trend = TRUE, robust = TRUE) %>%
+  topTreat(coef = 'groupMPXV', number = Inf)
+```
+
+## Option 2: impute everything
+
+Fill every missing value from a low-abundance distribution, on the assumption that a missing value means the protein was below the limit of detection. `MinProb` draws from a Gaussian centred on the low tail of each sample's observed distribution.
+
+```{r, message=FALSE, warning=FALSE, fig.show='hide'}
+set.seed(42)
+
+dia_prot <- QFeatures::impute(
+  dia_prot, i = 'protein', name = 'protein_imputed', method = 'MinProb')
+
+res_all <- assay(dia_prot[['protein_imputed']]) %>%
+  lmFit(design) %>%
+  treat(fc = 1.2, trend = TRUE, robust = TRUE) %>%
+  topTreat(coef = 'groupMPXV', number = Inf)
+```
+
+## Option 3: impute only where it is defensible
+
+The reason blanket imputation is risky is that it treats every missing value as a below-detection value, including the ones that are missing at random from an otherwise well-measured protein. `restrict_imputation()` keeps the imputed values only where the missingness pattern is consistent with genuine absence — here, where a condition has at most one quantified replicate.
+
+```{r, message=FALSE}
+use_imputed_df <- data.frame(
+  group = rep(c('control', 'MPXV'), each = 2),
+  n_finite = rep(c(0, 1), 2))
+
+dia_prot <- restrict_imputation(
+  dia_prot,
+  i_unimputed = 'protein',
+  i_imputed = 'protein_imputed',
+  i_restricted_imputed = 'protein_restricted',
+  use_imputed_df = use_imputed_df)
+```
+
+```{r, fig.show='hide'}
+res_restricted <- assay(dia_prot[['protein_restricted']]) %>%
+  lmFit(design) %>%
+  treat(fc = 1.2, trend = TRUE, robust = TRUE) %>%
+  topTreat(coef = 'groupMPXV', number = Inf)
+```
+
+## What the three give you
+
+```{r}
+summarise_res <- function(res, label){
+  data.frame(approach = label,
+             tested = nrow(res),
+             significant = sum(res$adj.P.Val < 0.05, na.rm = TRUE))
+}
+
+bind_rows(
+  summarise_res(res_none, 'impute nothing'),
+  summarise_res(res_restricted, 'restricted imputation'),
+  summarise_res(res_all, 'impute everything')) %>%
+  knitr::kable()
+```
+
+Imputation buys hits, as it always does. The question is which ones.
+
+```{r}
+gene_names <- as.data.frame(rowData(dia_qf[['protein']])[, c('Protein.Group', 'Genes')])
+
+sig_of <- function(res) rownames(res)[which(res$adj.P.Val < 0.05)]
+
+gained <- function(res){
+  g <- setdiff(sig_of(res), sig_of(res_none))
+  data.frame(Protein = g,
+             Gene = gene_names$Genes[match(g, gene_names$Protein.Group)],
+             n_control = n_quant[g, 'control'],
+             n_MPXV = n_quant[g, 'MPXV'])
+}
+
+knitr::kable(gained(res_restricted), row.names = FALSE,
+             caption = 'Gained by restricted imputation')
+```
+
+```{r}
+knitr::kable(gained(res_all), row.names = FALSE,
+             caption = 'Gained by blanket imputation')
+```
+
+Read the `n_control` and `n_MPXV` columns. Three kinds of gain appear here, and they are not equally trustworthy:
+
+- **Proteins that were untestable and are now testable**, with zero or one quantified replicate in one condition. `CRP` is the clearest: quantified in all 6 MPXV samples and 1 of 15 controls, and the canonical acute-phase protein. It is absent from the controls because it is genuinely low there, so imputing a low value is close to right, and both imputation routes recover it. This is the case imputation exists for.
+- **Proteins that were testable and became significant**, whose call changed rather than being rescued. `SERPINA4` is the instructive one: quantified in all 15 controls and all 6 MPXV samples, so not one of its own values was imputed, yet it is gained by both routes. Imputing other proteins changed the variance prior that `treat` shares across all of them. Before attributing a gained hit to the imputation of that protein, check whether it had anything imputed at all.
+- **Proteins with plenty of measurements in one condition and few in the other**, where blanket imputation fills most of a group from the low tail. `GAPDH`, gained only by blanket imputation, is quantified in 6 of 6 MPXV samples and 2 of 15 controls, so 13 control values are invented and the comparison rests on 2 real measurements against 6. Invented values have no scatter, so the result looks more confident than the evidence behind it — and an intracellular protein appearing as a plasma hit is exactly the kind of claim worth being suspicious of.
+
+The third category is the argument for `restrict_imputation()`. Blanket imputation applies the below-detection assumption everywhere; restricting it applies the assumption only where the data are consistent with it, and leaves everything else as it was.
+
+# Handling it: in the statistical test
+
+The third route does not impute at all. It carries the missingness into the model, so that the uncertainty created by a missing value stays visible in the result rather than being replaced by a number that looks as certain as a measurement.
+
+## limpa
+
+`limpa` fits a detection probability curve (DPC) relating the chance of detecting a peptide to its abundance, uses it to produce protein-level estimates *with standard errors*, and carries those standard errors into the linear model. It replaces summarisation, imputation and the model fit together.
+
+```{r, message=FALSE, warning=FALSE}
+library(limpa)
+
+se_peptides <- dia_qf[['peptides_for_summarisation']]
+
+y_peptide <- new('EList', list(E = assay(se_peptides),
+                               genes = rowData(se_peptides)))
+
+dpc_fit <- dpc(y_peptide)
+```
+
+```{r, fig.height=4, fig.width=5, out.width='60%'}
+plotDPC(dpc_fit)
+```
+
+The fitted curve is the assumption made visible: detection probability rising with abundance. Check it before trusting anything downstream — if the points do not follow the curve, the model does not describe your data.
+
+```{r, message=FALSE, warning=FALSE}
+y_protein <- dpcQuant(y_peptide, protein.id = 'Protein.Group', dpc = dpc_fit)
+
+dim(y_protein)
+```
+
+The standard errors are what distinguishes this from imputation. A protein estimated largely from missing values gets a large standard error and is down-weighted by the model, rather than being handed to the test as if it had been measured.
+
+```{r, fig.height=4, fig.width=5, out.width='60%'}
+data.frame(
+  abundance = rowMeans(y_protein$E, na.rm = TRUE),
+  std_error = rowMeans(y_protein$other$standard.error, na.rm = TRUE),
+  n_missing = rowSums(is.na(
+    assay(dia_qf[['protein']])[rownames(y_protein), ]))) %>%
+  ggplot(aes(abundance, std_error, colour = n_missing)) +
+  geom_point(size = 1) +
+  scale_colour_continuous(name = 'Missing\nvalues') +
+  theme_biomasslmb(base_size = 10, aspect_square = FALSE) +
+  labs(x = 'Protein abundance (log2)', y = 'Standard error')
+```
+
+## When limpa is the wrong tool
+
+The DPC assumes missingness is driven by detectability, which is driven by abundance. In an enrichment experiment that assumption is false: a protein is absent from the control pulldown because it is not there, not because it was too faint to detect. Fitting a DPC to such data produces a curve that describes something real about abundance and detection while missing the reason most of the values are missing.
+
+The diagnostic is the one from earlier in this article. A high condition missingness index, or a large `tjur_condition_fraction`, means a substantial part of the missingness is explained by experimental group rather than by abundance, and the DPC is not modelling it.
+
+## missBayes
+
+`missBayes` takes unimputed protein-level values and models the missingness explicitly as part of the test, under either a censored or a logistic missingness model. Two features distinguish it: it returns a posterior rather than a p-value, so the evidence for a protein can be read directly; and it fits *every* protein, so a result can concern a protein that `limma` would never have tested.
+
+That second point cuts both ways, and the counts to report alongside are the same ones the testing vignette keeps:
+
+```{r, eval=FALSE}
+n_observed <- sapply(levels(group), function(g){
+  rowSums(!is.na(assay(dia_prot[['protein']])[, group == g, drop = FALSE]))
+})
+```
+
+A call on a protein with zero observations in one group is entirely model-inferred. It may still be right, but it is a different kind of claim from one resting on measurements, and the results table should say which is which.
+
+# What each choice costs
+
+```{r, echo=FALSE}
+data.frame(
+  Approach = c('Impute nothing',
+               'Restricted imputation',
+               'Blanket imputation',
+               'limpa (DPC)',
+               'missBayes'),
+  `What you gain` = c(
+    'Every result rests on measurements',
+    'Recovers on/off proteins without inventing the rest',
+    'Every protein is testable',
+    'Uncertainty from missingness stays in the model',
+    'Missingness modelled explicitly; posterior per protein'),
+  `What it costs` = c(
+    'On/off proteins are untested, and they are often the biggest effects',
+    'A rule to choose and justify; imputed values still invented',
+    'Confident-looking results built from invented values',
+    'Assumes missingness is abundance-driven; wrong for enrichment designs',
+    'Slow; fits proteins with no data in a group; extra dependency'),
+  `Use when` = c(
+    'Missingness is mild, or you need every result defensible',
+    'Missingness is condition-structured and on/off proteins matter',
+    'Rarely; check what it changed before reporting it',
+    'LFQ, whole-proteome, missingness abundance-driven',
+    'Missingness matters and downstream analysis accepts a limma-style fit'),
+  check.names = FALSE) %>%
+  knitr::kable()
+```
+
+One constraint cuts across all of this and is easy to forget: **the model-based routes return a fitted model, not a quantification matrix.** If the next step is circadian analysis, kinetic fitting, thermal proteome profiling or clustering, those need a matrix of protein abundances per sample, and limpa's output does not provide one in the form they expect. That rules the model-based routes out regardless of how well they handle the missingness.
+
+# Summary
+
+-   Missing value severity is set by acquisition type: `r round(100*mean(survey$perc_missing[survey$ms_type == 'TMT']), 1)`% of samples missing per feature in TMT against `r round(100*mean(survey$perc_missing[survey$ms_type == 'DDA LFQ']), 1)`% in LFQ-DDA, across 56 real experiments
+-   Abundance explains a larger share of TMT's little missingness than of LFQ's abundant missingness; the condition missingness index runs the other way
+-   Diagnose before deciding, with `plot_missing_upset()`, `plot_missing_SN()` for TMT, and `global_condition_miss_score()` / `condition_miss_index()` to separate abundance-driven from condition-driven missingness
+-   Handle it early where it is cheap — S:N for TMT, `filterNA()` and `filter_features_per_protein()` for LFQ — and remember that the choice between summing and `robustSummary` is itself a missing value decision
+-   At protein level, compare what each option gains you and read the per-condition counts behind every gained hit before reporting it
+-   `restrict_imputation()` exists because the below-detection assumption is defensible for some missing values and not for others in the same dataset
+
+# Where to go next
+
+-   [Data exploration and statistical testing](exploration_and_statistical_testing.html) covers the testability filter that decides which proteins are testable without imputation.
+-   [Choosing a summarisation method](summarisation_methods.html) compares `sum` and `robustSummary` directly.
+-   [Enrichment designs](interactome_designs.html) covers the case where missingness is the signal, and where most of this article's defaults are wrong.
+-   [Multi-plex TMT](TMT_multiplex.html) covers TMT's actual missing value problem, which is between plexes.
+
+```{r}
+sessionInfo()
+```

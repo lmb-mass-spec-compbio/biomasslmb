@@ -18,6 +18,11 @@ articles:
   - LFQ_DDA_Peptide_QC_Summarisation
   - LFQ_DIA_Precursor_QC_Summarisation
   - exploration_and_statistical_testing
+- title: Specialised designs
+  navbar: ~
+  contents:
+  - TMT_multiplex
+  - interactome_designs
 - title: Choosing between options
   navbar: ~
   contents:

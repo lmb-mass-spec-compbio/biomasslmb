@@ -9,7 +9,7 @@
 #
 # Objects cached:
 #   uniprot2details: get_uniprot_details() for every accession in the
-#     lfq_dda_pd_PeptideGroups.txt master protein accessions. The 11 Cont_
+#     lfq_dda_pd_PeptideGroups.txt master protein accessions. The Cont_
 #     prefixed contaminant accessions do not map and are absent from the
 #     result -- this is deliberate, the vignette uses it to make the point.
 #   uniparc_example: get_uniprot_details() for a stable accession and a

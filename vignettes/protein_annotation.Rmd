@@ -113,10 +113,13 @@ uniparc_example %>%
 
 UniProt's ID mapping service occasionally returns a truncated cached response, in which a few hundred accessions silently lose their annotation with no error. `get_uniprot_details()` guards against this with `check_complete = 'error'` (the default), which compares the number of accessions submitted against the number mapped plus the number UniProt reports as failed, and raises an error if they disagree.
 
-That check passing does not mean every accession got an annotation — accessions UniProt explicitly reports as failed are simply absent from the result. Here, eleven are missing:
+That check passing does not mean every accession got an annotation — accessions UniProt explicitly reports as failed are simply absent from the result. Some are missing here:
 
 ```{r}
-setdiff(accessions, uniprot2details$UniprotID)
+unannotated <- setdiff(accessions, uniprot2details$UniprotID)
+
+length(unannotated)
+head(unannotated)
 ```
 
 These are the contaminant proteins. The search database prefixes contaminant accessions with `Cont_`, which is not a UniProt accession, so UniProt cannot map them. That is harmless as long as you are aware of it, because contaminants are removed during QC anyway — but it is the reason the annotation table has fewer rows than the accession vector you passed in, and it is worth checking that the accessions that dropped out are ones you expected to lose.

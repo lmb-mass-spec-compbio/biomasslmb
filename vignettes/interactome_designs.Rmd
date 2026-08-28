@@ -1,0 +1,184 @@
+---
+title: "Enrichment designs: IP, BioID and TurboID"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Enrichment designs: IP, BioID and TurboID}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+An enrichment experiment — an immunoprecipitation, or a proximity labelling method such as BioID or TurboID — asks a different question of the same instrument. Instead of comparing the abundance of every protein between conditions, it asks which proteins are recovered with a bait and which are background. That difference invalidates several of the assumptions the whole-proteome vignettes rely on:
+
+- **The samples are not expected to have the same protein composition.** The bait and its partners are specifically enriched, so median normalisation, which assumes most proteins are unchanged, removes part of the signal rather than a technical artefact.
+- **Absence is frequently real.** A protein missing from every control pulldown is usually absent rather than undetected, so discarding features with missing values discards the strongest hits, and imputing them invents a background level that was never observed.
+- **The comparison is often one-sided.** Depletion relative to control is rarely of interest, so a two-sided test spends power on a direction you do not care about.
+
+This vignette works through the QC and summarisation half of an enrichment experiment, where the first two of those consequences bite. The testing half, including the bait sanity check and one-sided testing, is covered in the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette, which continues with the object built here.
+
+The data are a real MaxQuant TMT18plex immunoprecipitation comparing a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each. The MaxQuant input also differs in shape from the Proteome Discoverer output used in the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette: the `evidence.txt` file uses different column names (`Leading.razor.protein` instead of `Master.Protein.Accessions`, `Reporter.intensity.corrected.*` instead of `Abundance.*`), and it does not report the PD-specific QC metrics (signal:noise, interference, SPS-MM). Those differences are noted as they arise.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+# Read in input data and design
+
+`psm_tmt_per2_mq` and `tmt_per2_mq_design` are the MaxQuant analogues of `psm_tmt_clock`/`tmt_clock_design` above: `psm_tmt_per2_mq` is the `evidence.txt` PSM-level output (truncated to a subset of proteins), and `tmt_per2_mq_design` gives the `Condition`/`Replicate` for each sample.
+
+```{r}
+knitr::kable(tmt_per2_mq_design)
+```
+
+```{r}
+
+tmt_qf_mq <- QFeatures::readQFeatures(assayData = psm_tmt_per2_mq,
+                                      colData = tmt_per2_mq_design,
+                                      quantCols = rownames(tmt_per2_mq_design),
+                                      name = "psms_raw")
+
+colData(tmt_qf_mq[['psms_raw']]) <- colData(tmt_qf_mq)
+
+tmt_qf_mq[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf_mq[['psms_raw']])
+
+```
+
+# Defining the contaminant proteins
+
+MaxQuant has its own contaminants FASTA convention (`CON__` prefixed accessions). `get_maxquant_cont_accessions` extracts these from the contaminants FASTA bundled with the package, in the same way `get_contaminant_fasta_accessions` did for the PD contaminants FASTA above.
+
+```{r}
+contaminant_proteins <- get_maxquant_cont_accessions()
+```
+
+We filter contaminants and non-unique master proteins in the same way as for PD, using `filter_features_mq_dda` in place of `filter_features_pd_dda`.
+
+```{r}
+tmt_qf_mq[['psms_filtered']] <- filter_features_mq_dda(
+  tmt_qf_mq[['psms_raw']],
+  contaminant_proteins = contaminant_proteins,
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = TRUE)
+
+colData(tmt_qf_mq[['psms_filtered']]) <- colData(tmt_qf_mq)
+```
+
+# Normalise (or not)
+
+Since this is an immunoprecipitation, the IP samples are expected to have a genuinely different protein composition to the controls: the bait and its interactors are specifically enriched. Standard normalisation assumes overall protein content is equivalent between samples and would partially erode this real biological difference, so — unlike a whole-proteome comparison — we do not normalise here. Where normalisation is still desired for this kind of experiment, an alternative to standard whole-proteome normalisation is to define a set of 'invariant' proteins that are expected to be equally abundant across all samples (e.g. proteins with no plausible relationship to the bait) and normalise using only these.
+
+```{r, warning=FALSE, fig.width=7, fig.height=5, out.width="75%"}
+plot_quant(tmt_qf_mq[['psms_filtered']], log2transform=TRUE, method='density') +
+  theme_biomasslmb() +
+  aes(colour=Condition, group=sample) +
+  xlab('PSM abundance (log2)')
+```
+
+# Removing low quality PSMs
+
+`filter_TMT_PSMs` still removes PSMs with no quantification values at all, but with `from_PD = FALSE` it skips the PD-specific `Quan.Info`/`PSM.Ambiguity` checks, and the interference/S:N/SPS-MM thresholds are left at their 'no filtering' defaults since MaxQuant's `evidence.txt` does not report these metrics in a directly comparable way. We also need to point it at the MaxQuant protein column, `Leading.razor.protein`.
+
+```{r}
+tmt_qf_mq[['psms_filtered_interference']] <- filter_TMT_PSMs(
+  tmt_qf_mq[['psms_filtered']],
+  inter_thresh = 100, sn_thresh = 0, spsmm_thresh = 0,
+  master_protein_col = 'Leading.razor.protein',
+  from_PD = FALSE)
+
+colData(tmt_qf_mq[['psms_filtered_interference']]) <- colData(tmt_qf_mq)
+```
+
+# Exploring missing values
+
+We check the missingness structure before deciding how to handle it, using `plot_missing_upset` and `condition_miss_score`/`condition_miss_index` (the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette explains these functions more fully).
+
+```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
+plot_missing_upset(tmt_qf_mq, i = 'psms_filtered_interference')
+```
+
+```{r}
+miss_res_mq <- condition_miss_score(tmt_qf_mq, i = 'psms_filtered_interference', group_cols = 'Condition')
+condition_miss_index(miss_res_mq$summary)$index
+```
+
+A meaningful fraction of PSMs here have missing values (`r miss_res_mq$global['n_features_informative']` out of `r miss_res_mq$global['n_features_total']`), consistent with this being an IP rather than a whole-proteome comparison: a protein absent from the control pulldown is expected to be missing in every `Control` replicate but present in every `IP` replicate. The condition missingness index is still modest, so this isn't yet a dominant pattern at the PSM level, but it's enough to make blanket removal of any PSM with a missing value an unattractive option here.
+
+# Summarising to protein-level abundances
+
+Since missing values here are more likely to be genuinely informative — a protein absent from the control pulldown — than in a whole-proteome comparison, instead of removing every PSM with any missing value, we retain PSMs with a modest number of missing values and use `MsCoreUtils::robustSummary`, which handles missing values appropriately during aggregation (see the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison with `sum`).
+
+```{r}
+tmt_qf_mq[['psms_filtered_interference']] <- QFeatures::logTransform(
+  tmt_qf_mq[['psms_filtered_interference']], base = 2)
+
+tmt_qf_mq[['psms_filtered_forSummary']] <- QFeatures::filterNA(
+  tmt_qf_mq[['psms_filtered_interference']], 8/12)
+
+biomasslmb:::message_parse(rowData(tmt_qf_mq[['psms_filtered_forSummary']]),
+                           'Leading.razor.protein',
+                           "Removing PSMs with excessive missing values")
+```
+
+```{r, warning=FALSE}
+tmt_qf_mq <- QFeatures::aggregateFeatures(
+  tmt_qf_mq,
+  i = "psms_filtered_forSummary",
+  fcol = "Leading.razor.protein",
+  name = "protein",
+  fun = MsCoreUtils::robustSummary)
+
+colData(tmt_qf_mq[['protein']]) <- colData(tmt_qf_mq)
+```
+
+# Inspecting the number of PSMs and proteins through the processing steps
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, out.width='75%'}
+rename_cols_mq <- c('All PSMs' = 'psms_raw',
+                    'Quantified, contaminants removed' = 'psms_filtered',
+                    'PSMs with quantification' = 'psms_filtered_interference',
+                    'Max 8/12 missing values' = 'psms_filtered_forSummary')
+
+rowvars_mq <- c('Sequence', 'Modifications')
+
+samples_present_mq <- get_samples_present(
+  tmt_qf_mq[,,unname(rename_cols_mq)], rowvars_mq, rename_cols_mq)
+plot_samples_present(samples_present_mq, rowvars_mq, breaks=seq(2,12,2)) + ylab('PSM')
+```
+
+```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, out.width='75%'}
+rename_cols_mq_prot <- c(rename_cols_mq, 'Protein' = 'protein')
+rowvars_mq_prot <- c('Leading.razor.protein')
+
+samples_present_mq_prot <- get_samples_present(tmt_qf_mq, rowvars_mq_prot, rename_cols_mq_prot)
+plot_samples_present(samples_present_mq_prot, rowvars_mq_prot, breaks=seq(2,12,2))
+```
+
+```{r, eval = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(tmt_qf_mq, overwrite=TRUE)
+```
+
+
+# Where to go next
+
+`tmt_qf_mq` now holds protein-level abundances summarised without discarding the informative missing values, and its `colData` carries the `IP`/`Control` design. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette continues from here with the parts of an enrichment analysis that differ from a whole-proteome comparison: checking that the bait itself behaves as expected, choosing a testability filter that does not throw away control-absent proteins, and one-sided testing against the control.
+
+```{r}
+sessionInfo()
+```

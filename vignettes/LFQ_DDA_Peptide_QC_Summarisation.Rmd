@@ -24,6 +24,8 @@ Since each sample is run separately, different peptides will be quantified in ea
 
 Despite the pitfalls of LFQ, the data analysis is still relatively straightforward, though there are steps that need some careful consideration and quality control assessment.
 
+This vignette works through one typical experiment from end to end: a whole-proteome comparison between two conditions, three replicates each. That is the common case, and the choices made below are the conventional ones for it. An enrichment experiment — an IP, BioID or TurboID pulldown — needs different reasoning about normalisation and about missing values, and is covered in [enrichment designs](interactome_designs.html).
+
 # Load required packages
 
 ```{r, message=FALSE}
@@ -34,9 +36,9 @@ library(tidyr)
 library(dplyr)
 ```
 
-## The experimental design
+# The experimental design
 
-`lfq_dda_pd_PeptideGroups.txt` is a file available from the `biomasslmb` package containing the peptide-level output from Proteome Discoverer (PD), using the Sequest HT search engine, for a real DDA LFQ TurboID (proximity biotinylation) experiment in mouse embryonic stem cells: a bait fusion protein is expressed and, when biotin is supplied, biotinylates nearby proteins, which are then enriched by streptavidin pulldown. We compare the biotin-labelled samples against unlabelled control pulldowns from the same bait (3 replicates each). It is truncated to a subset of 500 proteins for a manageable vignette.
+`lfq_dda_pd_PeptideGroups.txt` is a file available from the `biomasslmb` package containing the peptide-level output from Proteome Discoverer (PD) for a real DDA LFQ experiment: a whole-proteome comparison between a wild type human cell line and a point mutant of the same line, 3 replicates each. It is truncated to a subset of proteins for a manageable vignette.
 
 ```{r}
 pep_inf <- system.file(
@@ -68,31 +70,35 @@ This PD export also includes PD's own `Contaminant` column, populated from the s
 
 We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
 
-Inspecting the column names for the abundances, we see the names are not particularly useful: they include the PD file ID (`F1`, `F2`, ...) rather than which sample is which.
+Inspecting the column names for the abundances, we see the names are not particularly useful: they include the PD file ID (`F7`, `F8`, ...) rather than which sample is which.
 ```{r}
 infdf <- read.delim(pep_inf)
 
-abundance_cols_ix <- 13:18
+abundance_cols_ix <- grep('^Abundance', colnames(infdf))
 
 colnames(infdf)[abundance_cols_ix]
 ```
 
-Below, we update the column names for the abundance columns to reflect whether the sample was biotin-labelled or an unlabelled control, and the replicate number.
-```{r}
-# Clean up sample names
-condition <- ifelse(grepl('biotin$', colnames(infdf)[abundance_cols_ix]), 'Biotin', 'Control')
-colnames(infdf)[abundance_cols_ix] <- paste(condition, rep(1:3, times=2), sep='_')
-
-colnames(infdf)[abundance_cols_ix]
-```
-
-Before we read in the data, we also want to define the experimental conditions for each sample.
+Which file ID corresponds to which sample comes from the design table supplied with the experiment, so we build that first. The three wild type replicates were acquired first, followed by the three mutant replicates.
 
 ```{r}
-exp_design <- data.frame(quantCols=colnames(infdf)[abundance_cols_ix]) %>%
-  separate(quantCols, sep='_', into=c('Condition', 'Replicate'), remove = FALSE)
+exp_design <- data.frame(
+  quantCols = colnames(infdf)[abundance_cols_ix],
+  Condition = rep(c('WT', 'Mutant'), each = 3),
+  Replicate = rep(1:3, times = 2))
+
+exp_design$Sample <- paste(exp_design$Condition, exp_design$Replicate, sep = '_')
 
 knitr::kable(exp_design)
+```
+
+We then relabel the abundance columns with the sample names, so that everything downstream refers to samples rather than file IDs.
+
+```{r}
+colnames(infdf)[abundance_cols_ix] <- exp_design$Sample
+exp_design$quantCols <- exp_design$Sample
+
+colnames(infdf)[abundance_cols_ix]
 ```
 
 Now we can read the data into a `QFeatures` object
@@ -113,16 +119,17 @@ colData(lfq_qf[['peptides_raw']]) <- colData(lfq_qf)
 
 ```
 
-It's helpful to assess the retention time (RT) for the peptides and the
-relationship with the delta mass for the precursor ion. The RT distribution declines steadily
-after the first ~20 minutes, with a transient dip in peptide counts around 32-34 minutes, and
-the vast majority of peptides fall within +/-5 ppm delta mass regardless of RT, with just a
-modest number of higher-error outliers concentrated in the middle of the gradient.
+It's helpful to assess the retention time (RT) distribution for the peptides. `plot_rt_dist` defaults to the column name Proteome Discoverer uses for a Sequest HT search; this search was run with CHIMERYS, so we name the column explicitly.
 
-```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
-plot_rt_dist(lfq_qf[['peptides_raw']])
-plot_rt_vs_delta(lfq_qf[['peptides_raw']])
+The peptide count holds up across most of the gradient before tailing off over the last 20 minutes, which is what an even elution looks like. A large early or late spike, or a gap in the middle, would point at a chromatography problem worth resolving before going further.
+
+```{r, warning=FALSE, fig.width=5, fig.height=4, out.width="60%"}
+rt_col <- 'PSM.RT.in.min.by.Search.Engine.CHIMERYS'
+
+plot_rt_dist(lfq_qf[['peptides_raw']], rt_col = rt_col)
 ```
+
+The companion check, `plot_rt_vs_delta`, plots the precursor mass error against RT and would reveal a mass calibration that drifts across the run. It needs a reported mass error to work with, and this export gives a delta of exactly zero for every peptide, so there is nothing to plot here. A Sequest HT export reports the measured error and the check is worth making.
 
 
 # Filter peptides
@@ -150,13 +157,12 @@ colData(lfq_qf[['peptides_filtered']]) <- colData(lfq_qf)
 ```
 
 
-We will also remove peptides that are not rank 1 according to the search
-engine
+We will also remove peptides that are not rank 1 according to the search engine. Every peptide in this export is rank 1, so nothing is removed here, but the step belongs in the pipeline: an export that reports lower-ranked matches will contain some.
 
 ```{r}
 
 lfq_qf <- lfq_qf %>%
-filterFeatures(~ Search.Engine.Rank.by.Search.Engine.Sequest.HT == 1,
+filterFeatures(~ PSM.Search.Engine.Rank.by.Search.Engine.CHIMERYS == 1,
                i = "peptides_filtered")
 
 biomasslmb:::message_parse(rowData(lfq_qf[['peptides_filtered']]),
@@ -183,22 +189,25 @@ plot_quant(lfq_qf[['peptides_filtered']], log2transform=FALSE, method='density')
   xlab('Peptide abundance (log2)')
 ```
 
-## Normalise (or not)
+## Normalise
 
-Since this is a proximity-labelling experiment, the biotin samples are expected to have a
-genuinely different protein composition to the controls: the bait and its proximal partners
-are specifically enriched, while the unlabelled controls capture mostly non-specific background
-binding to the streptavidin beads. Standard normalisation assumes overall protein content is
-equivalent between samples and would partially erode this real biological difference, so we do
-not normalise here (see the [TMT QC](TMT_PSM_QC_Summarisation.html) vignette's MaxQuant
-immunoprecipitation example for the same reasoning applied to an antibody pulldown).
+The same amount of material was injected for every sample, and this is a whole-proteome comparison in which most proteins are expected to be unchanged between the two conditions, so any systematic offset between the distributions above is technical rather than biological. `diff.median` normalisation shifts each sample to a common median and removes it.
+
+```{r, warning=FALSE, fig.show='hold', fig.show="hold", out.width="50%"}
+lfq_qf[['peptides_filtered_norm']] <- QFeatures::normalize(
+  lfq_qf[['peptides_filtered']], method = 'diff.median')
+
+colData(lfq_qf[['peptides_filtered_norm']]) <- colData(lfq_qf)
+
+plot_quant(lfq_qf[['peptides_filtered_norm']], log2transform=FALSE, method='density') +
+  theme_biomasslmb() +
+  aes(colour=Condition, group=sample) +
+  xlab('Peptide abundance (log2)')
+```
+
+That assumption is what makes this step safe, and it is worth stating explicitly because it is not always true: an [enrichment design](interactome_designs.html) expects the conditions to differ in overall composition, and normalising to a common median there erodes the signal being measured.
 
 ## Summarising to protein-level abundances
-
-For the summarisation to protein, we will use `robustSummary`. We do not need to remove
-peptides with any missing values. However, we still don't want to retain
-peptides with too many missing values, since these will not be very
-informative in estimating the protein-level quantification.
 
 Before deciding how to handle missing values, it's worth checking how much missingness there is,
 and whether it's structured by `Condition`. `condition_miss_score` fits, for each peptide, a
@@ -207,22 +216,22 @@ score: values near 1 mean a peptide's missingness pattern is well explained by `
 `condition_miss_index` aggregates these into a single dataset-level value between 0 and 1.
 
 ```{r}
-miss_res <- condition_miss_score(lfq_qf, i = 'peptides_filtered', group_cols = 'Condition')
+miss_res <- condition_miss_score(lfq_qf, i = 'peptides_filtered_norm', group_cols = 'Condition')
 condition_miss_index(miss_res$summary)$index
 ```
 
-A substantial fraction of peptides have missing values here (`r miss_res$global['n_features_informative']` out of `r miss_res$global['n_features_total']`), and the condition missingness index is well above zero, consistent with this being a proximity-labelling pulldown rather than a whole-proteome comparison: a genuine proximity partner is expected to be reliably detected in every biotin replicate but frequently missing from the (mostly background) control replicates. `plot_missing_upset` shows the most common patterns.
+Missing values are common — `r miss_res$global['n_features_informative']` of the `r miss_res$global['n_features_total']` peptides have at least one — but the index is low, so what missingness there is looks largely unrelated to `Condition`. That is the expected picture for a whole-proteome comparison: a peptide near the limit of detection drops out of whichever runs happened to miss it, rather than out of one condition specifically. `plot_missing_upset` shows the most common patterns.
 
 ```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
-plot_missing_upset(lfq_qf, i='peptides_filtered')
+plot_missing_upset(lfq_qf, i='peptides_filtered_norm')
 ```
 
-Since a meaningful fraction of the missingness here is genuinely informative (a real proximity partner is absent from the control) rather than simply missing at random, we don't want to remove every peptide with any missing value. Since DDA LFQ typically has too many missing values to exclude peptides with missing values, the `MsCoreUtils::robustSummary` method should be preferred for summarisation to protein-level abundance. With `robustSummary`, we do not need to remove all peptides with missing values since the summarisation algorithm deals with them appropriately [@http://zotero.org/users/5634351/items/FZN3QTTZ]. However, we still don't want to retain peptides with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain peptides with at most 4/6 missing values (see the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison with `sum`, using this same dataset).
+Even so, there are far too many missing values to discard every peptide that has one, which is the usual state of affairs for DDA LFQ. `MsCoreUtils::robustSummary` is therefore preferred for summarisation to protein-level abundance, since it summarises accurately without requiring complete data [@http://zotero.org/users/5634351/items/FZN3QTTZ]. We still don't want to retain peptides with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain peptides with at most 4/6 missing values (see the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison with `sum`, using this same dataset).
 
 ```{r}
 
 lfq_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
-  lfq_qf[['peptides_filtered']], 4/6)
+  lfq_qf[['peptides_filtered_norm']], 4/6)
 
 biomasslmb:::message_parse(rowData(lfq_qf[['peptides_filtered_missing']]),
                            'Master.Protein.Accessions',
@@ -278,7 +287,7 @@ lfq_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
 
 ## Re-inspecting missing values at protein-level
 
-Now that we have protein-level abundances, we would like to re-inspect the missing values. Overall, we have `r round(nNA(lfq_qf[['protein']])$nNA$pNA*100, 3)` % missing values, with at most `r round(max(nNA(lfq_qf[['protein']])$nNAcols$pNA)*100, 3)` % missing values in any given sample. As at the peptide level, missingness is concentrated in the control samples: a real proximity partner of the bait is expected to be consistently quantified in the biotin samples but frequently missing from the (background-only) controls.
+Now that we have protein-level abundances, we would like to re-inspect the missing values. Overall, we have `r round(nNA(lfq_qf[['protein']])$nNA$pNA*100, 3)` % missing values, with at most `r round(max(nNA(lfq_qf[['protein']])$nNAcols$pNA)*100, 3)` % missing values in any given sample. Summarising has reduced the missingness considerably relative to the peptide level, since a protein only loses a sample when every one of its peptides does. What remains is spread across samples rather than concentrated in one condition, consistent with the peptide-level picture above.
 
 ```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
 
@@ -305,13 +314,13 @@ We'll start by inspecting the number of peptides in each experiment. We therefor
 
 rename_cols <- c('All peptides' = 'peptides_raw' ,
                  'Quantified, contaminants removed' = 'peptides_filtered',
-                 'No missing values' = 'peptides_filtered_missing',
-                 '>1 PSM per protein' = 'peptides_for_summarisation')
+                 'At most 4/6 missing values' = 'peptides_filtered_missing',
+                 '>1 peptide per protein' = 'peptides_for_summarisation')
 
 rowvars <- c('Annotated.Sequence', 'Modifications')
 
 samples_present <- get_samples_present(lfq_qf[,,unname(rename_cols)], rowvars, rename_cols)
-plot_samples_present(samples_present, rowvars, breaks=seq(2,10,2)) + ylab('PSM')
+plot_samples_present(samples_present, rowvars, breaks=seq(2,6,2)) + ylab('Peptide')
 
 
 
@@ -328,7 +337,7 @@ rename_cols_prot <- c(rename_cols, 'Protein'='protein')
 rowvars_prot <- c('Master.Protein.Accessions')
 
 samples_present <- get_samples_present(lfq_qf, rowvars_prot, rename_cols_prot)
-plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,10,2))
+plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,6,2))
 ```
 
 From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.

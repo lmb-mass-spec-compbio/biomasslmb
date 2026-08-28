@@ -1,0 +1,265 @@
+---
+title: "Multi-plex TMT: processing several plexes and bridge correction"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Multi-plex TMT: processing several plexes and bridge correction}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A TMTpro plex holds at most 18 samples, so any larger design has to be split over several plexes. Each plex is a separate MS run, which changes the analysis in one important way: the PSMs quantified in one plex are not the same PSMs as those quantified in another, so a protein's abundance in plex 1 and its abundance in plex 2 are built from different peptides and are not directly comparable. Merging the plexes without correcting for this confounds plex identity with biology.
+
+This is where TMT's missing values live. Within a plex, the samples are quantified from the same MS1 ion and the data are close to complete; *between* plexes, a protein can be quantified from an entirely different set of PSMs. The fix is not imputation but a bridge channel: a pooled sample, identical in every plex, that provides a per-protein reference point for putting the plexes on a common scale.
+
+The QC and summarisation applied to each plex are those of the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette, which works through them on a single plex and explains the reasoning for each. This vignette assumes them, and concentrates on what multi-plex experiments add: reading several plexes into one object, keeping them separate through processing, and joining them onto a common scale afterwards.
+
+`psm_tmt_2plex` and `tmt_2plex_design` are a real two-plex TMTpro 18plex experiment: a 3 × 3 factorial of three cell lines (`WT` and two knockouts) against three drug treatment timepoints, three replicates each, with one pooled bridge channel per plex.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+```
+
+# The experimental design
+
+```{r}
+knitr::kable(tmt_2plex_design)
+```
+
+Three things differ from the single-plex designs above. `quantCols` holds the TMT tag rather than a sample name, since the same tag denotes a different sample in each plex. `runCol` holds the plex, and is what `QFeatures::readQFeatures` uses to split the PSMs into one assay per run. And the bridge channels are marked by a `Genotype` of `Bridge`: they are the same pooled material in both plexes, so they have no genotype, timepoint or replicate of their own.
+
+Channels that were not labelled in a given plex are simply absent from the design.
+
+# Standardising the peptide to protein assignments
+
+Proteome Discoverer's PSM-level export can report different sets of protein accessions for the same peptide sequence, either because several search engines were used and they disagree, or because leucine and isoleucine are indistinguishable at typical collision energies and the redundant sequence matches are reported separately. The peptide-level export has one consistent assignment per sequence, and `update_peptide_assignments` uses it to overwrite the PSM-level assignments.
+
+```{r}
+pep_inf <- system.file(
+  "extdata", "tmt_2plex_PeptideGroups.txt.gz",
+  package = "biomasslmb"
+)
+
+psms_2plex <- biomasslmb::update_peptide_assignments(
+  psm_tmt_2plex, pep_inf, verbose = TRUE)
+```
+
+The output is shorter than the input because the peptide-level export selects one of the leucine/isoleucine-equivalent sequences, so PSMs matched to the sequences it did not select are dropped.
+
+This step is worth doing before `remove_redundant_psm_quant` below, which refuses to run on inconsistent assignments — it identifies redundant quantification by looking for duplicate rows, and cannot do so reliably if the same spectrum appears under two different protein assignments.
+
+# Reading several plexes into one `QFeatures` object
+
+Passing `runCol = 'Plex'` splits the PSM table on its `Plex` column and creates one assay per plex, matching channels to plexes through the `runCol` column of the design.
+
+```{r}
+tmt_qf_2plex <- QFeatures::readQFeatures(
+  assayData = psms_2plex,
+  colData = tmt_2plex_design,
+  runCol = "Plex")
+
+names(tmt_qf_2plex) <- paste0("psms_raw_", names(tmt_qf_2plex))
+
+names(tmt_qf_2plex)
+```
+
+Every assay gets a column for every tag used anywhere in the experiment, so the assays currently include channels that were not labelled in that plex. Those columns are entirely `NA` and have no design information attached, so we remove them.
+
+```{r}
+tmt_qf_2plex <- tmt_qf_2plex[, !is.na(tmt_qf_2plex$Genotype)]
+
+lapply(experiments(tmt_qf_2plex), dim)
+```
+
+The remaining column names combine the plex and the tag, since neither identifies a sample by itself.
+
+# Processing each plex separately
+
+Everything up to and including summarisation happens within a plex, for the same reason the plexes cannot be merged yet: `diff.median` normalisation compares channels within a run, signal:noise and co-isolation are properties of a spectrum in a particular run, and summing PSMs across runs would mix quantification from different ions. The steps themselves are those of the single-plex pipeline, applied in a loop.
+
+`remove_redundant_psm_quant` is the one addition. Where several search engines have matched the same spectrum, the PSM export contains one row per engine per spectrum, with identical quantification; keeping them would count the same measurement more than once during summarisation.
+
+```{r, warning=FALSE, message=FALSE}
+plexes <- c("1", "2")
+
+contaminant_accessions <- biomasslmb::get_contaminant_fasta_accessions(
+  system.file("extdata", "0602_Universal_Contaminants.fasta.gz",
+              package = "biomasslmb"))
+contaminant_accessions <- c(contaminant_accessions,
+                            sub("^Cont_", "", contaminant_accessions))
+
+for (plex in plexes) {
+
+  raw <- paste0("psms_raw_", plex)
+  filtered <- paste0("psms_filtered_", plex)
+  normalised <- paste0("psms_norm_", plex)
+  sn_filtered <- paste0("psms_filtered_sn_", plex)
+  for_sum <- paste0("psms_filtered_forSum_", plex)
+
+  tmt_qf_2plex[[raw]] <- biomasslmb::update_average_sn(tmt_qf_2plex[[raw]])
+
+  tmt_qf_2plex[[filtered]] <- biomasslmb::filter_features_pd_dda(
+    tmt_qf_2plex[[raw]],
+    contaminant_proteins = contaminant_accessions,
+    filter_contaminant = TRUE,
+    filter_associated_contaminant = TRUE,
+    unique_master = TRUE)
+
+  tmt_qf_2plex <- QFeatures::filterFeatures(
+    tmt_qf_2plex, ~ Rank == 1, i = filtered)
+
+  tmt_qf_2plex[[filtered]] <- biomasslmb::remove_redundant_psm_quant(
+    tmt_qf_2plex[[filtered]])
+
+  # Normalise on the log2 scale, then return to the original scale
+  tmt_qf_2plex[[normalised]] <- QFeatures::normalize(
+    QFeatures::logTransform(tmt_qf_2plex[[filtered]], base = 2),
+    method = "diff.median")
+  assay(tmt_qf_2plex[[normalised]]) <- 2^assay(tmt_qf_2plex[[normalised]])
+
+  tmt_qf_2plex[[sn_filtered]] <- biomasslmb::filter_TMT_PSMs(
+    tmt_qf_2plex[[normalised]],
+    inter_thresh = 50, sn_thresh = 5, spsmm_thresh = 65)
+
+  tmt_qf_2plex[[for_sum]] <- biomasslmb::filter_features_per_protein(
+    QFeatures::filterNA(tmt_qf_2plex[[sn_filtered]], 0), min_features = 2)
+
+  tmt_qf_2plex <- QFeatures::aggregateFeatures(
+    tmt_qf_2plex,
+    i = for_sum,
+    fcol = "Master.Protein.Accessions",
+    name = paste0("protein_", plex),
+    fun = base::colSums)
+
+  tmt_qf_2plex[[paste0("protein_", plex)]] <- QFeatures::logTransform(
+    tmt_qf_2plex[[paste0("protein_", plex)]], base = 2)
+}
+```
+
+As in the single-plex pipeline, we remove PSMs with any missing value and summarise by summing. Even at 18 channels, only around a tenth of the PSMs surviving the signal:noise filter have a missing value in any channel, so this costs little.
+
+```{r}
+sapply(plexes, function(plex) {
+  nrow(tmt_qf_2plex[[paste0("protein_", plex)]])
+})
+```
+
+# Joining the plexes
+
+`QFeatures::joinAssays` merges the per-plex protein assays into one, matching on row name.
+
+```{r}
+tmt_qf_2plex <- QFeatures::joinAssays(
+  tmt_qf_2plex,
+  i = paste0("protein_", plexes),
+  name = "protein_joined")
+
+colData(tmt_qf_2plex[["protein_joined"]]) <- colData(tmt_qf_2plex)
+
+dim(tmt_qf_2plex[["protein_joined"]])
+```
+
+The result holds every protein quantified in either plex, with `NA` where a protein was quantified in one plex but not the other. Proteins quantified in only one plex are not automatically a problem, but they carry no information about the plex difference and cannot be corrected for it, so a testability filter later will usually remove them.
+
+```{r}
+length(intersect(rownames(tmt_qf_2plex[["protein_1"]]),
+                 rownames(tmt_qf_2plex[["protein_2"]])))
+```
+
+# Why the plexes are not yet comparable
+
+The bridge channels are the same pooled material, so in the absence of a plex effect their protein abundances should agree. Plotting one against the other shows they do not.
+
+```{r, fig.height=5, fig.width=5, out.width="60%", warning=FALSE}
+bridge_cols <- rownames(colData(tmt_qf_2plex))[
+  colData(tmt_qf_2plex)$Genotype == "Bridge"]
+
+bridge_quant <- assay(tmt_qf_2plex[["protein_joined"]])[, bridge_cols]
+
+plot(bridge_quant,
+     xlab = "Bridge, plex 1 (log2)", ylab = "Bridge, plex 2 (log2)")
+
+sd(bridge_quant[, 1] - bridge_quant[, 2], na.rm = TRUE)
+```
+
+The consequence for the experiment as a whole is visible in a PCA: plex, not biology, is the dominant source of variance.
+
+```{r, fig.height=5, fig.width=7, out.width="75%", warning=FALSE}
+biomasslmb::plot_pca(tmt_qf_2plex, i = "protein_joined",
+                     colour_by = "Plex", shape_by = "Genotype")
+```
+
+# Bridge correction
+
+`bridge_normalise` takes, for each protein, the difference between its abundance in a plex's bridge channel and its abundance across the plexes' bridge channels, and subtracts that from every sample in that plex. On the log2 scale a subtraction is a ratio, so this rescales each plex by the per-protein factor needed to bring its bridge into line with the others.
+
+`bridge_cols` identifies the bridge channels. It takes a logical vector rather than a column name, because designs record which channels are the pooled reference in whatever way suits them — a `Type` column, a `Pool` prefix on a sample identifier — and a predicate works with all of them.
+
+```{r}
+protein_joined <- tmt_qf_2plex[["protein_joined"]]
+
+tmt_qf_2plex[["protein_bridge_norm"]] <- biomasslmb::bridge_normalise(
+  protein_joined,
+  plex_col = "Plex",
+  bridge_cols = protein_joined$Genotype == "Bridge")
+```
+
+The reported correction is the size of the plex effect being removed: a median of around 0.3 on the log2 scale is a factor of about 1.2 in abundance, applied per protein.
+
+A protein needs a bridge value in a plex to be placed on the common scale. Where one is missing but the protein was quantified in that plex's samples, those samples are set to `NA` by default, since there is no basis for comparing them with the other plexes; `on_missing` offers the alternatives of dropping the protein or leaving the plex uncorrected. Proteins absent from a plex altogether are unaffected — there is nothing there to correct.
+
+The bridge channels are now identical by construction, so their agreement is not evidence that the correction worked. The evidence is what happened to the other samples: plex is no longer the dominant source of variance.
+
+```{r, fig.height=5, fig.width=7, out.width="75%", warning=FALSE}
+biomasslmb::plot_pca(tmt_qf_2plex, i = "protein_bridge_norm",
+                     colour_by = "Plex", shape_by = "Genotype")
+```
+
+Colouring the same PCA by timepoint instead shows what the plex effect was hiding: the 24 hour samples separate from the earlier timepoints along PC1, in both plexes and in all three cell lines.
+
+```{r, fig.height=5, fig.width=7, out.width="75%", warning=FALSE}
+biomasslmb::plot_pca(tmt_qf_2plex, i = "protein_bridge_norm",
+                     colour_by = "Time", shape_by = "Genotype")
+```
+
+# Removing the bridge channels
+
+The bridge channels have served their purpose and are not samples of the experiment, so we drop them. With the plexes now on a common scale, the tag-and-plex column names can be replaced by the sample names from the design.
+
+```{r}
+protein_se <- tmt_qf_2plex[["protein_bridge_norm"]]
+protein_se <- protein_se[, protein_se$Genotype != "Bridge"]
+colnames(protein_se) <- protein_se$Sample
+
+tmt_qf_2plex[["protein"]] <- protein_se
+
+colData(tmt_qf_2plex[["protein"]])[1:3, ]
+```
+
+# If there is no bridge channel
+
+Bridge channels cost one channel per plex, and experiments do arrive without them. The usual alternative is internal reference scaling: use each plex's own channels as the per-protein reference in place of the bridge, which is `bridge_cols = rep(TRUE, ncol(protein_joined))`. This assumes that the average sample is equivalent in every plex, which holds when the conditions are balanced across plexes and fails when they are not — an unbalanced split can remove the biological difference along with the plex effect. Including plex as a term in the `limma` design matrix is another option, and models the plex offset rather than removing it, but it cannot be used for analyses that need a corrected quantification matrix.
+
+If you are still designing the experiment, include a bridge channel: it makes the correction explicit, checkable, and independent of how the conditions are distributed across plexes.
+
+
+# Where to go next
+
+The bridge-normalised protein-level abundances are ready for the exploration and testing described in the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette. Include `Plex` among the variables you inspect there: bridge correction should have removed the plex effect, and a PCA still separating on plex means it did not.
+
+```{r}
+sessionInfo()
+```

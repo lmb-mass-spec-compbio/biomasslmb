@@ -44,10 +44,12 @@ Which vignette you need depends on two independent things: how the data were acq
 | LFQ-DDA | Peptide groups (PD or MaxQuant) | [LFQ-DDA peptide QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html) |
 | LFQ-DIA | Precursors (DIA-NN or Spectronaut) | [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) |
 
+Each of those works through one straightforward experiment end to end. A TMT design too large for a single plex needs the extra step covered in [multi-plex TMT](TMT_multiplex.html).
+
 **Experimental design** determines how the resulting quantification should be normalised and tested. A whole-proteome comparison, an enrichment experiment (IP, BioID, TurboID) and a PTM experiment ask different things of the same protein-level matrix:
 
 - **Whole proteome.** Most proteins are unchanged between conditions, missing values usually mean the protein was present but not detected, and a two-sided test against the other condition is what you want. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette works through this case.
-- **Enrichment.** Most of the quantified proteome may be bait-dependent, so the assumption that underpins median normalisation fails. Absence from the control is frequently real absence rather than failed detection, which changes what imputation means. Testing is often one-sided.
+- **Enrichment.** Most of the quantified proteome may be bait-dependent, so the assumption that underpins median normalisation fails. Absence from the control is frequently real absence rather than failed detection, which changes what imputation means. Testing is often one-sided. See [enrichment designs](interactome_designs.html).
 - **PTM.** Site-level changes are confounded with changes in the abundance of the underlying protein, so the phospho (or other PTM) data need normalising to the total proteome with `get_medians()` and `center_normalise_to_ref()` before the site-level result means anything.
 
 The two axes are independent: a TMT IP and an LFQ-DIA whole-proteome comparison use different QC vignettes and different statistical treatments, and each combination occurs in practice.
@@ -103,7 +105,7 @@ Three things should make you depart from the conventional path:
 Every normalisation asserts that some set of proteins does not differ between samples, and then removes any difference observed in that set. The options differ only in how honest they are about which set that is.
 
 - **Reference set.** `get_medians()` and `center_normalise_to_ref()` normalise to a subset you define: the total proteome for a phospho experiment, a spike-in, or a set of proteins independent of the bait in an enrichment experiment. The assumption is explicit, and you can check whether it holds.
-- **Bridge or pooled channel.** For multi-plex TMT, the reference is a channel present in every plex rather than a set of proteins. This is what removes plex effects.
+- **Bridge or pooled channel.** For multi-plex TMT, the reference is a channel present in every plex rather than a set of proteins. This is what removes plex effects, and the [multi-plex TMT](TMT_multiplex.html) vignette works through it.
 - **All proteins.** `diff.median` normalisation assumes most proteins are unchanged. For a whole-proteome comparison between similar conditions this is reasonable. For an enrichment experiment or a strong perturbation it can be badly wrong, and it fails silently.
 
 # Example data
@@ -133,7 +135,7 @@ To start from raw search engine output instead, the corresponding input files ar
 dir(system.file("extdata", package = "biomasslmb"))
 ```
 
-`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq` and their design tables provide PSM-level starting points with accompanying experimental designs.
+`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq`, `psm_tmt_2plex` and their design tables provide PSM-level starting points with accompanying experimental designs. `psm_tmt_2plex` spans two TMT plexes, each with a pooled bridge channel.
 
 # Where to go next
 

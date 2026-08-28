@@ -291,6 +291,12 @@ Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecip
 -   Tested for differential protein abundance with `limma::treat`, using a fold-change threshold appropriate to the biological question: a modest threshold for whole-proteome changes in Part A, and a strict threshold to identify substantially-enriched candidate interactors in Part B
 -   Visualised the results with a volcano plot and inspected the feature-to-protein trend for a top hit
 
+# Where to go next
+
+-   [Functional enrichment](functional_enrichment.html) asks whether the proteins that changed share a function, location or complex, rather than reading them one at a time. It picks up from the Part A results.
+-   [Choosing a summarisation method](summarisation_methods.html) covers how the protein-level values tested here were arrived at, and what a different choice would have changed.
+-   [Enrichment designs](interactome_designs.html) covers the QC and normalisation decisions behind the Part B dataset, which differ from those a whole-proteome experiment calls for.
+
 ```{r}
 sessionInfo()
 ```

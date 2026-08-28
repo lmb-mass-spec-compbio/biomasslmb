@@ -18,6 +18,7 @@ articles:
   - LFQ_DDA_Peptide_QC_Summarisation
   - LFQ_DIA_Precursor_QC_Summarisation
   - exploration_and_statistical_testing
+  - functional_enrichment
 - title: Specialised designs
   navbar: ~
   contents:

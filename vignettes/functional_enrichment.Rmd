@@ -1,0 +1,273 @@
+---
+title: "Functional enrichment analysis"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Functional enrichment analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Statistical testing gives you a list of proteins. Functional enrichment asks whether that list is structured — whether the proteins that changed share a function, a location or a complex more often than a list of that size drawn from the same experiment would.
+
+That last clause is where most of the difficulty lies. Enrichment is a comparison between a **foreground** (the proteins you called changed) and a **background** (the proteins you could have called changed), and both are properties of your experiment rather than of biology. Get either wrong and the analysis will still run and still return small p-values; they will just be answering a question you did not ask.
+
+Here we work through over-representation analysis (ORA) with `goseq`, using the whole-proteome comparison from the [testing vignette](exploration_and_statistical_testing.html): blood plasma from MPXV-infected individuals against healthy controls [@Wang2022]. The expected answer is known — infection should mount an acute-phase response — which makes it possible to judge whether the analysis is behaving.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(dplyr)
+library(limma)
+library(goseq)
+```
+
+# The proteins to test
+
+We repeat the testing vignette's analysis to obtain the input: restrict to the two groups of interest, keep the proteins with at least 2 quantified values in both conditions, and fit the model.
+
+```{r}
+dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
+
+group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
+
+n_quant <- sapply(levels(group), function(g){
+  rowSums(!is.na(assay(dia_prot[['protein']])[, group == g, drop = FALSE]))
+})
+
+testable <- rownames(n_quant)[apply(n_quant, 1, min) >= 2]
+
+fit <- lmFit(assay(dia_prot[['protein']])[testable, ], model.matrix(~group))
+
+limma_results <- eBayes(fit, trend = TRUE, robust = TRUE) %>%
+  topTable(coef = 'groupMPXV', number = Inf) %>%
+  tibble::rownames_to_column('Protein')
+```
+
+We define changed proteins by significance alone, without the `treat` fold-change threshold used in the testing vignette. The threshold there guards against calling small changes interesting; here it would instead shrink the foreground, and the power of every enrichment test that follows depends on the foreground size. We return to what that choice costs at the end.
+
+Increased and decreased proteins are tested separately. A term that is over-represented among increased proteins and among decreased proteins is not over-represented among changed proteins as a group — pooling the two directions lets opposite biology cancel, which for this dataset would mix the acute-phase response with the lipoprotein depletion it drives.
+
+```{r}
+bias <- setNames(limma_results$AveExpr, limma_results$Protein)
+
+sig_up <- setNames(limma_results$adj.P.Val < 0.05 & limma_results$logFC > 0,
+                   limma_results$Protein)
+sig_dw <- setNames(limma_results$adj.P.Val < 0.05 & limma_results$logFC < 0,
+                   limma_results$Protein)
+
+c(tested = length(bias), increased = sum(sig_up), decreased = sum(sig_dw))
+```
+
+Note what the background is here: the `r length(bias)` proteins that were actually tested, not the human proteome and not even everything identified in the experiment. A plasma proteome is a heavily biased sample of the proteome to begin with, so testing against all of UniProt would return "secreted", "extracellular region" and every related term for any foreground at all, telling you only that you ran a plasma experiment. The proteins that could have been called changed are the right comparison, which is why the background is derived from the results table rather than supplied separately.
+
+# GO annotations
+
+`get_go_terms()` retrieves the GO terms UniProt annotates to each accession. `expand_terms = TRUE` also adds every ancestor term, so that a protein annotated to `phospholipid efflux` also counts towards `lipid transport` and `transport`. Enrichment tools that treat GO terms as flat, unrelated categories — `goseq` among them — need this expansion, or a general term will only ever be tested against the proteins annotated to it directly, which is usually very few.
+
+```{r, eval=FALSE}
+go_res_all <- get_go_terms(rownames(dia_qf[['protein']]), expand_terms = TRUE)
+```
+
+Expansion is slow and the query needs UniProt to be reachable, so here we read a stored copy of the result instead. `data-raw/record_go_enrichment_cache.R` regenerates it, and `release` records the UniProt release it was built from.
+
+```{r}
+go_enrichment_cache <- readRDS(system.file(
+  'extdata', 'go_enrichment_cache.rds', package = 'biomasslmb'))
+
+go_enrichment_cache$release
+
+go_res_all <- go_enrichment_cache$go_res_all
+
+head(go_res_all)
+```
+
+`goseq` needs the mapping as two columns, feature and category.
+
+```{r}
+gene2cat <- go_res_all[, c('UNIPROTKB', 'GO.ID')]
+```
+
+# Abundance bias
+
+Abundant proteins are quantified more precisely and in more samples, so they are more likely to reach significance for a change of a given size. Abundance is also not spread evenly across GO terms. Together those two facts mean a plain hypergeometric test will report terms rich in abundant proteins as enriched whether or not anything happened to them.
+
+`nullp()` fits the relationship between the bias and the probability of being called significant, producing a probability weighting function (PWF). We use mean log2 abundance across samples as the bias — `AveExpr`, already in the `limma` output. (For RNA-seq, which `goseq` was written for, the equivalent bias is transcript length.)
+
+```{r, fig.height=4, fig.width=6, out.width='70%', warning=FALSE}
+set.seed(0)
+
+pwf_up <- nullp(sig_up, bias.data = bias, plot.fit = FALSE)
+
+plotPWF(pwf_up, binsize = 20,
+        xlab = 'Mean abundance (log2)', ylab = 'Probability of significance')
+```
+
+Each point is a bin of 20 proteins ordered by abundance, and the line is the fitted PWF. The trend is upward but shallow: the most abundant proteins are `r round(max(pwf_up$pwf)/min(pwf_up$pwf), 1)` times as likely to be called significant as the least abundant. Worth looking at rather than assuming — a flat PWF means the correction will change nothing, and a steep one means an uncorrected analysis would have been badly misleading.
+
+# Over-representation testing
+
+`get_enriched_go()` wraps `goseq()`, adding BH-adjusted p-values for over- and under-representation and a truncated `term_short` column for plotting. The `Wallenius` method is what applies the PWF: it treats the foreground as drawn from a biased urn, where each protein's chance of selection is its PWF value. Passing `method = 'Hypergeometric'` instead runs the standard unweighted test and ignores the PWF entirely, so the bias correction is a property of the method, not of having fitted a PWF.
+
+```{r, message=FALSE, warning=FALSE}
+ora_up <- get_enriched_go(pwf_up, gene2cat = gene2cat, method = 'Wallenius')
+
+nrow(ora_up)
+```
+
+## Effect size
+
+A p-value says a term is more represented than expected; it does not say by how much, and with a large background a term can be highly significant while barely enriched. `estimate_overrep()` adds two effect sizes: `overrep`, the ratio of the term's foreground rate to the overall foreground rate, and `adj_overrep`, the same ratio after dividing out the PWF weight of the term's proteins. Use `adj_overrep` alongside a `Wallenius` p-value, so that both the test and the effect size account for the bias.
+
+```{r}
+ora_up <- estimate_overrep(ora_up, pwf_up, gene2cat)
+```
+
+## Independent filtering
+
+Most GO terms cannot be informative in a given experiment: a term with 2 background proteins cannot survive correction across a thousand others even if both are in the foreground, and a term covering most of the background cannot be specific to anything. Both nonetheless add to the multiple-testing burden. `add_independent_filtering_padj()` applies the principle DESeq2 uses for low-count genes — chooses a minimum term size that maximises the number of rejections, then re-adjusts p-values over only the terms that pass. This is valid because term size is independent of the p-value under the null but not under the alternative.
+
+```{r}
+ora_up <- ora_up %>%
+  add_independent_filtering_padj(plot = FALSE) %>%
+  mutate(over_represented_adj_pval = padj_if)
+
+sum(ora_up$over_represented_adj_pval < 0.05, na.rm = TRUE)
+```
+
+Setting `plot = TRUE` draws the number of rejections against the filtering threshold, which is worth looking at if the chosen threshold seems surprising.
+
+## Redundant terms
+
+The GO hierarchy guarantees that a real signal shows up as many terms at once: if `high-density lipoprotein particle` is over-represented then so are its parents, and each is reported as a separate finding. `remove_redundant_go()` walks the hierarchy and keeps, from each branch, only the most significant term.
+
+```{r, message=FALSE}
+ora_up_flt <- ora_up %>%
+  filter(over_represented_adj_pval < 0.05) %>%
+  remove_redundant_go()
+
+nrow(ora_up_flt)
+```
+
+Note the order: filter to significant terms first, then de-duplicate. Running it over every tested term would spend a lot of time collapsing branches that were never significant, and could keep a non-significant term as the representative of its branch.
+
+# The decreased proteins
+
+The same steps for the other direction.
+
+```{r, message=FALSE, warning=FALSE}
+pwf_dw <- nullp(sig_dw, bias.data = bias, plot.fit = FALSE)
+
+ora_dw_flt <- get_enriched_go(pwf_dw, gene2cat = gene2cat, method = 'Wallenius') %>%
+  estimate_overrep(pwf_dw, gene2cat) %>%
+  add_independent_filtering_padj(plot = FALSE) %>%
+  mutate(over_represented_adj_pval = padj_if) %>%
+  filter(over_represented_adj_pval < 0.05) %>%
+  remove_redundant_go()
+
+nrow(ora_dw_flt)
+```
+
+# Plotting the results
+
+`plot_go()` plots over-representation on the x-axis, shades by adjusted p-value and annotates each bar with the number of foreground proteins carrying the term. Both are needed to read the result: a large over-representation resting on 4 proteins is a different claim from a small one resting on 40.
+
+By default the axis labels come from `term_short`, the 30-character truncation `get_enriched_go()` adds. GO terms that share a prefix collide once truncated, so we label with the full `term` instead.
+
+The increased proteins:
+
+```{r, fig.height=2.5, fig.width=8}
+plot_go(ora_up_flt, term_col = 'term') +
+  theme_biomasslmb(base_size = 9, border = FALSE, aspect_square = FALSE)
+```
+
+They are enriched for complement and humoral immune terms — `complement binding` covers 8 of the 9 background proteins annotated to it — which is the acute-phase response the design was expected to show.
+
+The decreased proteins:
+
+```{r, fig.height=6, fig.width=8}
+plot_go(ora_dw_flt, term_col = 'term') +
+  theme_biomasslmb(base_size = 9, border = FALSE, aspect_square = FALSE)
+```
+
+They are enriched for lipoprotein particles and lipid transport, driven by the apolipoproteins. This is the other half of the same biology: the negative acute-phase reactants.
+
+# Which proteins drive a term?
+
+Related GO terms are annotated to overlapping sets of proteins, so a column of significant terms can be one finding reported repeatedly rather than several independent ones. `remove_redundant_go()` addresses this through the hierarchy, but terms that overlap heavily without being ancestors of each other survive it. `plot_go_terms_upset()` shows the overlap directly, at the level of the proteins.
+
+```{r, fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+plot_go_terms_upset(
+  goi = head(ora_dw_flt$term, 5),
+  foi = names(sig_dw)[sig_dw],
+  gene2cat = go_res_all)
+```
+
+Most of the five terms are carried by the same small core of proteins. That does not make the enrichment wrong, but it does mean the five terms are close to one finding, and a summary reporting them as five separate results would overstate the evidence.
+
+# What the foreground threshold costs
+
+ORA needs a cut-off to define the foreground, and the result depends on where it is put. Below, the same analysis with the foreground from `treat` at a 1.2-fold threshold — the definition the testing vignette used.
+
+```{r, message=FALSE, warning=FALSE}
+treat_results <- treat(fit, fc = 1.2, trend = TRUE, robust = TRUE) %>%
+  topTreat(coef = 'groupMPXV', number = Inf) %>%
+  tibble::rownames_to_column('Protein')
+
+sig_up_treat <- setNames(treat_results$adj.P.Val < 0.05 & treat_results$logFC > 0,
+                         treat_results$Protein)
+
+bias_treat <- setNames(treat_results$AveExpr, treat_results$Protein)
+
+ora_up_treat <- nullp(sig_up_treat, bias.data = bias_treat, plot.fit = FALSE) %>%
+  get_enriched_go(gene2cat = gene2cat, method = 'Wallenius') %>%
+  add_independent_filtering_padj(plot = FALSE)
+
+c(foreground = sum(sig_up_treat),
+  significant_terms = sum(ora_up_treat$padj_if < 0.05, na.rm = TRUE))
+```
+
+```{r}
+ora_up_treat %>%
+  arrange(over_represented_pvalue) %>%
+  select(term_short, numDEInCat, numInCat, over_represented_pvalue, padj_if) %>%
+  head(4) %>%
+  knitr::kable(digits = c(NA, 0, 0, 4, 3))
+```
+
+The ranking is unchanged — `acute-phase response` is still the most over-represented term, on 4 of its 16 background proteins — but with `r sum(sig_up_treat)` foreground proteins instead of `r sum(sig_up)`, nothing survives multiple-testing correction across `r nrow(ora_up_treat)` terms. The biology did not change; the power did.
+
+This is the general shape of the problem, and it cuts both ways: a permissive threshold gives power but admits noise into the foreground, and a strict one gives a foreground you trust and no power to use it. Report the threshold you used, and treat a result that appears or disappears when you move it as a weak result either way.
+
+# Summary
+
+Here we have:
+
+-   Defined a foreground and a background from the same testing results, so that enrichment is measured against the proteins that could have been called changed rather than against the proteome
+-   Retrieved GO annotations with `get_go_terms(expand_terms = TRUE)`, expanding to ancestor terms because `goseq` treats categories as flat
+-   Fitted a probability weighting function with `nullp()` on mean protein abundance, and used `method = 'Wallenius'` so that the enrichment test actually applies it
+-   Tested each direction separately with `get_enriched_go()`, added an effect size with `estimate_overrep()`, reduced the multiple-testing burden with `add_independent_filtering_padj()` and collapsed hierarchy-redundant terms with `remove_redundant_go()`
+-   Plotted the surviving terms with `plot_go()` and checked, with `plot_go_terms_upset()`, how far they rest on the same proteins
+-   Shown that the foreground threshold, not the biology, decided whether the increased proteins yielded a significant term at all
+
+# Where to go next
+
+-   ORA reduces each protein to significant or not. Gene set enrichment analysis (GSEA, e.g. `fgsea`) instead ranks every tested protein by a signed statistic and asks whether a term's proteins sit non-randomly in that ranking, which removes the threshold this analysis was shown to be sensitive to. It needs no significance cut-off and so is worth running alongside ORA when the foreground is small.
+-   [Data exploration and statistical testing](exploration_and_statistical_testing.html) covers where the foreground came from, including the testability filter that decided which proteins entered the background.
+-   [Protein annotation](protein_annotation.html) covers `get_go_terms()` and the rest of the UniProt annotation retrieval in more detail, including what happens to accessions that no longer map.
+
+```{r}
+sessionInfo()
+```

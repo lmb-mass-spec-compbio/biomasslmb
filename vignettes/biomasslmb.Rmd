@@ -64,7 +64,7 @@ Analyses typicall follow the same sequence regardless of which combination above
 
 **2. Exploration and statistical testing.** Check that the experiment worked before testing it: confirm the bait or protein(s) of interest behaves as expected, look at sample correlations and `plot_pca()`, then apply a testability filter and test. The conventional filter requires at least two genuinely quantified replicates in at least one condition, and at least two values in both conditions of whichever assay is actually fitted — one rule when nothing is imputed, two when something is. See [data exploration and statistical testing](exploration_and_statistical_testing.html).
 
-**3. Functional enrichment.** Test whether the differentially abundant proteins are enriched for particular GO terms, correcting for the length bias inherent in shotgun proteomics with a goseq probability weighting function. `estimate_overrep()` performs the enrichment, `remove_redundant_go()` collapses the parent and child terms that otherwise dominate the output, and `plot_go()` displays it.
+**3. Functional enrichment.** Test whether the differentially abundant proteins are enriched for particular GO terms, against the proteins that were tested rather than against the proteome. `get_enriched_go()` runs the test, correcting for the tendency of abundant proteins to be called significant more often via a goseq probability weighting function; `estimate_overrep()` adds an effect size, `remove_redundant_go()` collapses the parent and child terms that otherwise dominate the output, and `plot_go()` displays it. See [functional enrichment](functional_enrichment.html).
 
 # The decisions worth thinking about
 
@@ -139,7 +139,7 @@ dir(system.file("extdata", package = "biomasslmb"))
 
 # Where to go next
 
-If you are starting an analysis, go to the vignette for your acquisition type and work forwards. If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, and the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette covers the testing stage for both a whole-proteome and an enrichment design.
+If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html). If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, and the testing vignette covers the testing stage for both a whole-proteome and an enrichment design.
 
 # Getting help
 

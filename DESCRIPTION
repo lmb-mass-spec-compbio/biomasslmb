@@ -54,6 +54,7 @@ Imports:
     utils
 Suggests:
     arrow,
+    fgsea,
     ggrepel,
     hexbin,
     httptest,

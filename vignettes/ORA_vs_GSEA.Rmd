@@ -1,0 +1,272 @@
+---
+title: "ORA or GSEA?"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{ORA or GSEA?}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+There are two ways to ask whether a set of results is functionally structured, and they differ in what they take as input.
+
+**Over-representation analysis (ORA)** takes a list: the proteins you called significant. It asks whether a term appears in that list more often than the background rate. **Gene set enrichment analysis (GSEA)** takes a ranking: every protein you tested, ordered by a signed statistic. It asks whether a term's proteins sit systematically towards one end of that ranking.
+
+The practical consequence is that ORA depends on where you put the significance threshold and GSEA does not, while GSEA depends on the ranking statistic and ORA does not. Neither is generally better. Below we run both on the same data and look at where they agree, where they disagree, and what the disagreements have in common.
+
+The [functional enrichment](functional_enrichment.html) vignette covers the ORA workflow in detail; here it is compressed to what is needed for the comparison.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(dplyr)
+library(limma)
+library(goseq)
+library(fgsea)
+```
+
+# Shared input
+
+The same MPXV-vs-control plasma comparison used in the enrichment vignette, and the same GO annotations.
+
+```{r}
+dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
+
+group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
+
+n_quant <- sapply(levels(group), function(g){
+  rowSums(!is.na(assay(dia_prot[['protein']])[, group == g, drop = FALSE]))
+})
+
+testable <- rownames(n_quant)[apply(n_quant, 1, min) >= 2]
+
+limma_results <- assay(dia_prot[['protein']])[testable, ] %>%
+  lmFit(model.matrix(~group)) %>%
+  eBayes(trend = TRUE, robust = TRUE) %>%
+  topTable(coef = 'groupMPXV', number = Inf) %>%
+  tibble::rownames_to_column('Protein')
+
+go_res_all <- readRDS(system.file(
+  'extdata', 'go_enrichment_cache.rds', package = 'biomasslmb'))$go_res_all
+
+gene2cat <- go_res_all[, c('UNIPROTKB', 'GO.ID')]
+```
+
+# ORA
+
+Two tests, one per direction, each against the tested proteins as background.
+
+```{r, message=FALSE, warning=FALSE}
+bias <- setNames(limma_results$AveExpr, limma_results$Protein)
+
+run_ora <- function(sig, direction){
+  pwf <- nullp(sig, bias.data = bias, plot.fit = FALSE)
+
+  get_enriched_go(pwf, gene2cat = gene2cat, method = 'Wallenius') %>%
+    estimate_overrep(pwf, gene2cat) %>%
+    add_independent_filtering_padj(plot = FALSE) %>%
+    mutate(over_represented_adj_pval = padj_if, direction = direction)
+}
+
+set.seed(0)
+
+ora <- bind_rows(
+  run_ora(setNames(limma_results$adj.P.Val < 0.05 & limma_results$logFC > 0,
+                   limma_results$Protein), 'Increased'),
+  run_ora(setNames(limma_results$adj.P.Val < 0.05 & limma_results$logFC < 0,
+                   limma_results$Protein), 'Decreased'))
+```
+
+To compare against a single signed GSEA statistic, we reduce each term to its better-supported direction and give the over-representation a sign.
+
+```{r}
+ora_best <- ora %>%
+  group_by(category) %>%
+  slice_min(padj_if, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(ora_score = ifelse(direction == 'Increased',
+                            log2(adj_overrep), -log2(adj_overrep)))
+```
+
+# GSEA
+
+`fgsea` needs the annotations as a list of protein vectors, and a named vector of ranking statistics. We rank by `logFC * -log10(P.Value)`, so that a protein needs both a consistent direction and a small p-value to rank at either extreme — ranking on fold-change alone would put noisy, weakly-measured proteins at the top.
+
+```{r}
+pathways <- lapply(split(go_res_all$UNIPROTKB, go_res_all$GO.ID), unique)
+
+stats <- setNames(limma_results$logFC * -log10(limma_results$P.Value),
+                  limma_results$Protein)
+```
+
+`minSize` and `maxSize` do the job that independent filtering does for ORA: they exclude terms too small to be estimated and too large to be specific, before any multiple-testing correction.
+
+```{r, message=FALSE, warning=FALSE}
+set.seed(0)
+
+gsea <- fgsea(pathways = pathways, stats = stats,
+              minSize = 5, maxSize = 200, nPermSimple = 10000) %>%
+  as.data.frame()
+
+go_terms <- distinct(go_res_all[, c('GO.ID', 'TERM', 'ONTOLOGY')])
+
+gsea <- merge(gsea, go_terms, by.x = 'pathway', by.y = 'GO.ID') %>%
+  arrange(pval)
+
+c(terms_tested = nrow(gsea), significant = sum(gsea$padj < 0.05, na.rm = TRUE))
+```
+
+Note that GSEA needed no direction split. The sign of the normalised enrichment score (NES) carries it, and one test covers both.
+
+# Where they agree
+
+```{r}
+comparison <- merge(
+  ora_best[, c('category', 'term', 'ontology', 'numDEInCat', 'numInCat',
+               'padj_if', 'direction', 'ora_score')],
+  gsea[, c('pathway', 'NES', 'padj', 'size')],
+  by.x = 'category', by.y = 'pathway') %>%
+  mutate(called = case_when(
+    padj_if < 0.05 & padj < 0.05 ~ 'both',
+    padj_if < 0.05 ~ 'ORA only',
+    padj < 0.05 ~ 'GSEA only',
+    TRUE ~ 'neither'))
+
+comparison %>% count(called) %>% knitr::kable()
+```
+
+Both methods put the same terms on the same side. Below, the signed ORA effect size against the GSEA NES, for the `r nrow(comparison)` terms both tested.
+
+The trend line is fitted by total least squares, via `biomasslmb::tls`. Ordinary least squares assumes the x variable is measured without error and minimises vertical distance, which makes the fitted slope depend on which variable you happen to put on which axis. Here neither is a predictor of the other — both are noisy estimates of the same underlying enrichment — so the symmetric fit is the appropriate one. The same argument applies to any logFC-against-logFC comparison of two methods or two experiments.
+
+```{r, fig.height=4, fig.width=7, message=FALSE}
+comparison %>%
+  ggplot(aes(ora_score, NES)) +
+  geom_point(aes(colour = called), size = 1.5, alpha = 0.6) +
+  geom_smooth(method = biomasslmb::tls, se = FALSE, colour = 'black') +
+  scale_colour_manual(values = c(both = get_cat_palette(3)[2],
+                                 `ORA only` = get_cat_palette(3)[1],
+                                 `GSEA only` = get_cat_palette(3)[3],
+                                 neither = 'grey80'),
+                      name = NULL) +
+  theme_biomasslmb(base_size = 10, aspect_square = FALSE) +
+  labs(x = 'ORA over-representation (signed log2)', y = 'GSEA NES')
+```
+
+The correlation between the two effect sizes is `r round(cor(comparison$ora_score, comparison$NES, use = 'complete.obs'), 2)`. Where they disagree, they disagree about magnitude and about significance, not about direction — which is worth knowing, because it means a term called by one method and missed by the other is usually a power difference rather than a contradiction.
+
+# Where they disagree
+
+```{r}
+comparison %>%
+  filter(called == 'ORA only') %>%
+  arrange(padj_if) %>%
+  select(term, numInCat, numDEInCat, ora_score, padj_if, padj) %>%
+  head(6) %>%
+  knitr::kable(digits = c(NA, 0, 0, 2, 4, 3),
+               caption = 'Called by ORA only')
+```
+
+```{r}
+comparison %>%
+  filter(called == 'GSEA only') %>%
+  arrange(padj) %>%
+  select(term, numInCat, numDEInCat, NES, padj, padj_if) %>%
+  head(6) %>%
+  knitr::kable(digits = c(NA, 0, 0, 2, 4, 3),
+               caption = 'Called by GSEA only')
+```
+
+Compare the `numInCat` (proteins in the background) and `numDEInCat` (of those, significant) columns between the two tables. Most of the difference is there:
+
+- **ORA finds small terms that are almost entirely significant.** `phospholipid efflux` has 7 proteins in the background and 6 of them are significant. That is a striking result for a hypergeometric test, and a weak one for a ranking test: 7 proteins out of `r nrow(limma_results)` cannot occupy enough of the ranking to produce an extreme enrichment score, however well they are placed.
+- **GSEA finds large terms that shift consistently without individually clearing the threshold.** `leukocyte mediated immunity` has 62 background proteins of which 13 are significant — an unremarkable fraction — but enough of the other 49 sit on the same side of the ranking that the term is enriched overall. ORA cannot see those 49 at all; they are simply absent from its input.
+
+Neither is an error. They are answering different questions, and the term sizes tell you which question a given term was ever going to be able to answer.
+
+# Does either handle abundance bias better?
+
+`goseq` corrects for abundance bias explicitly, through the probability weighting function. `fgsea` has no equivalent: the ranking statistic is its only input, so any tendency for abundant proteins to rank more extremely is carried straight through. It would be reasonable to expect the ORA results to end up less associated with abundance as a result.
+
+On these data they do not.
+
+```{r}
+mean_abundance <- sapply(pathways[comparison$category], function(p){
+  mean(bias[intersect(p, names(bias))], na.rm = TRUE)
+})
+
+comparison$mean_abundance <- mean_abundance
+
+comparison %>%
+  summarise(
+    ORA = cor(mean_abundance, -log10(padj_if + 1e-10), use = 'complete.obs'),
+    GSEA = cor(mean_abundance, -log10(padj + 1e-10), use = 'complete.obs')) %>%
+  round(3) %>%
+  knitr::kable(caption = 'Correlation of term mean abundance with significance')
+```
+
+Both outputs retain a similar association between a term's mean protein abundance and its significance, and the ORA one is slightly the stronger. The PWF corrects the test; it does not make the surviving term list abundance-neutral, partly because term size and mean abundance are themselves related and independent filtering removes small terms preferentially.
+
+The useful conclusion is not that the correction is worthless — it changes which terms are called, and on this data it is the difference between 18 and 41 significant terms in the increased direction. It is that neither method's output should be read as free of abundance effects, and that checking is cheap.
+
+# Which to use
+
+Run both. They cost seconds, they use the same inputs, and the comparison above is more informative than either alone. When they must be reduced to one:
+
+```{r, echo=FALSE}
+data.frame(
+  Situation = c(
+    'Few significant proteins',
+    'Many significant proteins',
+    'Interest is in small, specific terms',
+    'Interest is in broad programmes',
+    'Threshold is arbitrary or contested',
+    'Abundance bias is a known concern'),
+  Prefer = c('GSEA', 'Either', 'ORA', 'GSEA', 'GSEA', 'ORA, but verify'),
+  Why = c(
+    'ORA loses power with the foreground; GSEA uses every tested protein',
+    'Both have power; disagreements are informative',
+    'A small term cannot move a ranking statistic far enough',
+    'A diffuse shift never reaches the ORA foreground',
+    'GSEA has no threshold to argue about',
+    'Only goseq offers a correction, and it is not a guarantee'),
+  check.names = FALSE) %>%
+  knitr::kable()
+```
+
+Two things apply whichever you use. Report the background, since neither result means anything without it. And collapse the GO hierarchy before counting your findings — `remove_redundant_go()` works on `fgsea` output too, given the right column names:
+
+```{r, eval=FALSE}
+gsea %>%
+  filter(padj < 0.05) %>%
+  remove_redundant_go(go_category_col = 'pathway', p_value_col = 'pval')
+```
+
+# Summary
+
+-   ORA takes a thresholded list and asks whether a term is over-represented in it; GSEA takes the full ranking and asks whether a term's proteins are concentrated at one end
+-   On the same data they agreed on direction, with the two effect sizes correlating at `r round(cor(comparison$ora_score, comparison$NES, use = 'complete.obs'), 2)`, and disagreed on `r sum(comparison$called %in% c('ORA only', 'GSEA only'))` of `r nrow(comparison)` terms
+-   The disagreements follow term size: ORA wins on small terms that are almost wholly significant, GSEA on large terms that shift consistently below the threshold
+-   Only `goseq` offers an abundance-bias correction, but on this data the surviving term lists were similarly associated with abundance either way, so verify rather than assume
+-   `tls()` gives the appropriate fit when comparing two methods' effect sizes, since neither axis is the predictor
+
+# Where to go next
+
+-   [Functional enrichment](functional_enrichment.html) covers the ORA workflow properly, including what the foreground threshold costs.
+-   [Data exploration and statistical testing](exploration_and_statistical_testing.html) covers where the ranking statistic comes from.
+
+```{r}
+sessionInfo()
+```

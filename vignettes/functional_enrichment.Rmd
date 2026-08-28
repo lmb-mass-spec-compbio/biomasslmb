@@ -264,7 +264,7 @@ Here we have:
 
 # Where to go next
 
--   ORA reduces each protein to significant or not. Gene set enrichment analysis (GSEA, e.g. `fgsea`) instead ranks every tested protein by a signed statistic and asks whether a term's proteins sit non-randomly in that ranking, which removes the threshold this analysis was shown to be sensitive to. It needs no significance cut-off and so is worth running alongside ORA when the foreground is small.
+-   [ORA or GSEA?](ORA_vs_GSEA.html) runs gene set enrichment analysis on this same data and compares it with the analysis above. GSEA ranks every tested protein by a signed statistic rather than thresholding, so it removes the sensitivity demonstrated in the last section, and it is worth running alongside ORA when the foreground is small.
 -   [Data exploration and statistical testing](exploration_and_statistical_testing.html) covers where the foreground came from, including the testability filter that decided which proteins entered the background.
 -   [Protein annotation](protein_annotation.html) covers `get_go_terms()` and the rest of the UniProt annotation retrieval in more detail, including what happens to accessions that no longer map.
 

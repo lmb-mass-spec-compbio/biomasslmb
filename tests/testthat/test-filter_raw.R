@@ -1,5 +1,5 @@
 psm <- tmt_qf[["psms_raw"]]
-peptides <- dia_qf[["peptides_fdr_cntrl"]]
+peptides <- dia_qf[["precursors"]]
 
 test_that("remove_no_master drops features with an empty master protein", {
   n_empty <- sum(SummarizedExperiment::rowData(psm)[["Master.Protein.Accessions"]] == "")

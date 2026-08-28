@@ -4,35 +4,33 @@
 # the TMT_PSM_QC_Summarisation vignette, alongside the PD-based
 # `psm_tmt_clock` example.
 #
-# Source: 2025_23_PER2_interactors_stoichiometry project (real MRC-LMB
-# proteomics data). The full experiment includes a "Booster" channel and
-# several unused/empty TMT channels which are dropped here to leave a clean
-# 2-condition x 6-replicate design. The original condition labels (`P2H`
-# for the bait pulldown, `HALO` for the control pulldown) and the
-# `Raw.file` column (which embeds the analyst's name and the bait protein)
-# are anonymised below to generic `IP`/`Control` labels and placeholder
-# run names, since - unlike the protein accessions, which are just real
-# quantification data - these two columns identify the specific project
+# Source: project 2025_23. The full experiment includes a "Booster" channel
+# and several unused/empty TMT channels which are dropped here to leave a
+# clean 2-condition x 6-replicate design. The condition labels and the
+# `Raw.file` column are replaced below with generic `IP`/`Control` labels and
+# placeholder run names, since - unlike the protein accessions, which are just
+# real quantification data - those two columns identify the specific project
 # and person rather than describing the (deliberately generic) teaching
-# experiment.
+# experiment. See data-raw/source_paths.R for why the input paths are globbed
+# rather than written out.
 
 library(dplyr)
 
 set.seed(42)
 
-raw_dir <- "~/git_repos/projects/2025/2025_23_PER2_interactors_stoichiometry/raw"
+source("data-raw/source_paths.R")
 
 # ---- Experimental design -----------------------------------------------
 
 exp_design <- openxlsx::read.xlsx(
-  file.path(raw_dir, "2103938239_Andrei_TMT12_210825.xlsx"), sheet = 2) %>%
+  source_path("2025/2025_23_*/raw/*_TMT12_*.xlsx"), sheet = 2) %>%
   filter(!is.na(Sample)) %>%
   tidyr::separate(Sample, into = c("Condition", "Replicate"), remove = FALSE) %>%
   tibble::column_to_rownames("Sample")
 
 # ---- Raw PSMs (evidence.txt) ---------------------------------------------
 
-infdf <- read.delim(file.path(raw_dir, "evidence.txt"))
+infdf <- read.delim(source_path("2025/2025_23_*/raw/evidence.txt"))
 
 # All Reporter-intensity-related columns (corrected/plain/count) - drop the
 # plain and count variants entirely, and restrict the corrected columns to
@@ -44,7 +42,16 @@ tag2sample <- setNames(rownames(exp_design), exp_design$Tag_n)
 sample_names <- tag2sample[gsub("^Reporter\\.intensity\\.corrected\\.", "",
                                 colnames(infdf)[abundance_cols])]
 
-keep_samples <- intersect(sample_names, rownames(exp_design)[exp_design$Condition %in% c("P2H", "HALO")])
+# The two real conditions are whatever remains once the booster channel is
+# dropped; they are not named here, for the reason given at the top. They sort
+# with the control pulldown first. Assert the shape rather than trusting it.
+source_conditions <- sort(setdiff(unique(exp_design$Condition), "Booster"))
+stopifnot(length(source_conditions) == 2)
+
+condition_map <- setNames(c("Control", "IP"), source_conditions)
+
+keep_samples <- intersect(
+  sample_names, rownames(exp_design)[exp_design$Condition %in% source_conditions])
 keep_abundance_cols <- abundance_cols[match(keep_samples, sample_names)]
 
 infdf <- infdf[, c(setdiff(seq_len(ncol(infdf)), all_reporter_cols), keep_abundance_cols)]
@@ -104,8 +111,8 @@ tmt_per2_mq_design <- exp_design[keep_samples, c("Condition", "Replicate")]
 
 # ---- Anonymise: generic condition labels and sample names -----------------
 
-condition_map <- c(P2H = "IP", HALO = "Control")
-tmt_per2_mq_design$Condition <- condition_map[tmt_per2_mq_design$Condition]
+tmt_per2_mq_design$Condition <- unname(
+  condition_map[tmt_per2_mq_design$Condition])
 new_sample_names <- paste(tmt_per2_mq_design$Condition, tmt_per2_mq_design$Replicate, sep = "_")
 
 sample_rename <- setNames(new_sample_names, keep_samples)

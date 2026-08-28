@@ -17,7 +17,9 @@ library(dplyr)
 
 set.seed(42)
 
-pep_inf <- "~/git_repos/projects/2026/2026_05_AMRC5_WT_vs_Mutant/raw/PD/2733983520_Roberta_20R_PeptideGroups.txt"
+source("data-raw/source_paths.R")
+
+pep_inf <- source_path("2026/2026_05_*/raw/PD/*_PeptideGroups.txt")
 
 infdf <- read.delim(pep_inf)
 

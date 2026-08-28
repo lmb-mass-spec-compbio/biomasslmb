@@ -5,24 +5,26 @@
 # this dataset lets the vignette demonstrate design-aware steps: PCA by
 # condition, missingness-by-condition, differential abundance testing.
 #
-# Source: 2026_04_CLOCKmRuby3 project (real MRC-LMB proteomics data),
-# subsetted and reduced to a teaching-sized dataset.
+# Source: project 2026_04 (real MRC-LMB proteomics data), subsetted and
+# reduced to a teaching-sized dataset. See data-raw/source_paths.R for why the
+# input paths are globbed rather than written out.
 
 library(dplyr)
 
 set.seed(42)
 
-raw_dir <- "~/git_repos/projects/2026/2026_04_CLOCKmRuby3/raw"
+source("data-raw/source_paths.R")
 
 # ---- Experimental design -----------------------------------------------
 
-exp_design <- openxlsx::read.xlsx(file.path(raw_dir, "labelling_scheme.xlsx")) %>%
+exp_design <- openxlsx::read.xlsx(
+  source_path("2026/2026_04_*/raw/labelling_scheme.xlsx")) %>%
   tidyr::separate(sample, into = c(NA, "Condition", "Replicate"), sep = "", remove = FALSE) %>%
   mutate(Condition = recode(Condition, "C" = "Control", "M" = "Mutant"))
 
 # ---- Raw PSMs ------------------------------------------------------------
 
-infdf <- read.delim(file.path(raw_dir, "2552805102_Nicola_TMT_12labels_PSMs.txt"))
+infdf <- read.delim(source_path("2026/2026_04_*/raw/*_TMT_12labels_PSMs.txt"))
 
 abundance_cols <- which(grepl("^Abundance\\.", colnames(infdf)))
 

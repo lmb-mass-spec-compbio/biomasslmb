@@ -75,6 +75,40 @@ condition_miss_index(miss_res$summary)$index
 
 The index is close to zero: for this whole-proteome comparison, protein-level missingness looks unrelated to group — in contrast to the enrichment experiment in Part B, where absence from the control pulldown is exactly the signal of interest. We therefore test the protein-level abundances directly, letting `limma` fit each protein on whichever samples it was quantified in, rather than imputing.
 
+## Which proteins can be tested?
+
+`limma` fits a linear model per protein, so each protein needs enough genuinely quantified values for its group means and its within-group variance to be estimable. A protein that fails this is not "not significant" — it is untested, and the two must not be reported as if they were the same thing.
+
+We therefore require at least 2 quantified values in *both* conditions, and count the quantified values per condition so we can apply that rule and report it alongside the results.
+
+```{r}
+group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
+
+n_quant <- sapply(levels(group), function(g){
+  rowSums(!is.na(assay(dia_prot[['protein']])[, group == g, drop = FALSE]))
+})
+
+testable <- rownames(n_quant)[apply(n_quant, 1, min) >= 2]
+
+length(testable)
+n_quant[apply(n_quant, 1, min) < 2, ]
+```
+
+Three of the excluded proteins have no quantified values at all in one condition. `lmFit` cannot estimate a group coefficient from an empty group, so it returns `NA` for those rows with a `Partial NA coefficients` warning. `NA` adjusted p-values are then dropped silently by `table()`, `sum(..., na.rm=TRUE)` and most other summaries, so an unfiltered run reports a plausible-looking number of significant proteins without ever indicating that some proteins could not be fitted. Filtering first makes the exclusion explicit and countable.
+
+The remaining excluded proteins were quantified in one or both conditions, but only once in one of them, so their fold-change rests on a single measurement with no way to judge its reproducibility. This filter is not free: `P02741` (CRP) is quantified in all 6 MPXV samples and just 1 of 15 controls, and is almost certainly a genuine, large increase — it is missing from the controls precisely *because* it is low there. Excluding it is the conservative choice, not the correct one in any absolute sense; recovering proteins like it requires modelling the missingness or imputing, which is what `restrict_imputation()` and the `mnar_score()` family are for.
+
+When imputed values are being tested, this becomes two filters rather than one, because "quantified" and "has a value" stop being the same thing: at least 2 *genuinely quantified* values in at least one condition, checked against the unimputed assay, so that no result rests entirely on imputed values; and at least 2 values in *both* conditions, checked against the imputed assay that is actually being fitted, so that the model can be fitted. Here nothing is imputed, so both reduce to the single rule applied above.
+
+For reporting, we keep the per-condition counts as columns so that a reader of the results table can see how much of each fold-change is supported by measurements.
+
+```{r}
+n_quant_cols <- n_quant %>%
+  as.data.frame() %>%
+  setNames(paste0('n_quant_', levels(group))) %>%
+  tibble::rownames_to_column('Protein')
+```
+
 ## Differential abundance testing with limma
 
 We use `limma` for differential abundance testing between `control` and `MPXV`. `limma` fits a linear model per protein, then applies an empirical Bayes step which borrows information across all proteins to stabilise the variance estimate — important here since the 6 MPXV replicates give fairly noisy per-protein variance estimates on their own.
@@ -84,10 +118,9 @@ We use `treat` rather than plain `eBayes`. `treat` tests the null hypothesis tha
 We attach gene symbols from the `protein` assay's `rowData` to the results, since they read more clearly than accessions on the volcano plot.
 
 ```{r, fig.show='hide'}
-group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
 design <- model.matrix(~group)
 
-fit <- lmFit(assay(dia_prot[['protein']]), design)
+fit <- lmFit(assay(dia_prot[['protein']])[testable, ], design)
 final_model <- treat(fit, fc = 1.2, trend = TRUE, robust = TRUE)
 
 gene_names <- as.data.frame(rowData(dia_qf[['protein']])[, c('Protein.Group', 'Genes')])
@@ -95,13 +128,14 @@ gene_names <- as.data.frame(rowData(dia_qf[['protein']])[, c('Protein.Group', 'G
 limma_results <- topTreat(final_model, coef = 'groupMPXV', number = Inf) %>%
   tibble::rownames_to_column('Protein') %>%
   left_join(gene_names, by = c('Protein' = 'Protein.Group')) %>%
+  left_join(n_quant_cols, by = 'Protein') %>%
   arrange(P.Value)
 
 table(direction = ifelse(limma_results$logFC < 0, 'Dec.', 'Inc.'),
       sig = limma_results$adj.P.Val < 0.05)
 ```
 
-The FDR adjustment is over the `r nrow(limma_results)` proteins that passed the filtering thresholds in the QC vignette; a stricter or looser peptide/protein filter would change the multiple-testing burden, and hence the adjusted p-values.
+The FDR adjustment is over the `r nrow(limma_results)` testable proteins, itself a subset of those that passed the filtering thresholds in the QC vignette; a stricter or looser peptide/protein filter, or a stricter testability rule, would change the multiple-testing burden and hence the adjusted p-values.
 
 ## Volcano plot
 
@@ -119,7 +153,7 @@ plot_volcano(limma_results, sig_col = NULL) +
     aes(label = Genes), min.segment.length = 0, size = 3)
 ```
 
-The significant proteins are dominated by the acute-phase response: positive acute-phase reactants such as `CRP`, `SAA2`, `HP`, `LBP` and `C9` are increased in MPXV plasma, while negative acute-phase reactants such as `APOA1`, `APOA2`, `TTR` and `RBP4` are decreased.
+The significant proteins are dominated by the acute-phase response: positive acute-phase reactants such as `SAA2`, `HP`, `LBP` and `C9` are increased in MPXV plasma, while negative acute-phase reactants such as `APOA1`, `APOA2`, `TTR` and `RBP4` are decreased.
 
 ## Inspecting proteins of interest
 
@@ -167,12 +201,27 @@ plot_pca(tmt_qf_mq, 'protein', colour_by='Condition', scale='uv', center=TRUE, a
 
 IP and Control samples separate clearly, as expected for a specific enrichment.
 
+## Which proteins can be tested?
+
+The same testability rule applies here, but TMT quantification within a plex is close to complete once the S:N and interference filters of the QC vignette have been applied, so it excludes nothing.
+
+```{r}
+condition_mq <- factor(tmt_qf_mq[['protein']]$Condition, levels = c('Control', 'IP'))
+
+n_quant_mq <- sapply(levels(condition_mq), function(g){
+  rowSums(!is.na(assay(tmt_qf_mq[['protein']])[, condition_mq == g, drop = FALSE]))
+})
+
+table(testable = apply(n_quant_mq, 1, min) >= 2)
+```
+
+That is the usual position for a single-plex TMT experiment, and it is worth checking rather than assuming: the filter matters where missingness is common, which for TMT means comparisons that span plexes rather than comparisons within one.
+
 ## Differential abundance testing with limma
 
 The statistical model itself is the same as Part A, but the biological question is different, and that changes what fold-change threshold is appropriate. In Part A, we were looking for shifts in a whole-proteome comparison, so a modest 1.2-fold `treat` threshold made sense. Here, we're trying to identify bona fide interactors of the bait protein: a real interactor should be substantially enriched in the IP relative to the control, not just detectably different. We therefore use a stricter 2-fold threshold.
 
 ```{r, fig.show='hide'}
-condition_mq <- factor(tmt_qf_mq[['protein']]$Condition, levels = c('Control', 'IP'))
 design_mq <- model.matrix(~condition_mq)
 
 fit_mq <- lmFit(assay(tmt_qf_mq[['protein']]), design_mq)
@@ -238,6 +287,7 @@ Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecip
 
 -   Checked that replicate samples correlate more strongly with each other than with the other condition, and that PCA separates the conditions — using `allowing_missing=TRUE` in both parts, since `robustSummary` retains some missing values
 -   Checked whether protein-level missingness was structured by experimental condition: unrelated to group in the whole-proteome comparison (Part A), but strongly condition-informative in the immunoprecipitation (see the QC vignette), where a protein absent from the control pulldown is itself the signal of interest
+-   Restricted testing to proteins with at least 2 quantified values in both conditions, and kept the per-condition counts in the results so that untested proteins are distinguishable from proteins tested and found unchanged
 -   Tested for differential protein abundance with `limma::treat`, using a fold-change threshold appropriate to the biological question: a modest threshold for whole-proteome changes in Part A, and a strict threshold to identify substantially-enriched candidate interactors in Part B
 -   Visualised the results with a volcano plot and inspected the feature-to-protein trend for a top hit
 

@@ -62,7 +62,7 @@ Analyses typicall follow the same sequence regardless of which combination above
 
 **1. QC, filtering and summarisation.** Remove contaminants and low-confidence identifications, log-transform, normalise, and summarise features to protein-level abundance. This is the acquisition-specific stage — use the vignette from the table above.
 
-**2. Exploration and statistical testing.** Check that the experiment worked before testing it: confirm the bait or protein(s) of interest behaves as expected, look at sample correlations and `plot_pca()`, then apply a testability filter and test. The conventional filter retains proteins with at least two quantified replicates in at least one condition. See [data exploration and statistical testing](exploration_and_statistical_testing.html).
+**2. Exploration and statistical testing.** Check that the experiment worked before testing it: confirm the bait or protein(s) of interest behaves as expected, look at sample correlations and `plot_pca()`, then apply a testability filter and test. The conventional filter requires at least two genuinely quantified replicates in at least one condition, and at least two values in both conditions of whichever assay is actually fitted — one rule when nothing is imputed, two when something is. See [data exploration and statistical testing](exploration_and_statistical_testing.html).
 
 **3. Functional enrichment.** Test whether the differentially abundant proteins are enriched for particular GO terms, correcting for the length bias inherent in shotgun proteomics with a goseq probability weighting function. `estimate_overrep()` performs the enrichment, `remove_redundant_go()` collapses the parent and child terms that otherwise dominate the output, and `plot_go()` displays it.
 

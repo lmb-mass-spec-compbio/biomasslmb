@@ -25,6 +25,8 @@ This vignette works through one typical experiment from end to end: a whole-prot
 
 The data used in this vignette is a real DIA-NN `report.parquet` output for a plasma proteomics case series comparing Mpox (MPXV) infection, COVID-19, and healthy controls [@Wang2022]. It is also used, with accompanying teaching material, in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Unlike the truncated demonstration files used elsewhere in `biomasslmb`, this dataset is used here in full - it is small enough not to need subsetting
 
+Spectronaut is the other search engine in common use for DIA data. Only the reading step differs: [reading Spectronaut output](#reading-spectronaut-output) at the end of this vignette shows how to reach the same `precursors` assay, after which every step below applies unchanged.
+
 # Load required packages
 
 ```{r, message=FALSE}
@@ -236,7 +238,11 @@ biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
                            "Removing peptides with > 75% missing values")
 ```
 
-Next, we remove peptides for proteins with fewer than 2 peptides.
+Next, we remove peptides for proteins with fewer than 2 peptides. This is routine practice and worth being explicit about, because it is doing more than tidying.
+
+A protein quantified from a single precursor has no internal replication: there is no second measurement to disagree with the first, so nothing about it can be checked. Any error in that one precursor — a misassigned peptide, interference, a bad integration — passes straight through to the protein-level value with nothing to average it out. Its missingness pattern is also the missingness pattern of one precursor rather than of the protein, which matters for everything downstream that reasons about missing values.
+
+The cost is real, and asymmetric: single-precursor proteins are disproportionately the low-abundance ones, so this filter removes preferentially from the part of the proteome that was hardest to measure. `min_features` is the dial. Raising it buys confidence and loses coverage; there is no threshold that is correct independent of what the result will be used for.
 
 ```{r}
 min_peps <- 2
@@ -334,6 +340,87 @@ From these two plots, we can see that the filtering to ensure that all proteins 
 # Save file to package as data so it can be read back in in other vignettes
 usethis::use_data(dia_qf, overwrite = TRUE)
 ```
+
+# Reading Spectronaut output {#reading-spectronaut-output}
+
+Everything above the `precursors` assay is DIA-NN specific: the file format, the column names and the Q-value fields. Everything below it is not. This section covers the difference, using a Spectronaut export from a total-lysate comparison between a vehicle control and an inhibitor treatment, three replicates each.
+
+Spectronaut's 'BGS Factory Report' is long-format like DIA-NN's report, one row per precursor per run, but a plain TSV rather than parquet. The export shipped here has been reduced to the columns needed downstream, which is worth doing to your own exports too — the full report has well over a hundred columns and is correspondingly slow to read.
+
+```{r}
+spectronaut_inf <- system.file(
+  "extdata", "spectronaut_report.tsv.gz", package = "biomasslmb")
+
+spectronaut_df <- read.delim(spectronaut_inf)
+
+colnames(spectronaut_df)
+```
+
+The correspondence with the DIA-NN fields used above is direct:
+
+| Quantity | DIA-NN | Spectronaut |
+|---|---|---|
+| Run | `Run` | `R.FileName` |
+| Precursor quantity | `Precursor.Quantity` | `FG.Quantity` |
+| Precursor identifier | `Precursor.Id` | `EG.ModifiedSequence` + `FG.Charge` |
+| Protein group | `Protein.Group` | `PG.ProteinGroups` |
+| Precursor confidence | `Q.Value` | `EG.Qvalue` |
+| Protein group confidence | `PG.Q.Value` | `PG.Qvalue` |
+
+Spectronaut has no single precursor identifier column, so we build one, since `readQFeatures` needs a value that is unique within a run.
+
+```{r}
+spectronaut_df$Precursor.Id <- paste(
+  spectronaut_df$EG.ModifiedSequence, spectronaut_df$FG.Charge, sep = '.')
+```
+
+The sample metadata is constructed the same way as before. Here the run names already encode the design, so we derive the columns from them rather than reading a separate file.
+
+```{r}
+spectronaut_design <- data.frame(runCol = sort(unique(spectronaut_df$R.FileName)))
+
+spectronaut_design <- spectronaut_design %>%
+  mutate(quantCols = 'FG.Quantity',
+         Condition = sub('_.*', '', runCol),
+         Replicate = sub('.*_', '', runCol))
+
+knitr::kable(spectronaut_design)
+```
+
+```{r}
+sn_qf <- readQFeatures(
+  spectronaut_df,
+  quantCols = "FG.Quantity",
+  fnames = "Precursor.Id",
+  runCol = "R.FileName",
+  colData = spectronaut_design
+)
+```
+
+Filtering on the two Q-value columns and joining the runs is the same operation as above, with the Spectronaut column names substituted. Note that there are no library Q-value fields to filter on: match-between-runs is a DIA-NN concept and Spectronaut's equivalent is handled within its own scoring.
+
+```{r}
+sn_qf <- sn_qf %>%
+  filterFeatures(~ EG.Qvalue <= 0.01) %>%
+  filterFeatures(~ PG.Qvalue <= 0.01)
+
+sn_qf <- joinAssays(
+  x = sn_qf, i = names(sn_qf), name = "precursors", fcol = "Precursor.Id")
+
+colData(sn_qf[['precursors']]) <- colData(sn_qf)
+
+dim(sn_qf[['precursors']])
+```
+
+From here the vignette applies unchanged, with `Protein.Group` replaced by `PG.ProteinGroups` wherever it appears as a `master_protein_col` or `fcol`. The one function that is DIA-NN specific is `filter_features_diann()`, which relies on DIA-NN's `Cont_` contaminant prefix and its column names; for Spectronaut, filter contaminants by matching `PG.ProteinAccessions` against the accessions from your contaminants FASTA.
+
+```{r}
+c(precursors = nrow(sn_qf[['precursors']]),
+  protein_groups = length(unique(rowData(sn_qf[['precursors']])$PG.ProteinGroups)),
+  percent_missing = round(100 * mean(is.na(assay(sn_qf[['precursors']]))), 1))
+```
+
+At the equivalent stage the DIA-NN dataset above is `r round(100*mean(is.na(assay(dia_qf[['precursors']]))), 1)`% missing against this one's `r round(100*mean(is.na(assay(sn_qf[['precursors']]))), 1)`%, though with `r ncol(dia_qf[['precursors']])` samples rather than `r ncol(sn_qf[['precursors']])`, so the two are not strictly comparable. The point is only that they are the same order of magnitude: pervasive precursor-level missingness is a property of label-free acquisition rather than of the search engine, and the reasoning in [handling missing values](handling_missing_values.html) applies to both.
 
 ```{r}
 sessionInfo()

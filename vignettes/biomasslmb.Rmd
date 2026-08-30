@@ -139,7 +139,9 @@ dir(system.file("extdata", package = "biomasslmb"))
 
 # Where to go next
 
-If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html). If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, and the testing vignette covers the testing stage for both a whole-proteome and an enrichment design.
+If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html). If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, the testing vignette covers the testing stage for both a whole-proteome and an enrichment design, and [comparing search engines](search_engine_comparison.html) asks how much of a result depends on the pipeline that produced it.
+
+Before reading too much into a result for any one protein, [peptides are not proteins](gotcha_peptide_to_protein.html) covers the inference step between what the instrument measured and what the output file reports, and which proteins it is unreliable for.
 
 # Getting help
 

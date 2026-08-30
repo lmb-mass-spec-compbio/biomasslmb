@@ -32,4 +32,8 @@ articles:
   - summarisation_methods
   - search_engine_comparison
   - ORA_vs_GSEA
+- title: Cautionary tales
+  navbar: ~
+  contents:
+  - gotcha_peptide_to_protein
 

@@ -1,0 +1,188 @@
+---
+title: "Gotcha: peptides are not proteins"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Gotcha: peptides are not proteins}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Bottom-up proteomics measures peptides. Every protein-level number in every other vignette rests on an inference step that turns those peptides into proteins, and that step is normally invisible: the search engine has already made its decisions by the time you read the file, and it reports them as a single accession per row.
+
+Most of the time this does not matter. This article is about the times it does, and about how to tell which case you are in.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+# How often could a peptide have come from more than one protein?
+
+This is answerable without any experimental data at all: digest a whole proteome in silico and count. `cleaver` does the digestion, and the *Caulobacter vibrioides* reference proteome is small enough to ship with the package and digest here.
+
+Peptides shorter than 6 or longer than 30 residues are rarely identified, so counting them would overstate how much of the proteome is really at stake.
+
+```{r}
+cvib_fasta <- system.file("extdata", "C_vibrioides_proteome.fasta.gz",
+                          package = "biomasslmb")
+
+proteome <- Biostrings::readAAStringSet(cvib_fasta)
+names(proteome) <- gsub('(sp|tr)\\|(\\S*)\\|.*', '\\2', names(proteome))
+
+peptides <- cleaver::cleave(proteome, enzym = "trypsin", unique = FALSE)
+
+pep2prot <- data.frame(
+  protein = rep(names(peptides), lengths(peptides)),
+  peptide = unlist(peptides, use.names = FALSE)) %>%
+  filter(nchar(peptide) >= 6, nchar(peptide) <= 30) %>%
+  distinct()
+
+per_peptide <- count(pep2prot, peptide, name = 'n_proteins')
+
+c(proteins = length(proteome),
+  peptides = nrow(per_peptide),
+  shared = sum(per_peptide$n_proteins > 1))
+```
+
+The same calculation on the human reference proteome takes a 7.4 MB FASTA and rather longer, so it is precomputed and cached with the package. Both entries were produced by the code above; see `data-raw/record_peptide_uniqueness.R`.
+
+```{r}
+peptide_uniqueness <- readRDS(system.file(
+  "extdata", "peptide_uniqueness.rds", package = "biomasslmb"))
+
+sapply(peptide_uniqueness, function(res) {
+  c(proteins = res$n_proteins,
+    peptides = sum(res$peptides$n_peptides),
+    percent_shared = round(
+      100 * sum(res$peptides$n_peptides[res$peptides$n_proteins > 1]) /
+        sum(res$peptides$n_peptides), 2),
+    most_proteins_one_peptide_maps_to = max(res$peptides$n_proteins))
+})
+```
+
+Two things are worth taking from this. Shared peptides are a minority in both proteomes — the overwhelming majority of tryptic peptides identify exactly one protein, and the inference step is doing nothing controversial for them. And the human proteome is roughly seven times worse than the bacterial one, with a worst case of a peptide that could have come from any of 156 proteins.
+
+The size of the proteome is not the whole story. A large proteome has more proteins for a peptide to collide with by chance, but the dominant cause is gene duplication: paralogue families, and the isoforms of a single gene, differ over part of their sequence and are identical over the rest. A bacterium with few paralogues barely has the problem.
+
+```{r, fig.height=4, fig.width=5.5, fig.fullwidth=TRUE, fig.cap="Cumulative distribution of the number of proteins a tryptic peptide could have originated from."}
+bind_rows(lapply(peptide_uniqueness, `[[`, 'peptides'), .id = 'Species') %>%
+  group_by(Species) %>%
+  arrange(n_proteins) %>%
+  mutate(cumulative = cumsum(n_peptides) / sum(n_peptides)) %>%
+  ggplot(aes(n_proteins, cumulative, colour = Species)) +
+  geom_step() +
+  scale_x_log10() +
+  scale_colour_manual(values = get_cat_palette(2)) +
+  theme_biomasslmb(base_size = 9) +
+  labs(x = 'Proteins the peptide could have come from',
+       y = 'Cumulative fraction of peptides')
+```
+
+# Which proteins pay for it
+
+An average over peptides hides the thing that matters. Sharing is not spread evenly: it is concentrated on the members of paralogue families, and for those proteins it can account for most or all of their peptides.
+
+```{r}
+sapply(peptide_uniqueness, function(res) {
+  p <- res$proteins
+  c(`no unique peptide at all` = sum(p$n_unique == 0),
+    `fewer than 2 unique peptides` = sum(p$n_unique < 2),
+    `under half of peptides unique` = sum(p$perc_unique < 50),
+    `percent of proteome affected` = round(100 * mean(p$perc_unique < 50), 1))
+})
+```
+
+`r format(sum(peptide_uniqueness[['Homo sapiens']]$proteins$n_unique == 0), big.mark = ',')` human proteins have **no unique tryptic peptide whatsoever**. No amount of instrument time will identify them unambiguously; whatever a search engine reports for them is an assignment rule, not a measurement. In *C. vibrioides* there are none.
+
+This is why the median tells you nothing useful here: half of the proteins in both proteomes have every one of their peptides to themselves, and the interesting population is entirely in the tail.
+
+# What the search engine does about it
+
+Faced with a peptide that maps to several proteins, a search engine picks one. Proteome Discoverer reports a **master protein** and MaxQuant a **razor protein**; both are, roughly, the protein with the most evidence among the candidates, on the reasoning that if a protein is definitely present it is the most parsimonious explanation for its shared peptides too.
+
+The two export formats record the ambiguity differently, and both keep enough to recover it.
+
+```{r}
+pd_peptides <- read.delim(system.file(
+  "extdata", "lfq_dda_pd_PeptideGroups.txt", package = "biomasslmb"))
+
+mq_peptides <- read.delim(gzfile(system.file(
+  "extdata", "lfq_dda_mq_peptides.txt.gz", package = "biomasslmb")))
+
+# PD counts the candidate proteins; MaxQuant flags whether there was only one
+table(`PD: proteins per peptide` = pmin(pd_peptides$Number.of.Proteins, 5))
+table(`MaxQuant: peptide unique to its protein` = mq_peptides$Unique..Proteins.)
+```
+
+`filter_features_pd_dda()` and `filter_features_mq_dda()` both take `unique_master`, which drops these rows. That is the conservative choice and it is what the QC vignettes use, but it is a choice: it discards real measurements, and it discards them preferentially from exactly the proteins that had least unique evidence to begin with.
+
+## The engines do not always agree
+
+These two files are the same six acquisitions searched two ways (see [comparing search engines](search_engine_comparison.html)), so for peptides identified by both we can ask directly whether they were assigned to the same protein.
+
+```{r}
+pd_peptides$Sequence <- toupper(pd_peptides$Sequence)
+mq_peptides$Sequence <- toupper(mq_peptides$Sequence)
+
+assignments <- merge(
+  pd_peptides[, c('Sequence', 'Master.Protein.Accessions',
+                  'Number.of.Proteins', 'Contaminant')],
+  mq_peptides[, c('Sequence', 'Leading.razor.protein',
+                  'Potential.contaminant')],
+  by = 'Sequence') %>%
+  # the two pipelines were searched against different contaminant databases,
+  # which use different accession prefixes, so contaminants would register as
+  # disagreements for a reason that has nothing to do with protein inference
+  filter(Contaminant != 'True', Potential.contaminant != '+',
+         !grepl('Cont_|CON__', Master.Protein.Accessions)) %>%
+  mutate(agree = Master.Protein.Accessions == Leading.razor.protein,
+         shared = Number.of.Proteins > 1)
+
+with(assignments, table(peptide_is_shared = shared, same_protein_assigned = agree))
+```
+
+Overall agreement is high, and it is entirely carried by the unshared peptides, where there was never a decision to make. Among the peptides that genuinely map to more than one protein, the two engines pick the same one less than half the time.
+
+```{r}
+assignments %>%
+  filter(shared, !agree) %>%
+  select(Sequence, Master.Protein.Accessions, Leading.razor.protein,
+         Number.of.Proteins) %>%
+  head(6)
+```
+
+These are not obscure edge cases: they are paralogue pairs of the kind that turn up in most experiments. A quantitative difference reported for one member of such a pair may be a real difference in that protein, or it may be its partner's signal arriving under a different name because a different search engine was used.
+
+# When the assumption breaks completely
+
+Everything above assumes the search database is a reference proteome: one entry per protein, curated, with isoforms either collapsed or explicitly listed. Two situations break that assumption badly enough that the protein-level output should not be trusted at all without further work.
+
+- **Metagenome assemblies.** When the database is predicted open reading frames from an assembly, the entries are contigs rather than proteins. The same real protein is frequently split across several contigs, or present on several contigs from related organisms in the sample, so a peptide maps to many "proteins" that are not distinct proteins at all. Peptide sharing is then not a property of biology but of the assembly, and it changes if the assembly is rerun. In this situation, quantifying at peptide level and grouping afterwards is more defensible than accepting the search engine's protein inference.
+- **Isoform-level databases.** Including every UniProt isoform makes the sharing problem far worse, since isoforms of one gene are identical over most of their length. Unless the experiment is specifically about isoforms — and can identify them from isoform-specific peptides, which needs checking rather than assuming — a canonical-sequence database gives a protein-level result that means what you think it means.
+
+# Summary
+
+- The overwhelming majority of tryptic peptides map to exactly one protein, so protein inference is uncontroversial for most of the proteome and this is not a reason to distrust proteomics generally.
+- The exceptions are concentrated, not scattered. In the human proteome around `r round(100 * mean(peptide_uniqueness[['Homo sapiens']]$proteins$perc_unique < 50), 0)`% of proteins have under half their peptides to themselves, and `r format(sum(peptide_uniqueness[['Homo sapiens']]$proteins$n_unique == 0), big.mark = ',')` have none at all. In a small bacterial proteome the problem is close to absent.
+- Master and razor protein assignments are inferences. Two search engines given identical spectra agree on which protein a shared peptide belongs to less than half the time.
+- Before believing a protein-level result, check whether that protein had unique peptides — `Number.of.Proteins` in a PD export, `Unique..Proteins.` in MaxQuant — and be especially careful with members of paralogue families and with any result that distinguishes between two closely related proteins.
+
+The QC vignettes for each acquisition type apply `unique_master` filtering at the point where it belongs: [TMT](TMT_PSM_QC_Summarisation.html), [LFQ-DDA](LFQ_DDA_Peptide_QC_Summarisation.html) and [LFQ-DIA](LFQ_DIA_Precursor_QC_Summarisation.html).
+
+```{r}
+sessionInfo()
+```

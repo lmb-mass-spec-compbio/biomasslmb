@@ -5,7 +5,7 @@
 \alias{lfq_qf}
 \title{LFQ-DDA data}
 \format{
-An object of class \code{QFeatures} of length 5.
+An object of class \code{QFeatures} of length 6.
 }
 \usage{
 lfq_qf

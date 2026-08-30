@@ -1,0 +1,383 @@
+---
+title: "PTM site quantification"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{PTM site quantification}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A post-translational modification (PTM) experiment asks a different question from a whole-proteome one. The quantity of interest is not how much of a protein there is, but how much of it carries a modification at a particular residue. Everything below follows from that difference.
+
+Because modified peptides are a small fraction of the peptides in a digest, they have to be enriched before they can be quantified with any depth. The usual design labels every sample once, pools the labelled material, and then splits the pool: one part is enriched for the modification, the other is left alone. The two parts are acquired as separate runs, giving two datasets over the same samples — an **enriched** one that reports modified peptides, and a **total** one that reports protein abundance.
+
+That pairing drives three things this vignette covers and the whole-proteome vignettes do not:
+
+- **Which residue is modified matters**, so the search engine's localisation confidence has to be assessed and the site placed within the protein, not just within the peptide.
+- **The enriched fraction cannot be normalised against itself.** A treatment that changes phosphorylation globally is the signal, and median-centring the enriched data would remove it. The total fraction supplies the reference instead.
+- **A site can change because its protein changed.** Dividing the site out by its protein separates the two, and the answer is not always the same as the site abundance.
+
+This vignette works through a phosphoproteomics experiment searched with Proteome Discoverer (PD). The principles apply to any enriched PTM; only the search-engine columns differ. MaxQuant's equivalents are `filter_maxquant_ptm()` and `add_filter_ptm_pos_rowdata_mq()`, which take the same role as `parse_PTM_scores_pd()` below.
+
+Everything up to the localisation step is the routine PSM processing covered in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html), so it is run here with less commentary.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(limma)
+```
+
+# The experimental design
+
+`psm_tmt_phospho`, `psm_tmt_phospho_total` and `tmt_phospho_design` are datasets available from the `biomasslmb` package, derived from a real TMTpro experiment in mouse fibroblasts. A drug treatment is compared against a vehicle control at two timepoints, with four replicates of each combination, all labelled in a single plex. `psm_tmt_phospho` is the PD PSM-level output for the phospho-enriched fraction and `psm_tmt_phospho_total` for the matched total fraction, both truncated to a subset of proteins for a manageable vignette.
+
+```{r}
+knitr::kable(tmt_phospho_design)
+```
+
+The two fractions share this design, because they are two acquisitions of the same labelled pool. The TMT tag that carried a given sample is the same in both.
+
+# Defining the contaminant proteins
+
+As for any experiment, we need the contaminant accessions to filter against. This search used the '0602_Universal Contaminants' database [@Frankenfield2022].
+
+```{r}
+contaminant_fasta_inf <- system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz",
+  package = "biomasslmb"
+)
+
+contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta_inf)
+contaminant_accessions <- c(contaminant_accessions,
+                            sub('^Cont_', '', contaminant_accessions))
+```
+
+# Read in and filter both fractions
+
+The two fractions are read into separate `QFeatures` objects. They cannot share one, because they hold different features: modified peptides in one, all peptides in the other. Keeping them apart also keeps it obvious which assay is which when they are combined at the end.
+
+The filtering applied here is the same for both, and is the usual PSM-level processing: drop contaminants and PSMs without a unique master protein, then drop PSMs with high co-isolation, low signal:noise, or a search engine rank below 1.
+
+```{r, message=FALSE, warning=FALSE}
+read_and_filter <- function(infdf) {
+  qf <- readQFeatures(assayData = infdf,
+                      colData = tmt_phospho_design,
+                      name = 'psm_raw')
+  colData(qf[['psm_raw']]) <- colData(qf)
+
+  # A more accurate average S:N ratio value than PD reports
+  qf[['psm_raw']] <- update_average_sn(qf[['psm_raw']])
+
+  qf[['psm_filtered']] <- filter_features_pd_dda(
+    qf[['psm_raw']],
+    contaminant_proteins = contaminant_accessions,
+    filter_contaminant = TRUE,
+    filter_associated_contaminant = TRUE,
+    unique_master = TRUE)
+
+  qf[['psm_quality']] <- filter_TMT_PSMs(
+    qf[['psm_filtered']], inter_thresh = 50, sn_thresh = 5)
+
+  filterFeatures(qf, ~ Rank == 1, i = 'psm_quality')
+}
+
+phospho <- read_and_filter(psm_tmt_phospho)
+total <- read_and_filter(psm_tmt_phospho_total)
+```
+
+```{r}
+data.frame(
+  fraction = c('Phospho-enriched', 'Total'),
+  raw = c(nrow(phospho[['psm_raw']]), nrow(total[['psm_raw']])),
+  filtered = c(nrow(phospho[['psm_quality']]), nrow(total[['psm_quality']])))
+```
+
+# Localising the modification
+
+A search engine reports which peptide was identified and which residues carry the modification, but the second of those is much less certain than the first. A peptide with several serines and one phosphate can often be explained about equally well by a phosphate on any of them: the fragment ions that would distinguish the possibilities may not have been observed. PD's ptmRS node scores each candidate site, and `parse_PTM_scores_pd()` reads those scores out of the `ptmRS.Best.Site.Probabilities` column.
+
+`threshold` sets the minimum score a site needs. If any site on a peptide falls below it, the modifications on that peptide are all discarded rather than partially kept — a peptide whose phosphate could be on either of two residues tells you nothing about either.
+
+```{r}
+phospho[['psm_localised']] <- parse_PTM_scores_pd(
+  phospho[['psm_quality']], threshold = 75)
+```
+
+The log distinguishes features from sites, which matters when peptides carry more than one modification. `parse_PTM_scores_pd()` annotates rather than filters, writing empty values where nothing passed, so the failures still need removing.
+
+```{r}
+phospho[['psm_localised']] <- phospho[['psm_localised']][
+  grepl('Phospho', rowData(phospho[['psm_localised']])$ptms), ]
+
+nrow(phospho[['psm_localised']])
+```
+
+A threshold of 75 is a common choice and is the one used here; 95 is stricter and is worth considering when the question rests on a single site. The cost is one-sided — raising it discards peptides, it does not add any — so the appropriate value depends on whether you would rather lose sites or believe some that are misplaced.
+
+# Placing sites within the protein
+
+The positions reported so far are positions within the peptide. Two PSMs of the same site reached by different missed cleavages will disagree about it, and no two proteins can be compared on it. `add_ptm_positions()` converts them to positions within the protein by re-digesting the protein sequences and locating each peptide.
+
+That needs the sequences. In a real analysis you would fetch them for your master proteins with `make_fasta()`; a FASTA covering this dataset's proteins is included with the package so that building the vignette does not depend on UniProt being reachable.
+
+```{r, eval=FALSE}
+proteome_fasta <- tempfile(fileext = '.fasta')
+make_fasta(unique(rowData(phospho[['psm_localised']])$Master.Protein.Accessions),
+           file = proteome_fasta)
+```
+
+```{r, message=FALSE, warning=FALSE}
+proteome_fasta <- system.file(
+  "extdata", "tmt_phospho_proteome.fasta.gz", package = "biomasslmb")
+
+phospho[['psm_localised']] <- add_ptm_positions(
+  phospho[['psm_localised']],
+  proteome_fasta = proteome_fasta,
+  master_protein_col = 'Master.Protein.Accessions')
+```
+
+This adds `start` and `end` for the peptide, `ptm_positions_prot` for the sites within the protein, and `ptm_name`, which combines residue and position into the conventional form.
+
+```{r}
+rowData(phospho[['psm_localised']]) %>%
+  data.frame() %>%
+  select(Sequence, Master.Protein.Accessions, ptm_positions,
+         start, ptm_positions_prot, ptm_name) %>%
+  head(4)
+```
+
+Two things stop a peptide from being placed. Its master protein may have no sequence in the FASTA, which happens when an accession has been withdrawn or merged since the search; and the peptide may occur at more than one position in its protein, in which case `start` holds several values and the site cannot be assigned to one of them. Neither is common, and in a subset this size either count can come out at zero, but both have to be checked for and removed: a site with no unambiguous position cannot be summarised or compared.
+
+```{r}
+site_positions <- rowData(phospho[['psm_localised']])
+
+data.frame(
+  reason = c('No sequence for the master protein',
+             'Peptide occurs more than once in its protein',
+             'Placed'),
+  PSMs = c(sum(is.na(site_positions$start)),
+           sum(grepl(';', site_positions$start)),
+           sum(!is.na(site_positions$start) & !grepl(';', site_positions$start))))
+```
+
+```{r}
+phospho[['psm_sites']] <- phospho[['psm_localised']][
+  !is.na(site_positions$start) & !grepl(';', site_positions$start), ]
+```
+
+Finally, the identifier the PSMs will be summarised over. A site is only meaningful with its protein attached — `S614` names a residue in some protein, not a measurable thing — so the accession and the site name are pasted together.
+
+```{r}
+rowData(phospho[['psm_sites']])$site <- paste(
+  rowData(phospho[['psm_sites']])$Master.Protein.Accessions,
+  gsub(' ', '', rowData(phospho[['psm_sites']])$ptm_name),
+  sep = '_')
+
+head(unique(rowData(phospho[['psm_sites']])$site))
+```
+
+# Summarising to sites and proteins
+
+With an identifier per fraction, both are summarised the same way as any TMT experiment: drop the PSMs with missing values, sum the rest, and log-transform. The enriched fraction is summarised over the site identifier, the total fraction over the master protein.
+
+```{r, message=FALSE, warning=FALSE}
+phospho[['psm_complete']] <- filterNA(phospho[['psm_sites']], 0)
+total[['psm_complete']] <- filterNA(total[['psm_quality']], 0)
+
+phospho <- aggregateFeatures(phospho, i = 'psm_complete', fcol = 'site',
+                             name = 'site_raw', fun = base::colSums)
+total <- aggregateFeatures(total, i = 'psm_complete',
+                           fcol = 'Master.Protein.Accessions',
+                           name = 'protein_raw', fun = base::colSums)
+
+phospho[['site_raw']] <- logTransform(phospho[['site_raw']], base = 2)
+total[['protein_raw']] <- logTransform(total[['protein_raw']], base = 2)
+
+c(sites = nrow(phospho[['site_raw']]), proteins = nrow(total[['protein_raw']]))
+```
+
+A peptide carrying two phosphates becomes one feature named for both, not two features of one site each, because that is what was measured: the quantification belongs to the doubly-modified form of that peptide, and there is no way to divide it between the two residues. Peptides carrying one of the sites alone, if they were observed, form their own separate feature.
+
+```{r}
+table(sites_per_feature = lengths(
+  strsplit(rowData(phospho[['site_raw']])$ptm_name, '; ')))
+```
+
+This means the same residue can appear in more than one feature, and that a feature's abundance is not the abundance of any single site. Treating each feature as an independent observation of its residues would double-count them.
+
+# Normalising the enriched fraction
+
+Unequal loading between channels has to be corrected in a PTM experiment just as in any other. The usual correction — centring every sample on a common median, as `QFeatures::normalize(method = 'diff.median')` does — assumes that most features are unchanged between samples. In the total fraction that is reasonable. In the enriched fraction it is not: a treatment that changes phosphorylation globally will shift the median of the enriched data, and centring it away removes exactly the effect the experiment was run to detect.
+
+The total fraction gives the reference instead. It comes from the same labelled pool, so it carries the same loading differences, and its median is a legitimate estimate of them. `get_medians()` extracts the per-sample medians, and `center_normalise_to_ref()` applies them to whichever assay you pass.
+
+```{r}
+total_medians <- get_medians(total[['protein_raw']])
+
+total[['protein']] <- center_normalise_to_ref(
+  total[['protein_raw']], total_medians, on_log_scale = TRUE)
+
+phospho[['site']] <- center_normalise_to_ref(
+  phospho[['site_raw']], total_medians, on_log_scale = TRUE)
+```
+
+`center_normalise_to_ref()` with the default `center_to_zero = FALSE` subtracts each median only after the medians have themselves been centred on their mean, so it applies the *relative* differences between samples and leaves the overall level of the data alone. That is why the same reference can be applied to two assays on quite different scales.
+
+It is worth seeing how far the two possible references disagree, since if they agreed exactly the choice would not matter.
+
+```{r, fig.height=3.5, fig.width=6, fig.fullwidth=TRUE, fig.cap="Per-sample median abundance in each fraction, centred on its own mean"}
+phospho_medians <- get_medians(phospho[['site_raw']])
+
+data.frame(
+  Sample = names(total_medians),
+  Total = total_medians - mean(total_medians),
+  Enriched = phospho_medians - mean(phospho_medians)) %>%
+  pivot_longer(c(Total, Enriched), names_to = 'Fraction',
+               values_to = 'Median') %>%
+  ggplot(aes(Median, Sample, colour = Fraction)) +
+  geom_point() +
+  geom_vline(xintercept = 0, linetype = 2, colour = 'grey50') +
+  scale_colour_manual(values = get_cat_palette(2)) +
+  theme_biomasslmb(base_size = 9, aspect_square = FALSE) +
+  labs(x = 'Centred median abundance (log2)', y = '')
+```
+
+The two references differ by up to `r round(max(abs((total_medians - mean(total_medians)) - (phospho_medians - mean(phospho_medians)))), 2)` on the log2 scale here. Some of that difference is genuine biology and some is the enrichment having worked slightly better in some channels than others, and nothing in the data distinguishes them — which is the reason to take the reference from the fraction where the assumption behind it holds.
+
+```{r, warning=FALSE, fig.show='hold', out.width="50%", fig.height=4, fig.width=5, fig.cap="Site-level abundance distributions, before and after normalisation"}
+plot_quant(phospho[['site_raw']], log2transform = FALSE, method = 'density') +
+  theme_biomasslmb(base_size = 9) +
+  theme(legend.key.height = unit(3, 'mm')) +
+  labs(x = 'Site abundance (log2)', title = 'Before normalisation')
+
+plot_quant(phospho[['site']], log2transform = FALSE, method = 'density') +
+  theme_biomasslmb(base_size = 9) +
+  theme(legend.key.height = unit(3, 'mm')) +
+  labs(x = 'Site abundance (log2)', title = 'After normalisation')
+```
+
+# Site abundance and occupancy
+
+A site's abundance can change for two reasons: the fraction of the protein that is modified has changed, or the amount of the protein has changed. Only the first is a change in signalling; the second would show up just as well in the total fraction.
+
+Subtracting the protein's log abundance from the site's separates them. The result is often called occupancy or stoichiometry, though neither name is quite right — an enrichment step does not preserve absolute proportions, so this is a relative measure, comparable between samples but not interpretable as "x% of the protein is modified".
+
+```{r}
+site_protein <- rowData(phospho[['site']])$Master.Protein.Accessions
+has_protein <- site_protein %in% rownames(total[['protein']])
+
+occupancy <- assay(phospho[['site']])[has_protein, ] -
+  assay(total[['protein']])[site_protein[has_protein], ]
+
+c(sites = nrow(phospho[['site']]), with_a_protein_estimate = sum(has_protein))
+```
+
+Not every site gets one. A protein can be quantified in the enriched fraction and not the total, which happens most for low-abundance proteins, where the enrichment is the only reason they were seen at all — so the sites that lose their protein estimate are not a random subset.
+
+# Testing
+
+Both matrices can go into `limma` in the usual way. The design here has a treatment and a timepoint, and the question is about the treatment, so the timepoint enters as a blocking factor.
+
+```{r}
+condition <- factor(phospho[['site']]$Condition,
+                    levels = c('Control', 'Treated'))
+timepoint <- factor(phospho[['site']]$Timepoint)
+design <- model.matrix(~ timepoint + condition)
+
+test_treatment <- function(quant) {
+  fit <- eBayes(lmFit(quant, design))
+  topTable(fit, coef = 'conditionTreated', number = Inf, sort.by = 'none')
+}
+
+site_res <- test_treatment(assay(phospho[['site']]))
+protein_res <- test_treatment(assay(total[['protein']]))
+occupancy_res <- test_treatment(occupancy)
+
+data.frame(
+  level = c('Site abundance', 'Protein abundance', 'Occupancy'),
+  tested = c(nrow(site_res), nrow(protein_res), nrow(occupancy_res)),
+  significant = c(sum(site_res$adj.P.Val < 0.05),
+                  sum(protein_res$adj.P.Val < 0.05),
+                  sum(occupancy_res$adj.P.Val < 0.05)))
+```
+
+The two site-level answers mostly agree, which is expected: the treatment changes hardly any protein abundances, so for most sites there is nothing for the correction to remove.
+
+```{r}
+comparison <- data.frame(
+  site = rownames(occupancy),
+  protein = site_protein[has_protein],
+  site_logFC = site_res$logFC[has_protein],
+  site_padj = site_res$adj.P.Val[has_protein],
+  occupancy_logFC = occupancy_res$logFC,
+  occupancy_padj = occupancy_res$adj.P.Val) %>%
+  mutate(
+    protein_logFC = protein_res[protein, 'logFC'],
+    protein_padj = protein_res[protein, 'adj.P.Val'],
+    called = case_when(
+      site_padj < 0.05 & occupancy_padj < 0.05 ~ 'both',
+      site_padj < 0.05 ~ 'site only',
+      occupancy_padj < 0.05 ~ 'occupancy only',
+      TRUE ~ 'neither'))
+
+table(comparison$called)
+```
+
+The interesting cases are the disagreements.
+
+```{r}
+comparison %>%
+  filter(called != 'neither', called != 'both') %>%
+  select(site, called, site_logFC, site_padj,
+         occupancy_logFC, occupancy_padj, protein_logFC, protein_padj) %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 2)))
+```
+
+```{r, fig.height=4, fig.width=5.5, fig.fullwidth=TRUE, fig.cap="Site-level against occupancy-level fold change. Points off the diagonal are sites whose protein also moved."}
+ggplot(comparison, aes(site_logFC, occupancy_logFC)) +
+  geom_hline(yintercept = 0, colour = 'grey80') +
+  geom_vline(xintercept = 0, colour = 'grey80') +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = 'grey50') +
+  geom_point(aes(colour = called), size = 1.5, alpha = 0.7) +
+  scale_colour_manual(values = c(get_cat_palette(3), 'grey70'),
+                      breaks = c('both', 'occupancy only', 'site only', 'neither'),
+                      name = 'Significant at') +
+  theme_biomasslmb(base_size = 9) +
+  labs(x = 'Site abundance (log2 fold change)',
+       y = 'Occupancy (log2 fold change)')
+```
+
+A site called at one level and not the other is not a contradiction; the two are answering different questions. A site that moves only in the abundance test, while its protein moves by a similar amount, is a protein-level change showing through — the modified fraction is constant and more of the protein is present. A site that moves only in the occupancy test is one where protein-level variation was adding noise, and removing it made a modest change detectable.
+
+Which of the two to report depends on the question. Occupancy is the right answer for "did signalling through this site change", and it is what most phosphoproteomics is asking. Site abundance is the right answer for "how much of this modified form is present", which is the relevant quantity when the modified form is itself the effector. Reporting both, as above, costs nothing and makes the distinction visible; reporting site abundance alone and describing it as a change in phosphorylation is the mistake this section exists to prevent.
+
+Note also that occupancy is only available for sites whose protein was quantified in the total fraction, so restricting to it discards sites — and, as noted above, not a random subset of them.
+
+# Summary
+
+A PTM experiment adds three steps to the whole-proteome workflow, and each of them is a place to get the answer wrong:
+
+- **Localisation.** The search engine's site assignment is a probabilistic claim, scored separately from the peptide identification. `parse_PTM_scores_pd()` reads the scores and discards peptides whose sites cannot be placed confidently. Positions then have to be converted from peptide coordinates to protein coordinates with `add_ptm_positions()`, dropping the peptides that occur at more than one position in their protein.
+- **Normalisation.** The enriched fraction's own median is not a valid reference, because a global change in modification is signal rather than a loading artefact. `get_medians()` on the total fraction and `center_normalise_to_ref()` on the enriched one keeps the loading correction and leaves the biology.
+- **Occupancy.** A change in site abundance is a change in modification only once the protein's own change has been divided out.
+
+Two of the steps in this vignette are shared with any TMT experiment and are covered in more detail elsewhere: PSM filtering and summarisation in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html), and testing in [Data exploration and statistical testing](exploration_and_statistical_testing.html). If the design spans more than one plex, both fractions need bringing onto a common scale before any of the above, which [multi-plex TMT](TMT_multiplex.html) covers — the bridge correction is applied to the enriched and total assays separately, using each one's own bridge channels.
+
+```{r}
+sessionInfo()
+```

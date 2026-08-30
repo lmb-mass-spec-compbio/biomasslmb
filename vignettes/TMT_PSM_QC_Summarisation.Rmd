@@ -32,6 +32,7 @@ Experiments that depart from it are covered separately, since the departures cha
 
 - **Several plexes.** A design too large for one plex needs each plex processed on its own and then brought onto a common scale — see [multi-plex TMT](TMT_multiplex.html).
 - **An enrichment design.** An IP, BioID or TurboID experiment breaks the assumptions behind normalisation and behind discarding missing values — see [enrichment designs](interactome_designs.html).
+- **An enriched PTM fraction.** Modified peptides have to be localised to a residue, summarised to sites rather than proteins, and normalised against a matched total fraction rather than against themselves — see [PTM site quantification](PTM_site_quantification.html).
 - **MaxQuant instead of PD.** The principles are the same, but the column names differ and the PD-specific QC metrics (signal:noise, interference, SPS-MM) are unavailable. The [enrichment designs](interactome_designs.html) vignette works through MaxQuant input.
 
 # Load required packages

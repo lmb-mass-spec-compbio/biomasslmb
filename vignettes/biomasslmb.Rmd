@@ -50,7 +50,7 @@ Each of those works through one straightforward experiment end to end. A TMT des
 
 - **Whole proteome.** Most proteins are unchanged between conditions, missing values usually mean the protein was present but not detected, and a two-sided test against the other condition is what you want. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette works through this case.
 - **Enrichment.** Most of the quantified proteome may be bait-dependent, so the assumption that underpins median normalisation fails. Absence from the control is frequently real absence rather than failed detection, which changes what imputation means. Testing is often one-sided. See [enrichment designs](interactome_designs.html).
-- **PTM.** Site-level changes are confounded with changes in the abundance of the underlying protein, so the phospho (or other PTM) data need normalising to the total proteome with `get_medians()` and `center_normalise_to_ref()` before the site-level result means anything.
+- **PTM.** Site-level changes are confounded with changes in the abundance of the underlying protein, so the phospho (or other PTM) data need normalising to the total proteome with `get_medians()` and `center_normalise_to_ref()` before the site-level result means anything. See [PTM site quantification](PTM_site_quantification.html).
 
 The two axes are independent: a TMT IP and an LFQ-DIA whole-proteome comparison use different QC vignettes and different statistical treatments, and each combination occurs in practice.
 
@@ -104,7 +104,7 @@ Three things should make you depart from the conventional path:
 
 Every normalisation asserts that some set of proteins does not differ between samples, and then removes any difference observed in that set. The options differ only in how honest they are about which set that is.
 
-- **Reference set.** `get_medians()` and `center_normalise_to_ref()` normalise to a subset you define: the total proteome for a phospho experiment, a spike-in, or a set of proteins independent of the bait in an enrichment experiment. The assumption is explicit, and you can check whether it holds.
+- **Reference set.** `get_medians()` and `center_normalise_to_ref()` normalise to a subset you define: the total proteome for a phospho experiment, a spike-in, or a set of proteins independent of the bait in an enrichment experiment. The assumption is explicit, and you can check whether it holds. The [PTM site quantification](PTM_site_quantification.html) vignette works through the phospho case.
 - **Bridge or pooled channel.** For multi-plex TMT, the reference is a channel present in every plex rather than a set of proteins. This is what removes plex effects, and the [multi-plex TMT](TMT_multiplex.html) vignette works through it.
 - **All proteins.** `diff.median` normalisation assumes most proteins are unchanged. For a whole-proteome comparison between similar conditions this is reasonable. For an enrichment experiment or a strong perturbation it can be badly wrong, and it fails silently.
 

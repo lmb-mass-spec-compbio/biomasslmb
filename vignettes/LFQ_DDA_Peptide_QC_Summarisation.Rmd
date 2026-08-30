@@ -342,6 +342,8 @@ plot_samples_present(samples_present, rowvars_prot, breaks=seq(2,6,2))
 
 From these two plots, we can see that the filtering to ensure that all proteins have \>1 peptides removed only a few peptides, but more proteins. Whether this is appropriate will depend on your data in hand.
 
+The same six runs were also searched with MaxQuant, and [comparing search engines](search_engine_comparison.html) puts that output through this pipeline to show how much of the protein list and the significant hits depend on the choice of pipeline rather than on the biology.
+
 
 ```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes

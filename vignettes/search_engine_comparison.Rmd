@@ -1,0 +1,298 @@
+---
+title: "Comparing search engines"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Comparing search engines}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The same raw files can be searched with Proteome Discoverer, MaxQuant, Spectronaut or DIA-NN, and the four will not give you the same answer. They differ in how spectra are matched, in how peptides are assigned to proteins when a peptide could have come from several, and in how intensities are extracted and normalised. Each of those differences propagates to the protein-level matrix, and from there to the fold changes and the list of significant proteins.
+
+This vignette runs one experiment through two pipelines — Proteome Discoverer (searched with CHIMERYS) and MaxQuant — and asks how much of the result survives the change. It is worth knowing the answer for two reasons. If you have output from more than one pipeline, you need to decide what to make of the differences. And if you have output from only one, the size of the differences here is a reasonable guide to how much of your protein list is a property of the biology and how much is a property of the software.
+
+**What this comparison can and cannot show.** Both example datasets are subset to a shared set of proteins, so that the vignette stays small. That makes it a fair comparison of *quantification and testing* on proteins both pipelines had the chance to see, and an unfair comparison of *identification depth*, since neither was given the chance to contribute proteins the other's subset lacks. Depth is a real difference between search engines and it is not what is measured below.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(limma)
+```
+
+# The data
+
+`lfq_dda_pd_PeptideGroups.txt` and `lfq_dda_mq_peptides.txt.gz` are files available from the `biomasslmb` package holding, respectively, the Proteome Discoverer and MaxQuant peptide-level output for the *same six acquisitions*: a whole-proteome LFQ-DDA comparison between a wild type human cell line and a point mutant of the same line, three replicates each.
+
+The Proteome Discoverer side has already been processed in the [LFQ-DDA QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html) vignette, and the result ships as `lfq_qf`. So only the MaxQuant side needs building here, and it is built with the same choices at every step, so that the comparison isolates the pipeline rather than the analyst.
+
+```{r}
+mq_inf <- system.file("extdata", "lfq_dda_mq_peptides.txt.gz",
+                      package = "biomasslmb")
+```
+
+# Processing the MaxQuant output
+
+MaxQuant's `peptides.txt` is the counterpart of PD's peptide groups export. The column names differ throughout — `Leading.razor.protein` for PD's `Master.Protein.Accessions`, `Reverse` and `Potential.contaminant` for PD's `Contaminant`, `Intensity.<experiment>` for `Abundance.<file ID>` — but it holds the same kind of thing.
+
+The intensity columns are named for MaxQuant's 'experiment' labels, so as with the PD export the first job is to attach the design.
+
+```{r}
+infdf <- read.delim(mq_inf)
+
+intensity_cols_ix <- grep('^Intensity\\.', colnames(infdf))
+colnames(infdf)[intensity_cols_ix]
+```
+
+```{r}
+exp_design <- data.frame(
+  Condition = rep(c('WT', 'Mutant'), each = 3),
+  Replicate = rep(1:3, times = 2))
+
+exp_design$Sample <- paste(exp_design$Condition, exp_design$Replicate, sep = '_')
+exp_design$quantCols <- exp_design$Sample
+
+colnames(infdf)[intensity_cols_ix] <- exp_design$Sample
+
+knitr::kable(exp_design)
+```
+
+MaxQuant writes an intensity of exactly zero where it has no measurement. Mass spectrometry cannot assert that a peptide was absent, only that it was not detected, so those have to become `NA` before anything else happens — an important difference from the PD export, which leaves the cell empty.
+
+```{r}
+mq_qf <- readQFeatures(assayData = infdf,
+                       quantCols = intensity_cols_ix,
+                       colData = exp_design,
+                       name = 'peptides_raw')
+
+colData(mq_qf[['peptides_raw']]) <- colData(mq_qf)
+mq_qf[['peptides_raw']] <- zeroIsNA(mq_qf[['peptides_raw']])
+```
+
+The rest is the pipeline from the LFQ-DDA vignette, with `filter_features_mq_dda()` in place of `filter_features_pd_dda()` and `Leading.razor.protein` in place of `Master.Protein.Accessions`. MaxQuant searches against its own contaminants FASTA, so the accessions come from `get_maxquant_cont_accessions()` rather than from the universal contaminants database PD was searched against.
+
+```{r, message=FALSE, warning=FALSE}
+contaminant_accessions <- get_maxquant_cont_accessions()
+
+mq_qf[['peptides_filtered']] <- filter_features_mq_dda(
+  mq_qf[['peptides_raw']],
+  contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = FALSE,
+  remove_no_quant = TRUE)
+
+colData(mq_qf[['peptides_filtered']]) <- colData(mq_qf)
+
+mq_qf[['peptides_filtered']] <- logTransform(
+  mq_qf[['peptides_filtered']], base = 2)
+
+mq_qf[['peptides_filtered_norm']] <- normalize(
+  mq_qf[['peptides_filtered']], method = 'diff.median')
+
+mq_qf[['peptides_filtered_missing']] <- filterNA(
+  mq_qf[['peptides_filtered_norm']], 4/6)
+
+min_peps <- 2
+mq_qf[['peptides_for_summarisation']] <- filter_features_per_protein(
+  mq_qf[['peptides_filtered_missing']], min_features = min_peps,
+  master_protein_col = 'Leading.razor.protein')
+```
+
+```{r, message=FALSE, warning=FALSE}
+set.seed(42)
+
+mq_qf <- aggregateFeatures(mq_qf,
+                           i = 'peptides_for_summarisation',
+                           fcol = 'Leading.razor.protein',
+                           name = 'protein',
+                           fun = MsCoreUtils::robustSummary,
+                           maxit = 10000)
+
+colData(mq_qf[['protein']]) <- colData(mq_qf)
+
+protein_retain_mask <- get_protein_no_quant_mask(
+  mq_qf[['peptides_for_summarisation']], min_features = min_peps,
+  master_protein_col = 'Leading.razor.protein')
+
+mq_qf[['protein']] <- mask_protein_level_quant(
+  mq_qf[['protein']], protein_retain_mask)
+```
+
+# What each pipeline produced
+
+```{r}
+summarise_pipeline <- function(qf) {
+  data.frame(
+    peptides_used = nrow(qf[['peptides_for_summarisation']]),
+    proteins = nrow(qf[['protein']]),
+    median_peptides_per_protein = median(rowData(qf[['protein']])$.n),
+    percent_missing = round(100 * nNA(qf[['protein']])$nNA$pNA, 1))
+}
+
+rbind(
+  `Proteome Discoverer` = summarise_pipeline(lfq_qf),
+  MaxQuant = summarise_pipeline(mq_qf))
+```
+
+```{r}
+pd_proteins <- rownames(lfq_qf[['protein']])
+mq_proteins <- rownames(mq_qf[['protein']])
+shared_proteins <- intersect(pd_proteins, mq_proteins)
+
+c(PD_only = length(setdiff(pd_proteins, mq_proteins)),
+  shared = length(shared_proteins),
+  MaxQuant_only = length(setdiff(mq_proteins, pd_proteins)))
+```
+
+Even with both inputs restricted to the same protein list, the two pipelines end up quantifying different sets of it. Proteins are lost at every stage — a peptide not identified, a peptide identified but assigned to a different protein, a peptide with too many missing values, a protein left with fewer than two peptides — and the losses are not the same on both sides.
+
+That is also why MaxQuant carries more protein-level missingness here despite starting from the same runs: fewer peptides per protein means fewer chances for a protein to be seen in a given sample.
+
+## Do they identify the same peptides?
+
+Restricting to the proteins both pipelines quantified, the peptide sets still only partly overlap.
+
+```{r}
+pd_peptides <- rowData(lfq_qf[['peptides_for_summarisation']])
+mq_peptides <- rowData(mq_qf[['peptides_for_summarisation']])
+
+pd_seqs <- unique(toupper(
+  pd_peptides$Sequence[pd_peptides$Master.Protein.Accessions %in% shared_proteins]))
+mq_seqs <- unique(toupper(
+  mq_peptides$Sequence[mq_peptides$Leading.razor.protein %in% shared_proteins]))
+
+c(PD_only = length(setdiff(pd_seqs, mq_seqs)),
+  shared = length(intersect(pd_seqs, mq_seqs)),
+  MaxQuant_only = length(setdiff(mq_seqs, pd_seqs)))
+```
+
+So the two protein-level estimates for a shared protein are not two measurements of the same thing in the strict sense: they are summaries over overlapping but different sets of peptides. This is the mechanism behind everything that follows, and it is worth keeping in mind before attributing a disagreement to one pipeline being 'wrong'.
+
+# Fold changes
+
+Both protein matrices go through the same test: a two-group comparison, restricted to proteins with at least two quantified replicates in each condition (see [data exploration and statistical testing](exploration_and_statistical_testing.html) for why that restriction is needed).
+
+```{r}
+test_condition <- function(qf) {
+  condition <- factor(qf[['protein']]$Condition, levels = c('WT', 'Mutant'))
+  design <- model.matrix(~ condition)
+
+  quant <- assay(qf[['protein']])
+  n_quant <- sapply(levels(condition), function(g) {
+    rowSums(!is.na(quant[, condition == g, drop = FALSE]))
+  })
+  testable <- apply(n_quant, 1, min) >= 2
+
+  fit <- eBayes(lmFit(quant[testable, ], design))
+  topTable(fit, coef = 'conditionMutant', number = Inf, sort.by = 'none')
+}
+
+pd_res <- test_condition(lfq_qf)
+mq_res <- test_condition(mq_qf)
+
+data.frame(
+  pipeline = c('Proteome Discoverer', 'MaxQuant'),
+  tested = c(nrow(pd_res), nrow(mq_res)),
+  significant = c(sum(pd_res$adj.P.Val < 0.05), sum(mq_res$adj.P.Val < 0.05)))
+```
+
+```{r}
+comparison <- merge(pd_res, mq_res, by = 'row.names',
+                    suffixes = c('.PD', '.MQ')) %>%
+  dplyr::rename(Protein = 'Row.names') %>%
+  mutate(called = case_when(
+    adj.P.Val.PD < 0.05 & adj.P.Val.MQ < 0.05 ~ 'both',
+    adj.P.Val.PD < 0.05 ~ 'PD only',
+    adj.P.Val.MQ < 0.05 ~ 'MaxQuant only',
+    TRUE ~ 'neither'))
+
+nrow(comparison)
+round(cor(comparison$logFC.PD, comparison$logFC.MQ), 3)
+```
+
+The fold changes agree closely. That is the reassuring half of the result: whatever else differs, the two pipelines are measuring the same biological effect on the proteins they both quantify.
+
+## Fitting a line to two noisy measurements
+
+The obvious thing to do with a scatter like this is to regress one axis on the other and read off the slope. Ordinary least squares is the wrong tool here, and the reason is visible in the answer it gives.
+
+```{r}
+c(`MaxQuant ~ PD` = unname(coef(lm(logFC.MQ ~ logFC.PD, comparison))[2]),
+  `1 / (PD ~ MaxQuant)` = unname(1 / coef(lm(logFC.PD ~ logFC.MQ, comparison))[2]))
+```
+
+Those two numbers describe the same line, and they disagree. Ordinary least squares minimises error in the response only, so it assumes the predictor is measured without error. Regressing MaxQuant on PD therefore treats the PD fold changes as exact and attributes all the scatter to MaxQuant, which biases the slope towards zero; swapping the axes biases it the other way. Neither assumption is true — both axes are estimates from noisy data, and neither is the predictor.
+
+Total least squares minimises perpendicular distance instead, treating both axes symmetrically. `tls()` implements it and is designed to be passed to `geom_smooth()`.
+
+```{r}
+unlist(tls(logFC.MQ ~ logFC.PD, comparison))
+```
+
+The TLS slope sits between the two OLS estimates, close to 1: on the proteins both pipelines quantify, they agree on the magnitude of the effect and not only its direction.
+
+```{r, fig.height=4.5, fig.width=6, fig.fullwidth=TRUE, fig.cap="Protein fold changes from the two pipelines, with a total least squares fit (solid) against the identity line (dashed)."}
+ggplot(comparison, aes(logFC.PD, logFC.MQ)) +
+  geom_hline(yintercept = 0, colour = 'grey85') +
+  geom_vline(xintercept = 0, colour = 'grey85') +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = 'grey50') +
+  geom_point(aes(colour = called, size = called != 'neither'), alpha = 0.8) +
+  geom_smooth(method = tls, formula = y ~ x, se = FALSE,
+              colour = 'grey20', linewidth = 0.5) +
+  scale_colour_manual(
+    values = c(get_cat_palette(3), 'grey70'),
+    breaks = c('both', 'PD only', 'MaxQuant only', 'neither'),
+    name = 'Significant in') +
+  scale_size_manual(values = c(1, 2), guide = 'none') +
+  theme_biomasslmb(base_size = 9) +
+  labs(x = 'Mutant vs WT (log2), Proteome Discoverer',
+       y = 'Mutant vs WT (log2), MaxQuant')
+```
+
+# Significant proteins
+
+Agreement on fold change does not carry over to agreement on significance.
+
+```{r}
+table(comparison$called)
+```
+
+```{r}
+comparison %>%
+  filter(called %in% c('PD only', 'MaxQuant only')) %>%
+  select(Protein, called, logFC.PD, adj.P.Val.PD, logFC.MQ, adj.P.Val.MQ) %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 2))) %>%
+  arrange(called)
+```
+
+Look at what these disagreements are made of. Every one of them has the same sign in both pipelines, and none is a case of one pipeline seeing an effect the other missed entirely: what moves is the adjusted p-value, over a range that straddles 0.05 while the fold change barely shifts. A protein summarised from more peptides, or from peptides with less missingness, gets a tighter estimate and clears the threshold; the same protein summarised from a handful of noisier peptides does not. The threshold is a step function applied to a continuous quantity, so proteins near it are decided by small differences in precision — which is exactly what changing pipeline perturbs.
+
+Note also that the disagreement counted here is only over the `r nrow(comparison)` proteins both pipelines tested. Every protein one pipeline quantified and the other did not is a silent disagreement that never reaches this table.
+
+# What to do with this
+
+- **Fold changes are robust; significance calls are not.** If a result matters, its evidence should be the effect size and its consistency across replicates, not which side of 0.05 the adjusted p-value fell on in one pipeline.
+- **Do not run both and keep whichever gives the answer you wanted.** Two pipelines produce two sets of borderline calls, and picking between them after seeing the results is an unrecorded multiple-testing problem. Choose the pipeline before looking, on grounds that have nothing to do with the outcome — the acquisition type, what the search needs to support, what the rest of the project used.
+- **Running both as a check is legitimate, provided you say so.** A protein significant in both pipelines is better supported than one significant in either alone. Reporting the intersection is defensible; reporting the union without saying two pipelines were tried is not.
+- **When you do plot one pipeline against another, use `tls()`.** Both axes are noisy estimates and neither predicts the other, so ordinary least squares gives an answer that depends on which one you happened to put on the x-axis.
+
+The same reasoning applies to the DIA pipelines. The [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) vignette covers reading both DIA-NN and Spectronaut output, and a comparison between them would be built exactly as above: process both through the same steps, then compare the protein-level results.
+
+```{r}
+sessionInfo()
+```

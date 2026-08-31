@@ -897,5 +897,30 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "schwanhausser2011",
+		"type": "article-journal",
+		"container-title": "Nature",
+		"DOI": "10.1038/nature10098",
+		"issue": "7347",
+		"page": "337-342",
+		"title": "Global quantification of mammalian gene expression control",
+		"volume": "473",
+		"author": [
+			{ "family": "Schwanhäusser", "given": "Björn" },
+			{ "family": "Busse", "given": "Dorothea" },
+			{ "family": "Li", "given": "Na" },
+			{ "family": "Dittmar", "given": "Gunnar" },
+			{ "family": "Schuchhardt", "given": "Johannes" },
+			{ "family": "Wolf", "given": "Jana" },
+			{ "family": "Chen", "given": "Wei" },
+			{ "family": "Selbach", "given": "Matthias" }
+		],
+		"issued": {
+			"date-parts": [
+				[ "2011" ]
+			]
+		}
 	}
 ]

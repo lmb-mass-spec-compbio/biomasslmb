@@ -1,0 +1,246 @@
+---
+title: "Absolute quantification with iBAQ, and its limits"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Absolute quantification with iBAQ, and its limits}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Every other vignette in this package compares one protein against itself across samples. That comparison is safe because whatever makes a protein easy or hard to detect — how well its peptides ionise, how many it yields, how they chromatograph — is the same in every sample, so it cancels.
+
+Comparing *different* proteins within one sample does not have that protection, and it is a question people reasonably want to ask: is this protein abundant here, or rare? Is my bait present at similar levels to the thing it pulled down?
+
+iBAQ is the standard attempt at an answer [@schwanhausser2011]. It corrects the most obvious of the confounders: a long protein yields more tryptic peptides than a short one, so it accumulates more total signal at equal molar abundance. Dividing the summed intensity by the number of peptides the protein could have produced removes that term.
+
+This vignette shows how to compute it, and then how to check whether it worked — because on the data below the correction turns out to remove very little, and the reasons for that are worth understanding before quoting an iBAQ number to anyone.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+# The data
+
+`lfq_dda_ibaq_PeptideGroups.txt.gz` is the Proteome Discoverer peptide-level output for the LFQ-DDA experiment used in the [LFQ-DDA QC vignette](LFQ_DDA_Peptide_QC_Summarisation.html) — a wild type human cell line against a point mutant, three replicates each — subset differently. Alongside a random sample of proteins it retains **every cytosolic ribosomal protein** that was identified, because the check in the second half of this vignette needs a set of proteins whose relative molar abundance is known in advance, and a random few hundred proteins of a proteome contain almost none of any complex.
+
+`lfq_dda_ibaq_proteome.fasta.gz` holds the sequences of those proteins, needed for the in silico digest below.
+
+```{r}
+pep_inf <- system.file("extdata", "lfq_dda_ibaq_PeptideGroups.txt.gz",
+                       package = "biomasslmb")
+fasta_inf <- system.file("extdata", "lfq_dda_ibaq_proteome.fasta.gz",
+                         package = "biomasslmb")
+```
+
+**Label-free is the right input for iBAQ.** MS1 peak area is a physical measure of how much peptide eluted, and each peptide contributes one number per run. Summed TMT reporter intensity is not equivalent: PSMs are summed, so a peptide sequenced ten times contributes ten rows, and how often a peptide is selected for fragmentation is an artefact of the acquisition method rather than a property of the protein. iBAQ on TMT data carries that distortion on top of everything discussed below.
+
+```{r}
+infdf <- read.delim(gzfile(pep_inf))
+
+abundance_cols_ix <- grep('^Abundance', colnames(infdf))
+
+exp_design <- data.frame(
+  Condition = rep(c('WT', 'Mutant'), each = 3),
+  Replicate = rep(1:3, times = 2))
+exp_design$Sample <- paste(exp_design$Condition, exp_design$Replicate, sep = '_')
+exp_design$quantCols <- exp_design$Sample
+
+colnames(infdf)[abundance_cols_ix] <- exp_design$Sample
+
+qf <- readQFeatures(assayData = infdf,
+                    quantCols = abundance_cols_ix,
+                    colData = exp_design,
+                    name = 'peptides_raw')
+
+colData(qf[['peptides_raw']]) <- colData(qf)
+```
+
+# Filtering
+
+The filtering is the usual LFQ-DDA sequence with one deliberate difference: `unique_master = TRUE`. A peptide shared between two proteins would otherwise contribute its full intensity to whichever one the search engine assigned it to, inflating that protein's total by signal that did not come from it. For relative quantification that error is roughly constant across samples and largely cancels; for an absolute estimate it does not. See [peptides are not proteins](gotcha_peptide_to_protein.html) for how often this arises.
+
+```{r, message=FALSE, warning=FALSE}
+contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb"))
+contaminant_accessions <- c(contaminant_accessions,
+                            sub('^Cont_', '', contaminant_accessions))
+
+qf[['peptides']] <- filter_features_pd_dda(
+  qf[['peptides_raw']],
+  contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = TRUE,
+  remove_no_quant = TRUE)
+
+qf[['peptides_filtered']] <- filterNA(qf[['peptides']], 4/6)
+qf[['peptides_filtered']] <- filter_features_per_protein(
+  qf[['peptides_filtered']], min_features = 2)
+
+c(raw = nrow(qf[['peptides_raw']]),
+  filtered = nrow(qf[['peptides']]),
+  retained = nrow(qf[['peptides_filtered']]))
+```
+
+# The numerator: total signal, summed
+
+iBAQ's numerator is the *total* MS1 signal attributed to a protein, so the summarisation has to be a sum, on the linear scale. This is a real departure from the rest of the package, where `robustSummary` is preferred: `robustSummary` estimates a representative log-scale value per protein, which is what you want for comparing across samples and is not what you want here. A ratio of total signal to peptide count only means anything if the numerator really is a total.
+
+For the same reason, `na.rm = TRUE` is correct here even though it would be wrong for relative quantification. A peptide that was not detected contributed no signal, and that is literally what the instrument recorded. The cost is that a protein whose peptides were mostly missed is systematically underestimated — worth remembering when the answer looks low.
+
+```{r, message=FALSE, warning=FALSE}
+qf <- aggregateFeatures(qf,
+                        i = 'peptides_filtered',
+                        fcol = 'Master.Protein.Accessions',
+                        name = 'summed',
+                        fun = base::colSums,
+                        na.rm = TRUE)
+
+nrow(qf[['summed']])
+```
+
+# The denominator: peptides the protein could have produced
+
+`cleaver` digests the sequences in silico. Two choices matter and neither has a single right answer.
+
+**Missed cleavages.** Counting them would inflate the denominator with peptides that mostly are not observed. Zero missed cleavages is the conventional choice and the one used here.
+
+**The observable length window.** Peptides shorter than about 6 residues are not distinguishable and longer than about 30 are rarely identified, so counting them would overstate how much of the protein was ever available to be measured. The exact bounds are a judgement call; 6–30 is conventional. An alternative is to take the window from the peptide lengths actually observed in your own data, which adapts to the instrument method at the cost of making the denominator dataset-dependent.
+
+```{r}
+proteome <- Biostrings::readAAStringSet(fasta_inf)
+fasta_headers <- names(proteome)
+names(proteome) <- gsub("(sp|tr)\\|(\\S*)\\|.*", "\\2", fasta_headers)
+
+digest <- cleaver::cleave(proteome, enzym = 'trypsin',
+                          missedCleavages = 0, unique = FALSE)
+
+n_observable <- sapply(digest, function(peptides) {
+  widths <- Biostrings::width(peptides)
+  sum(widths >= 6 & widths <= 30)
+})
+
+summary(n_observable)
+```
+
+```{r}
+protein <- qf[['summed']]
+protein <- protein[rownames(protein) %in% names(n_observable), ]
+n_peptides <- n_observable[rownames(protein)]
+protein <- protein[n_peptides > 0, ]
+n_peptides <- n_peptides[n_peptides > 0]
+
+qf[['ibaq']] <- protein
+assay(qf[['ibaq']]) <- sweep(assay(protein), 1, n_peptides, '/')
+
+nrow(qf[['ibaq']])
+```
+
+# What the correction changes
+
+```{r}
+summed <- log2(assay(qf[['summed']])[rownames(protein), 'WT_1'])
+ibaq <- log2(assay(qf[['ibaq']])[, 'WT_1'])
+finite <- is.finite(summed) & is.finite(ibaq)
+
+c(spearman = round(cor(summed[finite], ibaq[finite], method = 'spearman'), 3),
+  median_rank_change = median(abs(rank(-summed[finite]) - rank(-ibaq[finite]))),
+  proteins = sum(finite))
+```
+
+The two orderings are highly correlated, but not identical: the median protein moves about `r median(abs(rank(-summed[is.finite(summed) & is.finite(ibaq)]) - rank(-ibaq[is.finite(summed) & is.finite(ibaq)])))` places in the abundance ranking. So the correction is doing something. Whether what it does is an improvement is a separate question, and the next section is how to ask it.
+
+# Checking it against something known
+
+The cytosolic ribosome contains one copy of each of its ~80 protein subunits. Whatever their sequences and lengths, they are present in the cell at the same molar abundance. If iBAQ is recovering molar abundance, they should come out at the same value; if it is not, the spread among them is a direct measure of how far off it is.
+
+This is the most useful thing in this vignette, because it requires no external reference and can be run on any whole-proteome dataset that contains ribosomal proteins.
+
+```{r}
+ribosomal_accessions <- gsub("(sp|tr)\\|(\\S*)\\|.*", "\\2", fasta_headers)[
+  grepl(paste0("(Small|Large) ribosomal subunit protein [eu][LS][0-9]",
+               "|^(40S|60S) ribosomal protein"),
+        sub("^\\S+\\s+", "", fasta_headers)) &
+    !grepl("mitochondrial", fasta_headers)]
+
+is_ribosomal <- rownames(protein) %in% ribosomal_accessions
+sum(is_ribosomal & finite)
+```
+
+```{r}
+ribo <- is_ribosomal & finite
+
+data.frame(
+  measure = c('sd of log2 summed intensity', 'sd of log2 iBAQ',
+              'interquartile range of iBAQ (fold)'),
+  value = c(round(sd(summed[ribo]), 2),
+            round(sd(ibaq[ribo]), 2),
+            round(2^IQR(ibaq[ribo]), 1)))
+```
+
+The correction does not tighten them. It very slightly widens them, and the interquartile range stays around three-fold across a set of proteins that are present in a strict 1:1 ratio.
+
+The reason is visible in how little of the variation the denominator can explain in the first place:
+
+```{r}
+c(correlation = round(cor(summed[ribo], log2(n_peptides[ribo])), 3),
+  variance_explained_percent = round(
+    100 * cor(summed[ribo], log2(n_peptides[ribo]))^2, 1))
+```
+
+Within a set of proteins at equal molar abundance, the number of observable peptides accounts for essentially none of the spread in summed intensity. There is almost nothing there for iBAQ to remove. What is left over is the variation iBAQ does not address: how readily each peptide ionises, how well it chromatographs, whether it was selected for fragmentation.
+
+```{r, fig.height=4, fig.width=6, fig.fullwidth=TRUE, fig.cap="iBAQ across all proteins, with the ribosomal proteins marked. They occupy a narrow band of the full range, but a wide one in absolute terms."}
+data.frame(ibaq = ibaq[finite],
+           set = ifelse(is_ribosomal[finite], 'Cytosolic ribosomal', 'Other')) %>%
+  ggplot(aes(ibaq, fill = set)) +
+  geom_histogram(bins = 40, position = 'identity', alpha = 0.7) +
+  scale_fill_manual(values = c(get_cat_palette(1), 'grey70'),
+                    breaks = c('Cytosolic ribosomal', 'Other'), name = '') +
+  theme_biomasslmb(base_size = 9, aspect_square = FALSE) +
+  labs(x = 'iBAQ (log2)', y = 'Proteins')
+```
+
+# How to read that
+
+Two explanations fit this result and the data cannot separate them.
+
+The first is that iBAQ is simply not buying much. Protein abundance in a cell spans some fifteen doublings, while protein length spans three or four, so the term iBAQ corrects is small next to the term it does not — and peptide-level ionisation efficiency varies over orders of magnitude between peptides of the same protein, let alone between proteins.
+
+The second is that the check itself is imperfect. Ribosomal proteins are equimolar *in the ribosome*, but a cell also contains free subunits awaiting assembly, and they turn over at different rates. Some of the three-fold spread may be real biology rather than measurement error, in which case iBAQ is doing better than this makes it look.
+
+Either way the practical conclusion is the same, and it is the one worth taking away: **on this data, an iBAQ difference of less than several-fold between two proteins is not evidence of anything.** The ribosomal band above is narrow relative to the fifteen-doubling range of the proteome — which is exactly the resolution iBAQ has. It supports statements of the form "this protein is among the most abundant in the sample" or "this one is two orders of magnitude rarer than that one". It does not support "protein A is present at 1.8 times protein B".
+
+Run the same check on your own data before relying on an iBAQ number. If your ribosomal proteins come out tighter than these, you have more resolution than this vignette does.
+
+# iBAQ is not copy number
+
+A related point, because the two are often conflated. iBAQ is an intensity divided by a count; its units are arbitrary and comparable only within one sample. Converting it to molecules per cell requires anchoring the scale to something measured independently — a spike-in standard of known amount, or a total protein mass per cell combined with an assumption that the quantified proteome accounts for essentially all of it. Without that anchor, a large iBAQ value means "abundant in this sample" and nothing more absolute than that.
+
+# Summary
+
+- iBAQ divides a protein's total signal by the number of tryptic peptides it could yield, to make different proteins in one sample roughly comparable. It is the only measure in this package that attempts that.
+- The numerator must be a **sum on the linear scale**, not `robustSummary`, and shared peptides should be excluded so that signal is not attributed to a protein it did not come from.
+- The denominator comes from an in silico digest with `cleaver`. Zero missed cleavages and a 6–30 residue window are the conventional choices; both are judgement calls that change the answer.
+- **Check it before trusting it.** Cytosolic ribosomal proteins are equimolar and cost nothing to use as an internal standard. Here they spread over roughly three-fold, and the correction does not narrow them.
+- Treat iBAQ as an order-of-magnitude statement about a sample, not a ratio between two proteins, and not a copy number.
+
+```{r}
+sessionInfo()
+```

@@ -25,6 +25,7 @@ articles:
   - TMT_multiplex
   - interactome_designs
   - PTM_site_quantification
+  - absolute_quantification_iBAQ
 - title: Choosing between options
   navbar: ~
   contents:

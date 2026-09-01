@@ -1,0 +1,198 @@
+---
+title: "Gotcha: technical replicates"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Gotcha: technical replicates}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A biological replicate is a separate biological sample: a different culture, a different animal, a different pulldown. A technical replicate is the same sample measured more than once — the same digest injected twice, most often.
+
+They answer different questions. Biological replicates tell you how much the thing you are studying varies; technical replicates tell you how much your instrument varies. A statistical test comparing two conditions is a statement about the first, and it needs to know how many biological replicates there are. If you hand it technical replicates as though they were biological ones, it will believe you.
+
+This article shows what that costs, and what to do with technical replicates instead.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(dplyr)
+library(limma)
+```
+
+# The data
+
+`lfq_dda_techrep_peptides.txt.gz` is MaxQuant peptide-level output from a bait pulldown against a tag-only control. Three biological replicates of each, and every one of those six samples was acquired twice — twelve runs in total.
+
+```{r}
+pep_inf <- system.file("extdata", "lfq_dda_techrep_peptides.txt.gz",
+                       package = "biomasslmb")
+infdf <- read.delim(gzfile(pep_inf))
+
+intensity_cols_ix <- grep('^(Control|IP)_', colnames(infdf))
+
+exp_design <- data.frame(quantCols = colnames(infdf)[intensity_cols_ix]) %>%
+  mutate(
+    Condition = sub('_.*', '', quantCols),
+    Replicate = as.integer(sub('^[A-Za-z]+_(\\d+)_\\d+$', '\\1', quantCols)),
+    Tech_rep  = as.integer(sub('.*_(\\d+)$', '\\1', quantCols)))
+
+knitr::kable(exp_design)
+```
+
+```{r, message=FALSE, warning=FALSE}
+qf <- readQFeatures(assayData = infdf, quantCols = intensity_cols_ix,
+                    colData = exp_design, name = 'peptides_raw')
+colData(qf[['peptides_raw']]) <- colData(qf)
+qf[['peptides_raw']] <- zeroIsNA(qf[['peptides_raw']])
+
+qf[['peptides']] <- filter_features_mq_dda(
+  qf[['peptides_raw']],
+  contaminant_proteins = get_maxquant_cont_accessions(),
+  filter_contaminant = TRUE, filter_associated_contaminant = TRUE,
+  unique_master = TRUE, remove_no_quant = TRUE)
+
+qf[['peptides']] <- normalize(logTransform(qf[['peptides']], base = 2),
+                              method = 'diff.median')
+colData(qf[['peptides']]) <- colData(qf)
+
+nrow(qf[['peptides']])
+```
+
+# How much do they actually agree?
+
+Before anything else, it is worth confirming that these are technical replicates in behaviour and not just in name. For every pair of samples within a condition, take the standard deviation of the peptide-level log2 differences: a small value means the two agree.
+
+```{r}
+quant <- assay(qf[['peptides']])
+
+pair_spread <- function(a, b) sd(quant[, a] - quant[, b], na.rm = TRUE)
+
+technical <- unlist(lapply(c('Control', 'IP'), function(cond) {
+  sapply(1:3, function(r) {
+    pair_spread(paste0(cond, '_', r, '_1'), paste0(cond, '_', r, '_2'))
+  })
+}))
+
+biological <- unlist(lapply(c('Control', 'IP'), function(cond) {
+  lapply(1:2, function(t) {
+    combn(1:3, 2, function(p) {
+      pair_spread(paste0(cond, '_', p[1], '_', t),
+                  paste0(cond, '_', p[2], '_', t))
+    })
+  })
+}))
+
+c(technical_pairs = round(median(technical), 3),
+  biological_pairs = round(median(biological), 3))
+```
+
+Two acquisitions of the same digest disagree about half as much as two separate biological samples of the same condition. That is the expected picture, and it is exactly why the two cannot be interchanged: a substantial part of the variation between biological replicates is real biological variation, and no amount of re-injecting will reduce it.
+
+# Summarising to protein
+
+```{r, message=FALSE, warning=FALSE}
+qf <- aggregateFeatures(qf, i = 'peptides',
+                        fcol = 'Leading.razor.protein', name = 'protein',
+                        fun = MsCoreUtils::robustSummary, maxit = 10000)
+colData(qf[['protein']]) <- colData(qf)
+
+protein <- assay(qf[['protein']])
+sample_data <- colData(qf[['protein']])
+
+nrow(protein)
+```
+
+```{r}
+test_condition <- function(quant, condition) {
+  group <- factor(condition, levels = c('Control', 'IP'))
+  n_quant <- sapply(levels(group), function(l) {
+    rowSums(!is.na(quant[, group == l, drop = FALSE]))
+  })
+  testable <- apply(n_quant, 1, min) >= 2
+
+  fit <- eBayes(lmFit(quant[testable, ], model.matrix(~ group)))
+  tt <- topTable(fit, coef = 2, number = Inf)
+  c(tested = sum(testable), significant = sum(tt$adj.P.Val < 0.05))
+}
+```
+
+# The error: twelve samples that are really six
+
+The tempting thing to do with twelve columns is to test them as twelve samples.
+
+```{r}
+test_condition(protein, sample_data$Condition)
+```
+
+Now the correct analysis. The two acquisitions of a biological sample are averaged first, giving one value per biological replicate, and the test sees three against three.
+
+```{r}
+biological_sample <- paste(sample_data$Condition, sample_data$Replicate)
+
+averaged <- sapply(unique(biological_sample), function(s) {
+  rowMeans(protein[, biological_sample == s, drop = FALSE], na.rm = TRUE)
+})
+averaged[is.nan(averaged)] <- NA
+
+test_condition(averaged, sub(' .*', '', colnames(averaged)))
+```
+
+Roughly twice as many proteins reach significance when the technical replicates are treated as independent.
+
+The extra hits are not evidence of anything. `limma` estimates each protein's variance from the scatter of samples within a group, and the two acquisitions of one digest scatter half as much as two separate samples would. Including both therefore does two things at once: it halves the standard error by pretending there are six independent observations per group, and it pulls the variance estimate down towards the technical noise rather than the biological noise. Both push p-values in the same direction, and neither reflects any additional biological information — the experiment still contains three biological replicates per condition, whatever the file says.
+
+This is pseudo-replication, and proteomics makes it unusually easy to commit, because a technical replicate arrives as just another column and nothing in the file marks it as one.
+
+# Averaging beats picking one
+
+Given that the two acquisitions have to be reduced to one value, an alternative to averaging is to keep one and discard the other. It is worth seeing what that costs.
+
+```{r}
+first_only <- protein[, sample_data$Tech_rep == 1]
+second_only <- protein[, sample_data$Tech_rep == 2]
+
+rbind(
+  averaged = test_condition(averaged, sub(' .*', '', colnames(averaged))),
+  technical_replicate_1 = test_condition(
+    first_only, sample_data$Condition[sample_data$Tech_rep == 1]),
+  technical_replicate_2 = test_condition(
+    second_only, sample_data$Condition[sample_data$Tech_rep == 2]))
+```
+
+Averaging wins on both counts, and by a wide margin. It tests more proteins, because a protein missed in one acquisition can be rescued by the other, and it finds more of them, because averaging two measurements of the same digest reduces the technical component of the noise without touching the biological component.
+
+Note also how much the two single-acquisition analyses differ from each other. Neither is wrong; they are two draws from the same technical noise, and the gap between them is a fair warning about how much a result can move on measurement noise alone when the number of biological replicates is small.
+
+# What technical replicates are for
+
+None of this makes them a waste of instrument time. They are the only thing in an experiment that separates measurement variability from biological variability, which makes them useful for questions the biological replicates cannot answer:
+
+- **Is a surprising result real or an acquisition artefact?** If a protein's two technical replicates disagree far more than the typical pair, its value in that sample is unreliable regardless of what the statistics say.
+- **Is one sample's acquisition bad?** The `pair_spread` calculation above, per sample rather than pooled, identifies a run that went wrong — a poor injection, a fouled column — in a way that a single acquisition per sample cannot.
+- **Is the instrument the limiting factor?** If technical variability approaches biological variability, more biological replicates will not help as much as fixing the acquisition.
+
+The rule is simply that they belong in quality control, not in the degrees of freedom of the test.
+
+# Summary
+
+- A technical replicate measures the instrument; a biological replicate measures the biology. Here two acquisitions of one digest disagreed about half as much as two biological samples.
+- **Testing technical replicates as though they were biological replicates roughly doubled the number of significant proteins here.** The extra hits come from a halved standard error and a variance estimate pulled towards technical noise, not from any additional information.
+- Average technical replicates to one value per biological sample before testing. Do not pick one and discard the rest: averaging tested more proteins and found more of them than either single acquisition.
+- Use them for quality control — spotting unreliable measurements, bad runs, and whether the instrument or the biology is the limiting source of variation.
+
+```{r}
+sessionInfo()
+```

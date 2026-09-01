@@ -1,0 +1,240 @@
+---
+title: "Gotcha: contaminants and protein-level FDR"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Gotcha: contaminants and protein-level FDR}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Every sample carries protein that did not come from the experiment: keratin from skin and dust, trypsin from the digest, albumin from serum in the culture medium. These are searched against deliberately — a contaminant database gives their spectra somewhere correct to go, instead of leaving them to be force-matched onto real proteins — and then have to be removed before anything is quantified.
+
+The removal is where things go quietly wrong, because the QC vignettes apply *three* overlapping defences against contaminants and, on a typical export, any one of them is sufficient. When one is broken you do not find out, because the other two cover for it. This article is about what each one actually does, and what an export looks like when the cover is not there.
+
+It also covers protein-level FDR, which is a different kind of filter applied at the same stage and for a related reason: not everything the search engine reports is something you should quantify.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(dplyr)
+```
+
+```{r}
+pep_inf <- system.file("extdata", "lfq_dda_pd_PeptideGroups.txt",
+                       package = "biomasslmb")
+infdf <- read.delim(pep_inf)
+
+abundance_cols_ix <- grep('^Abundance', colnames(infdf))
+exp_design <- data.frame(
+  quantCols = colnames(infdf)[abundance_cols_ix],
+  Condition = rep(c('WT', 'Mutant'), each = 3),
+  Replicate = rep(1:3, times = 2))
+
+read_peptides <- function(df) {
+  qf <- readQFeatures(assayData = df, quantCols = abundance_cols_ix,
+                      colData = exp_design, name = 'peptides')
+  colData(qf[['peptides']]) <- colData(qf)
+  qf[['peptides']]
+}
+
+peptides <- read_peptides(infdf)
+nrow(peptides)
+```
+
+# The three defences
+
+**The search engine's own flag.** Proteome Discoverer writes a `Contaminant` column, MaxQuant a `Potential.contaminant` column, marking anything matched to the contaminant database. `filter_features_pd_dda()` and `filter_features_mq_dda()` use it automatically.
+
+**The accession prefix.** Contaminant databases are normally built with the entries renamed, so a contaminant accession reads `Cont_P02538` in a PD search or `CON__P02538` in a MaxQuant one. The filtering functions grep for that prefix — `cont_string`, which defaults to `Cont_` for the PD functions and `CON__` for the MaxQuant ones.
+
+**An explicit accession list.** `get_contaminant_fasta_accessions()` parses the contaminant FASTA and returns the accessions it holds; `get_maxquant_cont_accessions()` does the same for MaxQuant's bundled database. That list is passed as `contaminant_proteins`.
+
+```{r}
+contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb"))
+
+maxquant_accessions <- get_maxquant_cont_accessions()
+
+c(fasta = length(contaminant_accessions), maxquant = length(maxquant_accessions))
+head(contaminant_accessions, 3)
+head(maxquant_accessions, 3)
+```
+
+Note that the two helpers return accessions in **different formats**, matching the database each search used. A list from one is useless against output from the other, and nothing checks that you passed the right one.
+
+# On a normal export, the list does nothing
+
+```{r, message=FALSE, warning=FALSE}
+filter_contaminants <- function(obj, accessions) {
+  nrow(filter_features_pd_dda(
+    obj,
+    contaminant_proteins = accessions,
+    filter_contaminant = TRUE,
+    filter_associated_contaminant = TRUE,
+    unique_master = FALSE,
+    remove_no_quant = TRUE))
+}
+
+data.frame(
+  accession_list = c('correct (from the search database)',
+                     'MaxQuant list — wrong format entirely'),
+  peptides_retained = c(
+    filter_contaminants(peptides, c(contaminant_accessions,
+                                    sub('^Cont_', '', contaminant_accessions))),
+    filter_contaminants(peptides, maxquant_accessions)))
+```
+
+Identical. Supplying a completely inapplicable contaminant list changes nothing, because the `Cont_` prefix grep and PD's own `Contaminant` column between them have already caught every contaminant in the file. If your pipeline has a broken contaminant list, this is what it looks like: exactly like a working one.
+
+# When the cover is not there
+
+The prefix grep and the engine's flag both depend on the search having been set up with a renamed contaminant database. That is the normal case but not the only one — appending a contaminant FASTA to the target database without renaming its entries is an easy thing to do, and then contaminants are reported under their ordinary UniProt accessions with nothing to distinguish them.
+
+Below, the same data is altered to look like that search: prefixes stripped and the flag cleared. Nothing else changes.
+
+```{r}
+unprefixed <- infdf
+unprefixed$Master.Protein.Accessions <- gsub(
+  'Cont_', '', unprefixed$Master.Protein.Accessions)
+unprefixed$Protein.Accessions <- gsub('Cont_', '', unprefixed$Protein.Accessions)
+unprefixed$Contaminant <- 'False'
+
+unprefixed_peptides <- read_peptides(unprefixed)
+```
+
+```{r, message=FALSE, warning=FALSE}
+data.frame(
+  accession_list = c('correct list, including bare accessions',
+                     'correct list, Cont_-prefixed forms only',
+                     'MaxQuant list — wrong format entirely'),
+  peptides_retained = c(
+    filter_contaminants(unprefixed_peptides,
+                        c(contaminant_accessions,
+                          sub('^Cont_', '', contaminant_accessions))),
+    filter_contaminants(unprefixed_peptides, contaminant_accessions),
+    filter_contaminants(unprefixed_peptides, maxquant_accessions)))
+```
+
+Now the list is the only thing standing between you and the contaminants, and getting its format wrong leaves around fifty keratin and trypsin peptides in the data, silently.
+
+This is why the QC vignettes pass both forms:
+
+```{r, eval=FALSE}
+contaminant_accessions <- c(contaminant_accessions,
+                            sub('^Cont_', '', contaminant_accessions))
+```
+
+It costs nothing when the prefixes are present and saves you when they are not. The general principle is worth stating plainly: **check what your contaminant accessions actually look like in your own data before trusting the filter**, rather than assuming the helper you called returns the format your search produced.
+
+```{r}
+master_proteins <- unique(unlist(strsplit(
+  infdf$Master.Protein.Accessions, '; ')))
+
+c(prefixed_in_this_export = length(grep('^Cont_', master_proteins)),
+  matching_the_fasta_list = length(intersect(master_proteins,
+                                             contaminant_accessions)))
+```
+
+# Associated contaminants
+
+A subtler problem. A peptide can be shared between a contaminant and a real protein — keratins have relatives in the human proteome, and trypsin is a protease like many others. If that peptide is assigned to the real protein, the contaminant's signal is quantified under a name that looks legitimate.
+
+`filter_associated_contaminant = TRUE` handles this by collecting every protein that appears alongside a contaminant on any peptide, and removing features assigned to those too.
+
+```{r, message=FALSE, warning=FALSE}
+with_associated <- filter_features_pd_dda(
+  peptides, contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE, filter_associated_contaminant = TRUE,
+  unique_master = FALSE, remove_no_quant = TRUE)
+
+without_associated <- filter_features_pd_dda(
+  peptides, contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE, filter_associated_contaminant = FALSE,
+  unique_master = FALSE, remove_no_quant = TRUE)
+
+c(with_associated = nrow(with_associated),
+  without_associated = nrow(without_associated),
+  extra_removed = nrow(without_associated) - nrow(with_associated))
+```
+
+A small number, but the peptides it removes are the ones most likely to mislead, because they are attached to real proteins with plausible names. It is worth knowing that this is deliberately aggressive: a real protein that happens to share one peptide with a keratin is discarded entirely, not just for that peptide. If a protein you care about disappears during filtering, this is the step to check first.
+
+# Protein-level FDR
+
+A separate filter applied at the same stage. Search engines control the false discovery rate at the level of peptide-spectrum matches, but a protein identified from a handful of borderline matches can still be a false identification even when every one of its PSMs passed. Proteome Discoverer therefore also reports a protein-level FDR confidence, in the protein export rather than the peptide one.
+
+`filter_by_protein_fdr()` reads that file and drops peptides belonging to proteins that did not reach high confidence.
+
+```{r, message=FALSE, warning=FALSE}
+protein_inf <- system.file("extdata", "lfq_dda_pd_Proteins.txt.gz",
+                           package = "biomasslmb")
+
+proteins <- read.delim(gzfile(protein_inf))
+table(proteins$Protein.FDR.Confidence.Combined)
+```
+
+Every protein here is high confidence, so no peptide can be removed for failing the FDR threshold. Watch what happens anyway.
+
+```{r, message=FALSE, warning=FALSE}
+fdr_filtered <- filter_by_protein_fdr(with_associated,
+                                      protein_fdr_filename = gzfile(protein_inf))
+
+c(before = nrow(with_associated), after = nrow(fdr_filtered))
+```
+
+`filter_by_protein_fdr()` does two things, and only one of them is in its name. It joins the peptide table to the protein table on the master protein accession, and drops any peptide whose master protein has **no row to join to** — regardless of confidence.
+
+```{r}
+master_protein <- rowData(with_associated)$Master.Protein.Accessions
+
+c(no_matching_protein_row = sum(!master_protein %in% proteins$Accession),
+  of_those_a_protein_group = sum(!master_protein %in% proteins$Accession &
+                                   grepl('; ', master_protein)),
+  of_those_simply_absent = sum(!master_protein %in% proteins$Accession &
+                                 !grepl('; ', master_protein)))
+```
+
+Most are peptides whose master protein is a group of several accessions: the protein table has one row per protein, so a `Q9Y294; O00566` master matches nothing and the peptide goes. The remainder are proteins the peptide table names but the protein table does not, because Proteome Discoverer grouped them under a different representative.
+
+Neither is unreasonable behaviour — a peptide whose protein is absent from the protein-level output cannot have a protein-level FDR — but it means the step removes far more than its name suggests, and how much depends on what you did beforehand. Filtering to unique master proteins first separates the two effects:
+
+```{r, message=FALSE, warning=FALSE}
+unique_master_only <- filter_features_pd_dda(
+  peptides, contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE, filter_associated_contaminant = TRUE,
+  unique_master = TRUE, remove_no_quant = TRUE)
+
+c(before = nrow(unique_master_only),
+  after = nrow(filter_by_protein_fdr(
+    unique_master_only, protein_fdr_filename = gzfile(protein_inf))))
+```
+
+**Apply it after unique-master filtering**, so that what it removes is what it is meant to remove.
+
+As for the FDR filtering itself: in most Proteome Discoverer exports the protein table contains nothing but `High`, so the step does nothing, which is why it is easy to omit without noticing. Omitting it is still the wrong habit, for the same reason as everything else here — the export where it would have mattered looks exactly like the export where it did not. Check the distribution above on your own data; `Medium` and `Low` entries mean the filter is doing real work, and skipping it means quantifying proteins the search engine was not confident it had identified at all.
+
+`retain_proteins` exists for the case where a protein of specific interest — a bait, a tagged construct — falls below the threshold and you want to keep it knowingly rather than lose it silently.
+
+# Summary
+
+- Contaminant removal has three overlapping defences: the search engine's flag, the accession prefix, and an explicit accession list. On a normal export any one suffices, so a broken list is invisible.
+- `get_contaminant_fasta_accessions()` and `get_maxquant_cont_accessions()` return **differently formatted** accessions. Passing both the prefixed and bare forms costs nothing and covers the case where the search database was not renamed — which is the case where the list is the only defence you have.
+- `filter_associated_contaminant = TRUE` also removes real proteins that share a peptide with a contaminant. This is intentional and aggressive; check it first if a protein you expected has vanished.
+- Protein-level FDR is a separate control from PSM-level FDR and lives in a separate file. `filter_by_protein_fdr()` applies it, and usually removes nothing on that count — which is not a reason to omit it.
+- That function also silently drops every peptide whose master protein has no row in the protein table, including all peptides with a multi-protein master. Run it **after** `unique_master = TRUE` so the two effects are not confused.
+
+```{r}
+sessionInfo()
+```

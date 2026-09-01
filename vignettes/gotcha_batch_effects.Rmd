@@ -1,0 +1,227 @@
+---
+title: "Gotcha: batch effects"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Gotcha: batch effects}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A design too large for one TMT plex has to be split across several, and the plexes are separate acquisitions. Different ions get selected for fragmentation in each, so a protein's abundance is summarised from a different set of PSMs in each plex, and the resulting numbers are not on a common scale.
+
+The [multi-plex TMT](TMT_multiplex.html) vignette covers what to do about it. This article is about what happens if you don't, because "we'll deal with the batch effect in the model" and "the conditions are balanced across plexes so it comes out in the wash" are both things people say, and only one of them is half true.
+
+Nothing here is specific to TMT. Any structure that splits an experiment into batches — samples acquired on different days, a column changed halfway through, two operators — does the same thing to LFQ data, and the same reasoning applies.
+
+# Load required packages
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+library(ggplot2)
+library(dplyr)
+library(limma)
+```
+
+# Two versions of the same experiment
+
+`psm_tmt_2plex` is a real 3 × 3 factorial design — three cell lines crossed with three drug treatment timepoints — spread over two TMTpro plexes, each carrying a pooled bridge channel. The processing below is exactly the pipeline from the [multi-plex TMT](TMT_multiplex.html) vignette, run in one chunk since it is explained there.
+
+```{r, message=FALSE, warning=FALSE}
+pep_inf <- system.file("extdata", "tmt_2plex_PeptideGroups.txt.gz",
+                       package = "biomasslmb")
+psms <- update_peptide_assignments(psm_tmt_2plex, pep_inf, verbose = FALSE)
+
+tmt_qf <- readQFeatures(assayData = psms, colData = tmt_2plex_design,
+                        runCol = "Plex")
+names(tmt_qf) <- paste0("psms_raw_", names(tmt_qf))
+tmt_qf <- tmt_qf[, !is.na(tmt_qf$Genotype)]
+
+plexes <- c("1", "2")
+contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb"))
+contaminant_accessions <- c(contaminant_accessions,
+                            sub("^Cont_", "", contaminant_accessions))
+
+for (plex in plexes) {
+  raw <- paste0("psms_raw_", plex)
+  filtered <- paste0("psms_filtered_", plex)
+  normalised <- paste0("psms_norm_", plex)
+  for_sum <- paste0("psms_forSum_", plex)
+
+  tmt_qf[[raw]] <- update_average_sn(tmt_qf[[raw]])
+  tmt_qf[[filtered]] <- filter_features_pd_dda(
+    tmt_qf[[raw]], contaminant_proteins = contaminant_accessions,
+    filter_contaminant = TRUE, filter_associated_contaminant = TRUE,
+    unique_master = TRUE)
+  tmt_qf <- filterFeatures(tmt_qf, ~ Rank == 1, i = filtered)
+  tmt_qf[[filtered]] <- remove_redundant_psm_quant(tmt_qf[[filtered]])
+
+  tmt_qf[[normalised]] <- normalize(
+    logTransform(tmt_qf[[filtered]], base = 2), method = "diff.median")
+  assay(tmt_qf[[normalised]]) <- 2^assay(tmt_qf[[normalised]])
+
+  tmt_qf[[for_sum]] <- filter_features_per_protein(
+    filterNA(filter_TMT_PSMs(tmt_qf[[normalised]], inter_thresh = 50,
+                             sn_thresh = 5, spsmm_thresh = 65), 0),
+    min_features = 2)
+
+  tmt_qf <- aggregateFeatures(tmt_qf, i = for_sum,
+                              fcol = "Master.Protein.Accessions",
+                              name = paste0("protein_", plex),
+                              fun = base::colSums)
+  tmt_qf[[paste0("protein_", plex)]] <- logTransform(
+    tmt_qf[[paste0("protein_", plex)]], base = 2)
+}
+
+tmt_qf <- joinAssays(tmt_qf, i = paste0("protein_", plexes),
+                     name = "protein_joined")
+colData(tmt_qf[["protein_joined"]]) <- colData(tmt_qf)
+```
+
+That gives the naive merge — every plex processed properly on its own, then stacked side by side. The corrected version differs from it by one function call.
+
+```{r}
+is_bridge <- tmt_qf[["protein_joined"]]$Genotype == "Bridge"
+
+tmt_qf[["protein_corrected"]] <- bridge_normalise(
+  tmt_qf[["protein_joined"]], plex_col = "Plex", bridge_cols = is_bridge)
+```
+
+```{r}
+uncorrected <- tmt_qf[["protein_joined"]][, !is_bridge]
+corrected <- tmt_qf[["protein_corrected"]][, !is_bridge]
+sample_data <- colData(uncorrected)
+
+knitr::kable(table(Plex = sample_data$Plex, Genotype = sample_data$Genotype))
+knitr::kable(table(Plex = sample_data$Plex, Time = sample_data$Time))
+```
+
+Note the two design tables. The genotypes are close to evenly split between the plexes; the timepoints are not — most of the 0h samples are in one plex and most of the 24h samples in the other. That asymmetry is the point of the rest of this article.
+
+# How big is the effect?
+
+For each protein quantified in every sample, we can ask what fraction of its variance across samples is attributable to the plex, and compare that against the fraction attributable to the biology.
+
+```{r}
+variance_explained <- function(quant, grouping) {
+  apply(quant, 1, function(x) {
+    fit <- summary(aov(x ~ factor(grouping)))[[1]]
+    fit[1, "Sum Sq"] / sum(fit[, "Sum Sq"])
+  })
+}
+
+complete <- complete.cases(assay(uncorrected))
+
+data.frame(
+  variable = c('Plex', 'Plex', 'Genotype', 'Genotype'),
+  version = c('uncorrected', 'corrected', 'uncorrected', 'corrected'),
+  median_variance_explained = round(c(
+    median(variance_explained(assay(uncorrected)[complete, ], sample_data$Plex)),
+    median(variance_explained(assay(corrected)[complete, ], sample_data$Plex)),
+    median(variance_explained(assay(uncorrected)[complete, ], sample_data$Genotype)),
+    median(variance_explained(assay(corrected)[complete, ], sample_data$Genotype))),
+    3))
+```
+
+For the median protein, which plex it was measured in explains about two thirds of its variation across the experiment, and the genotype explains under a twentieth. The correction moves the first to near nothing and roughly doubles the second — not because it created biological signal, but because it stopped a much larger technical signal from crowding it out.
+
+This is why a PCA of uncorrected multi-plex data separates on plex rather than on condition. That plot is in the [multi-plex TMT](TMT_multiplex.html) vignette; the numbers above are the same fact stated as a proportion.
+
+# What it costs when the design is balanced
+
+The genotypes are near-evenly distributed across the plexes, so the plex effect should not systematically favour one genotype over another. A common intuition is that this makes the batch effect harmless. It does not.
+
+```{r}
+test_contrast <- function(quant, sample_data, variable, levels) {
+  in_contrast <- sample_data[[variable]] %in% levels
+  quant <- quant[, in_contrast]
+  group <- factor(sample_data[[variable]][in_contrast], levels = levels)
+
+  n_quant <- sapply(levels, function(l) {
+    rowSums(!is.na(quant[, group == l, drop = FALSE]))
+  })
+  testable <- apply(n_quant, 1, min) >= 2
+
+  fit <- eBayes(lmFit(quant[testable, ], model.matrix(~ group)))
+  topTable(fit, coef = 2, number = Inf, sort.by = 'none')
+}
+
+genotype_uncorrected <- test_contrast(assay(uncorrected), sample_data,
+                                      'Genotype', c('WT', 'KO1'))
+genotype_corrected <- test_contrast(assay(corrected), sample_data,
+                                    'Genotype', c('WT', 'KO1'))
+
+compare <- function(a, b) {
+  shared <- intersect(rownames(a), rownames(b))
+  c(significant_uncorrected = sum(a$adj.P.Val < 0.05),
+    significant_corrected = sum(b$adj.P.Val < 0.05),
+    both = sum(a[shared, 'adj.P.Val'] < 0.05 & b[shared, 'adj.P.Val'] < 0.05),
+    uncorrected_only = sum(a[shared, 'adj.P.Val'] < 0.05 &
+                             b[shared, 'adj.P.Val'] >= 0.05),
+    corrected_only = sum(a[shared, 'adj.P.Val'] >= 0.05 &
+                           b[shared, 'adj.P.Val'] < 0.05),
+    logFC_correlation = round(cor(a[shared, 'logFC'], b[shared, 'logFC']), 3))
+}
+
+compare(genotype_uncorrected, genotype_corrected)
+```
+
+Balance protects the fold changes, and it protects you from false positives: not one protein is significant before correction and not after, and the fold changes agree closely between the two versions. What it does not protect is power. The uncorrected data finds a small fraction of the proteins the corrected data finds, because the plex effect is sitting in the residual variance of every protein and inflating the denominator of every t-statistic.
+
+A balanced design turns a batch effect from a source of wrong answers into a source of missing ones. That is better, but it is not free, and it is not a reason to skip the correction.
+
+# What it costs when the design is not balanced
+
+The timepoints are unevenly split. Now compare the same two versions on a 0h against 24h contrast.
+
+```{r}
+time_uncorrected <- test_contrast(assay(uncorrected), sample_data,
+                                  'Time', c('0h', '24h'))
+time_corrected <- test_contrast(assay(corrected), sample_data,
+                                'Time', c('0h', '24h'))
+
+compare(time_uncorrected, time_corrected)
+```
+
+The power loss is still there. But something else has appeared: proteins significant *before* correction and not after. Those are the batch effect masquerading as biology — because most 0h samples sit in one plex and most 24h samples in the other, part of the plex difference is indistinguishable from a time difference, and the test reports it as one.
+
+The fold changes are also visibly more distorted than in the balanced case, which is the same problem measured a different way.
+
+Three proteins is a small number, and the effect here is modest because the imbalance is modest — 3 against 6, not 0 against 9. A design where a condition sits entirely within one plex has no protection at all, and there is nothing in the output to warn you: the p-values look exactly like real ones.
+
+# The proteins you cannot correct
+
+There is a second, quieter consequence of merging plexes, visible before any testing.
+
+```{r}
+c(in_joined_assay = nrow(tmt_qf[['protein_joined']]),
+  quantified_in_both_plexes = length(intersect(
+    rownames(tmt_qf[['protein_1']]), rownames(tmt_qf[['protein_2']]))))
+```
+
+`joinAssays` keeps every protein quantified in either plex, filling `NA` where a protein was quantified in one and not the other. Those single-plex proteins have no bridge measurement in the plex they are missing from, so there is no correction factor to apply — and more importantly, every sample that has a value for them comes from the same plex, so any apparent difference between conditions is perfectly confounded with the plex.
+
+They are not junk, and dropping them is not automatic. But they cannot support a comparison across plexes, and a testability filter that only counts quantified values per condition will not necessarily notice.
+
+# Summary
+
+- In this dataset the plex explains about two thirds of the variance of the median protein, against under a twentieth for the genotype. A batch effect is not a small perturbation on top of the biology; it is usually much larger than the biology.
+- **Balancing the conditions across batches protects correctness, not power.** With a balanced contrast, the uncorrected data produced no false positives here but found a small fraction of the true ones.
+- **With an unbalanced contrast it does not protect correctness either.** Part of the batch difference is inseparable from the condition difference, and it is reported as biology with ordinary-looking p-values.
+- Proteins quantified in only one plex cannot be corrected and cannot support a cross-plex comparison, whatever their p-value.
+- The fix is in [multi-plex TMT](TMT_multiplex.html): process each plex separately, then bring them onto a common scale with `bridge_normalise()` before doing anything that spans plexes. If you are still designing the experiment, balance the conditions across plexes *and* include a bridge channel — the two solve different halves of the problem.
+
+```{r}
+sessionInfo()
+```

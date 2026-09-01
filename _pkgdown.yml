@@ -37,4 +37,7 @@ articles:
   navbar: ~
   contents:
   - gotcha_peptide_to_protein
+  - gotcha_batch_effects
+  - gotcha_contaminants_and_FDR
+  - gotcha_technical_replicates
 

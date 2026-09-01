@@ -1,11 +1,11 @@
 ---
-title: "LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance"
+title: "LFQ-DDA workflow: peptide QC and protein summarisation"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance}
+  %\VignetteIndexEntry{LFQ-DDA workflow: peptide QC and protein summarisation}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

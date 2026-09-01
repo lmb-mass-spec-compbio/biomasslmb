@@ -1,11 +1,11 @@
 ---
-title: "PTM site quantification"
+title: "PTM designs: site-level quantification and normalisation"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{PTM site quantification}
+  %\VignetteIndexEntry{PTM designs: site-level quantification and normalisation}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

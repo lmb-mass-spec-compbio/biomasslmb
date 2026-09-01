@@ -1,11 +1,11 @@
 ---
-title: "Comparing protein summarisation approaches"
+title: "Choosing a summarisation method"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Comparing protein summarisation approaches}
+  %\VignetteIndexEntry{Choosing a summarisation method}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

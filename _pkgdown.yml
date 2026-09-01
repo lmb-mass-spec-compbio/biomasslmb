@@ -15,6 +15,7 @@ articles:
   contents:
   - protein_annotation
   - TMT_PSM_QC_Summarisation
+  - TMT_multiplex
   - LFQ_DDA_Peptide_QC_Summarisation
   - LFQ_DIA_Precursor_QC_Summarisation
   - exploration_and_statistical_testing
@@ -22,7 +23,6 @@ articles:
 - title: Specialised designs
   navbar: ~
   contents:
-  - TMT_multiplex
   - interactome_designs
   - PTM_site_quantification
   - absolute_quantification_iBAQ

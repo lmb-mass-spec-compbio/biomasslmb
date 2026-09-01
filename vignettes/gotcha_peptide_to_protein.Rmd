@@ -1,11 +1,11 @@
 ---
-title: "Gotcha: peptides are not proteins"
+title: "Pitfall: peptides are not proteins"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Gotcha: peptides are not proteins}
+  %\VignetteIndexEntry{Pitfall: peptides are not proteins}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

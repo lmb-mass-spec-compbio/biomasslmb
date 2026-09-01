@@ -1,11 +1,11 @@
 ---
-title: "LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance"
+title: "LFQ-DIA workflow: precursor QC and protein summarisation"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance}
+  %\VignetteIndexEntry{LFQ-DIA workflow: precursor QC and protein summarisation}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

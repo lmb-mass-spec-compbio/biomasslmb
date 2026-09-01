@@ -1,11 +1,11 @@
 ---
-title: "Gotcha: technical replicates"
+title: "Pitfall: technical replicates are not biological replicates"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Gotcha: technical replicates}
+  %\VignetteIndexEntry{Pitfall: technical replicates are not biological replicates}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

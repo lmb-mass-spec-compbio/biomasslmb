@@ -1,11 +1,11 @@
 ---
-title: "TMT QC PSM-level quantification and summarisation to protein-level abundance"
+title: "TMT workflow: PSM QC and protein summarisation"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{TMT QC PSM-level quantification and summarisation to protein-level abundance}
+  %\VignetteIndexEntry{TMT workflow: PSM QC and protein summarisation}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

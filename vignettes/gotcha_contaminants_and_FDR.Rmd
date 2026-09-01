@@ -1,11 +1,11 @@
 ---
-title: "Gotcha: contaminants and protein-level FDR"
+title: "Pitfall: contaminants and protein-level FDR"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Gotcha: contaminants and protein-level FDR}
+  %\VignetteIndexEntry{Pitfall: contaminants and protein-level FDR}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

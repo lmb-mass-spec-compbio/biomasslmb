@@ -1,11 +1,11 @@
 ---
-title: "Gotcha: batch effects"
+title: "Pitfall: batch effects in multi-plex TMT"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Gotcha: batch effects}
+  %\VignetteIndexEntry{Pitfall: batch effects in multi-plex TMT}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

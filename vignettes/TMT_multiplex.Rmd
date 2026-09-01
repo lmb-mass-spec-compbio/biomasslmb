@@ -1,11 +1,11 @@
 ---
-title: "Multi-plex TMT: processing several plexes and bridge correction"
+title: "TMT workflow: multiple plexes and bridge correction"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Multi-plex TMT: processing several plexes and bridge correction}
+  %\VignetteIndexEntry{TMT workflow: multiple plexes and bridge correction}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

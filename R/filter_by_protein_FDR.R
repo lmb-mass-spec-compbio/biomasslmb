@@ -6,6 +6,14 @@
 #' This function is used to filter peptides to retain only those from proteins
 #' passing the FDR threshold
 #'
+#' Note that peptides whose master protein has no row in
+#' `protein_fdr_filename` are also removed, since no FDR confidence can be
+#' established for them. This includes every peptide whose master protein is a
+#' group of several accessions, which cannot match a single-accession row in
+#' the protein-level output. Applying this function after filtering to unique
+#' master proteins (see `filter_features_pd_dda(unique_master = TRUE)`) keeps
+#' the two effects separate. Accessions listed in `retain_proteins` are exempt.
+#'
 #' @param obj `SummarisedExperiment` containing peptide-level output from Proteome Discoverer.
 #' @param protein_fdr_filename `string`. Filepath for protein-level output from Proteome Discoverer
 #' @param protein_col_peptide `string`. Name of column containing master
@@ -47,8 +55,7 @@ filter_by_protein_fdr <- function(obj,
     by = join_by(
       !!sym(protein_col_peptide) == !!(protein_col_protein)))
 
-  rowData(obj)$Protein.Confidence <-
-    protein_fdr$Protein.FDR.Confidence.Combined
+  rowData(obj)$Protein.Confidence <- protein_fdr[[protein_FDR_col]]
 
 
   obj <- obj[(!is.na(rowData(obj)$Protein.Confidence) | rowData(obj)[[protein_col_peptide]] %in% retain_proteins), ]

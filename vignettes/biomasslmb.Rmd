@@ -101,16 +101,18 @@ LFQ quantifies each sample in a separate run, so missing values are pervasive an
 Three things should make you depart from the conventional path:
 
 1. **Severity of missingness.** Diagnose it rather than assuming: `global_condition_miss_score()` separates missingness explained by abundance from missingness explained by condition, `condition_miss_score()` does the same per feature, and `plot_missing_upset()` and `plot_missing_SN()` show its structure. [Handling missing values](handling_missing_values.html) works through the diagnosis and every option that follows from it.
-2. **Experimental design.** In an enrichment experiment, absence from the control is usually meaningful, so imputing it discards the signal you are looking for.
-3. **What you need to do next.** limpa's output is a `limma` fit. Analyses that need a quantification matrix instead — circadian rhythm fitting with MetaCycle or a cosinor model, protein degradation or turnover rates fitted from a pulse-labelling timecourse, kinetic models fitted with `nls`, thermal proteome profiling — cannot consume it, whatever its merits for handling missing values.
+2. **Experimental design.** In an enrichment experiment, absence from the control is usually real rather than a detection failure. Discarding those features removes your strongest candidates outright; imputing them keeps the candidates but restates a presence/absence result as a fold change against an invented background, so its magnitude is set by the imputation parameters rather than by the data.
+3. **Downstream statistical test.** `limma` tests contrasts between groups. It does not estimate a decay rate, a melting temperature, or an amplitude and phase, so it is the wrong tool for a degradation or turnover timecourse, thermal proteome profiling, a dose response, or a circadian experiment — these call for the package built for the question, `nls` for kinetics, a cosinor model or MetaCycle for rhythms, and so on, fitted directly to the protein-level quantification matrix. That is what should make you depart here: those tools take a matrix of abundances, and limpa and missBayes return a fitted model instead, whatever their merits for handling missing values.
 
 ## Normalisation: what do you assume is unchanged?
 
-Every normalisation asserts that some set of proteins does not differ between samples, and then removes any difference observed in that set. The options differ only in how honest they are about which set that is.
+The normalisations used in these vignettes all work the same way: they take some set of proteins to be unchanged between samples, and remove whatever difference is observed in that set. They differ only in how explicit they are about which set that is.
 
 - **Reference set.** `get_medians()` and `center_normalise_to_ref()` normalise to a subset you define: the total proteome for a phospho experiment, a spike-in, or a set of proteins independent of the bait in an enrichment experiment. The assumption is explicit, and you can check whether it holds. The [PTM site quantification](PTM_site_quantification.html) vignette works through the phospho case.
 - **Bridge or pooled channel.** For multi-plex TMT, the reference is a channel present in every plex rather than a set of proteins. This is what removes plex effects, and the [multi-plex TMT](TMT_multiplex.html) vignette works through it.
 - **All proteins.** `diff.median` normalisation assumes most proteins are unchanged. For a whole-proteome comparison between similar conditions this is reasonable. For an enrichment experiment or a strong perturbation it can be badly wrong, and it fails silently.
+
+Not every normalisation is of this form. Quantile normalisation, for instance, nominates no set at all: it replaces each sample's ranked abundances with the average across samples at that rank, so every sample ends up with an identical distribution. The assumption is correspondingly stronger — that the true distribution of abundances is the same in every sample, and any difference in its shape is technical — and where that fails it fails as quietly as `diff.median` does.
 
 # Example data
 

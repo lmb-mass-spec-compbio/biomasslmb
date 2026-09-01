@@ -391,7 +391,7 @@ data.frame(
   knitr::kable()
 ```
 
-One constraint cuts across all of this and is easy to forget: **the missingness-aware routes return a fitted model, not a quantification matrix.** If the next step is circadian analysis, kinetic fitting, thermal proteome profiling or clustering, those need a matrix of protein abundances per sample, and limpa's output does not provide one in the form they expect. That rules those routes out regardless of how well they handle the missingness.
+One constraint cuts across all of this and is easy to forget: **the missingness-aware routes return a fitted model, not a quantification matrix.** If the next step is circadian analysis, degradation or turnover rate fitting, kinetic fitting, thermal proteome profiling or clustering, those need a matrix of protein abundances per sample, and limpa's output does not provide one in the form they expect. That rules those routes out regardless of how well they handle the missingness.
 
 # Summary
 

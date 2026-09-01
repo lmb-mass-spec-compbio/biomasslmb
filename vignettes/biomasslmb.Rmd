@@ -54,6 +54,8 @@ Each of those works through one straightforward experiment end to end. A TMT des
 
 The two axes are independent: a TMT IP and an LFQ-DIA whole-proteome comparison use different QC vignettes and different statistical treatments, and each combination occurs in practice.
 
+All three of those designs ask the same underlying question — which proteins, or sites, differ in abundance between conditions — and that is the question every vignette here works through to a result. Many experiments ask something else of the same measurements: how abundance changes over time, how it responds to a dose or a temperature, how quickly a protein is made or destroyed. The stages below are not specific to differential abundance, and everything up to and including protein-level quantification applies unchanged to those designs: the annotation, the QC and filtering, the summarisation, the normalisation, and the reasoning about missing values are all the same work. What differs is the model fitted at the end. If your experiment is one of those, read the vignette for your acquisition type for stages 1 and 2, and treat the testing stage as the point where this material stops applying.
+
 Both axes concern comparing the same protein between samples, which is what the quantification supports well. Comparing *different* proteins with each other — asking which of two proteins is present in greater amount — is a separate question, and the intensities do not answer it directly, because a peptide's signal depends at least as much on how readily it ionises as on how much of it there is. [Absolute quantification and iBAQ](absolute_quantification_iBAQ.html) covers the correction usually applied and what it does and does not achieve.
 
 # The stages, in order
@@ -100,7 +102,7 @@ Three things should make you depart from the conventional path:
 
 1. **Severity of missingness.** Diagnose it rather than assuming: `global_condition_miss_score()` separates missingness explained by abundance from missingness explained by condition, `condition_miss_score()` does the same per feature, and `plot_missing_upset()` and `plot_missing_SN()` show its structure. [Handling missing values](handling_missing_values.html) works through the diagnosis and every option that follows from it.
 2. **Experimental design.** In an enrichment experiment, absence from the control is usually meaningful, so imputing it discards the signal you are looking for.
-3. **What you need to do next.** limpa's output is a `limma` fit. Analyses that need a quantification matrix instead — circadian rhythm fitting with MetaCycle or a cosinor model, kinetic models fitted with `nls`, thermal proteome profiling — cannot consume it, whatever its merits for handling missing values.
+3. **What you need to do next.** limpa's output is a `limma` fit. Analyses that need a quantification matrix instead — circadian rhythm fitting with MetaCycle or a cosinor model, protein degradation or turnover rates fitted from a pulse-labelling timecourse, kinetic models fitted with `nls`, thermal proteome profiling — cannot consume it, whatever its merits for handling missing values.
 
 ## Normalisation: what do you assume is unchanged?
 
@@ -153,3 +155,5 @@ Four articles cover steps that look the same whether or not they are working, wh
 # Getting help
 
 These vignettes describe the common cases, and many experiments are not common cases. If you are unsure which route applies to your data, or you have a design the vignettes do not cover, please get in touch with Tom Smith (tsmith@mrc-lmb.cam.ac.uk) rather than guessing — it is far easier to help at the design or analysis stage than to unpick a decision afterwards.
+
+This applies in particular to the designs that end in a model other than a comparison between conditions: thermal proteome profiling, protein degradation and turnover measured by pulse labelling, circadian and other timecourse experiments, dose responses, and clustering of temporal profiles. The quantification these need is produced by the vignettes here, but the analysis that follows is specific enough to each experiment that it is worth discussing directly rather than adapting the testing vignettes to it. Please get in touch, ideally before the samples are run, since these designs constrain the number of conditions, the labelling scheme and the choice of acquisition in ways that are impossible to fix afterwards.

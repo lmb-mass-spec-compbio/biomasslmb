@@ -99,6 +99,8 @@ We first perform routine filtering to remove PSMs that:
 -   Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated' contaminants.
 -   Don't have a unique master protein.
 
+The accession list, the `Cont_` prefix and PD's own `Contaminant` column are three separate defences, and they do not always agree with one another. [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) measures what each one catches and what is left behind when the database naming does not match what the filter expects.
+
 ```{r}
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
@@ -197,6 +199,8 @@ biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
 # Summarising to protein-level abundances
 
 Now that we have inspected the PSM-level quantification and filtered the PSMs, we can summarise the PSMs to protein-level abundances.
+
+Summarisation takes the master protein assignment at face value: every PSM contributes to exactly one protein, the one the search engine assigned it to. That assignment is an inference rather than a measurement, and for proteins whose peptides are largely shared with their homologues it is not a reliable one. [Peptides are not proteins](gotcha_peptide_to_protein.html) covers how the assignment is made and how to tell which of your proteins it can support.
 
 For PSM to protein summarisation with TMT quantification, simply summing together the PSM-level abundances provides accurate estimates, so long as there are no missing values. If many missing values are present, the `MsCoreUtils::robustSummary` method may be preferred, since it is able to summarise accurately, even in the presence of missing values [@http://zotero.org/users/5634351/items/FZN3QTTZ]. For a comparison of the two summarisation approaches, see the [Comparing protein summarisation approaches](summarisation_methods.html) vignette.
 

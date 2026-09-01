@@ -54,6 +54,8 @@ Each of those works through one straightforward experiment end to end. A TMT des
 
 The two axes are independent: a TMT IP and an LFQ-DIA whole-proteome comparison use different QC vignettes and different statistical treatments, and each combination occurs in practice.
 
+Both axes concern comparing the same protein between samples, which is what the quantification supports well. Comparing *different* proteins with each other — asking which of two proteins is present in greater amount — is a separate question, and the intensities do not answer it directly, because a peptide's signal depends at least as much on how readily it ionises as on how much of it there is. [Absolute quantification and iBAQ](absolute_quantification_iBAQ.html) covers the correction usually applied and what it does and does not achieve.
+
 # The stages, in order
 
 Analyses typicall follow the same sequence regardless of which combination above applies.
@@ -141,7 +143,12 @@ dir(system.file("extdata", package = "biomasslmb"))
 
 If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html). If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, the testing vignette covers the testing stage for both a whole-proteome and an enrichment design, and [comparing search engines](search_engine_comparison.html) asks how much of a result depends on the pipeline that produced it.
 
-Before reading too much into a result for any one protein, [peptides are not proteins](gotcha_peptide_to_protein.html) covers the inference step between what the instrument measured and what the output file reports, and which proteins it is unreliable for.
+Four articles cover steps that look the same whether or not they are working, which is what makes them worth reading before you trust a result rather than after:
+
+- [Peptides are not proteins](gotcha_peptide_to_protein.html) — the inference step between what the instrument measured and what the output file reports, and which proteins it is unreliable for.
+- [Batch effects](gotcha_batch_effects.html) — how much of the variance in a multi-plex TMT experiment is the plex rather than the biology, and what an uncorrected analysis costs you. Whether that cost is false positives or lost power depends on how the conditions are distributed across plexes.
+- [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) — three overlapping defences against contaminants, which of them is actually doing the work, and what `filter_by_protein_fdr()` removes besides low-confidence proteins.
+- [Technical replicates are not biological replicates](gotcha_technical_replicates.html) — what happens to a result when repeat acquisitions of one sample are tested as though they were independent samples.
 
 # Getting help
 

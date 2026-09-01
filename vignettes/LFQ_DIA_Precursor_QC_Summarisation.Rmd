@@ -57,6 +57,8 @@ print(head(contaminant_accessions))
 
 DIA-NN was run with this contaminants database included directly in the search FASTA, so contaminant entries are named with a `Cont_` prefix that is carried straight through into the `Protein.Ids` and `Protein.Group` columns of the DIA-NN output. `filter_features_diann` uses this prefix automatically, in addition to the `contaminant_accessions` we've just extracted.
 
+The prefix and the accession list are separate defences, and a search database whose contaminant entries were never renamed provides neither. [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) measures what each one catches and what is left behind when they do not match.
+
 # Read in input data
 
 We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
@@ -209,6 +211,8 @@ For the summarisation to protein, we will use `robustSummary`. We do not need to
 peptides with any missing values. However, we still don't want to retain
 peptides with too many missing values, since these will not be very
 informative in estimating the protein-level quantification.
+
+Summarisation takes the protein group assignment at face value: every precursor contributes to exactly one protein group. That assignment is an inference rather than a measurement, and for proteins whose peptides are largely shared with their homologues it is not a reliable one. [Peptides are not proteins](gotcha_peptide_to_protein.html) covers how the assignment is made and how to tell which of your proteins it can support.
 
 Before deciding how to handle missing values, it's worth checking how much missingness there is,
 and whether it's structured by `group`. `condition_miss_score` fits, for each peptide, a

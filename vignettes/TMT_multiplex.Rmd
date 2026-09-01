@@ -197,6 +197,8 @@ sd(bridge_quant[, 1] - bridge_quant[, 2], na.rm = TRUE)
 
 The consequence for the experiment as a whole is visible in a PCA: plex, not biology, is the dominant source of variance.
 
+How much that matters for the final result depends on how the conditions are distributed across the plexes, and it is not always a question of power: [batch effects](gotcha_batch_effects.html) quantifies the plex effect on this dataset and shows a balanced contrast losing hits it should have found while an unbalanced one gains hits that do not survive correction.
+
 ```{r, fig.height=5, fig.width=7, out.width="75%", warning=FALSE}
 biomasslmb::plot_pca(tmt_qf_2plex, i = "protein_joined",
                      colour_by = "Plex", shape_by = "Genotype")

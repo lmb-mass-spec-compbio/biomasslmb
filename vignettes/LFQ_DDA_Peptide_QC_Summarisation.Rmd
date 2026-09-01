@@ -66,6 +66,8 @@ print(head(contaminant_accessions))
 
 This PD export also includes PD's own `Contaminant` column, populated from the same search against the '0602_Universal Contaminants' database. `filter_features_pd_dda` uses this column automatically, in addition to the `contaminant_accessions` we've just extracted.
 
+These are separate defences that do not always agree with one another, and when one of them silently fails the filtering still appears to work. [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) measures what each one catches and what a mismatch between the accession list and the search database leaves behind.
+
 # Read in input data
 
 We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
@@ -208,6 +210,8 @@ plot_quant(lfq_qf[['peptides_filtered_norm']], log2transform=FALSE, method='dens
 That assumption is what makes this step safe, and it is worth stating explicitly because it is not always true: an [enrichment design](interactome_designs.html) expects the conditions to differ in overall composition, and normalising to a common median there erodes the signal being measured.
 
 ## Summarising to protein-level abundances
+
+Summarisation takes the master protein assignment at face value: every peptide contributes to exactly one protein, the one the search engine assigned it to. That assignment is an inference rather than a measurement, and for proteins whose peptides are largely shared with their homologues it is not a reliable one. [Peptides are not proteins](gotcha_peptide_to_protein.html) covers how the assignment is made and how to tell which of your proteins it can support.
 
 Before deciding how to handle missing values, it's worth checking how much missingness there is,
 and whether it's structured by `Condition`. `condition_miss_score` fits, for each peptide, a

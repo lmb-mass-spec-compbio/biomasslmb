@@ -81,6 +81,8 @@ The index is close to zero: for this whole-proteome comparison, protein-level mi
 
 We therefore require at least 2 quantified values in *both* conditions, and count the quantified values per condition so we can apply that rule and report it alongside the results.
 
+This count treats every column as an independent replicate. Where a sample has been acquired more than once, that is not true, and counting the acquisitions rather than the samples inflates the apparent replication while pulling the variance estimate towards technical rather than biological noise. [Technical replicates are not biological replicates](gotcha_technical_replicates.html) measures what that does to a result, and what to do with the repeat acquisitions instead.
+
 ```{r}
 group <- factor(dia_prot[['protein']]$group, levels = c('control', 'MPXV'))
 

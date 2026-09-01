@@ -74,9 +74,9 @@ Every analysis makes choices about summarisation, missing values, testing and no
 
 ## Summarisation, missing values and testing are one decision
 
-The obvious reading is that you pick a summarisation method, then decide what to do about missing values, then choose a test. Some of the available approaches do work that way, but the model-based ones do not:
+The obvious reading is that you pick a summarisation method, then decide what to do about missing values, then choose a test. Some of the available approaches do work that way. Others do not, because they treat the missingness as something to be modelled during the test rather than resolved before it:
 
-- **Separate steps.** Summarise with `robustSummary` or by summing, decide on imputation at the protein level, then test with `limma`. Each step is independent and inspectable.
+- **Separate steps.** Summarise with `robustSummary` or by summing, decide on imputation at the protein level, then test with `limma`. Each step is independent and inspectable. `limma` fits a linear model per protein, but it fits it to whatever values survive the earlier steps, and knows nothing about why the rest are absent.
 - **limpa** couples all three. It takes peptide-level data, fits a detection probability curve relating detectability to abundance, produces protein-level estimates *with standard errors*, and carries that uncertainty into the linear model. It replaces summarisation, imputation and the model fit together.
 - **missBayes** couples the last two. It takes unimputed protein-level quantification and models the missingness explicitly as part of the test. Note that it fits every protein, so a result can concern a protein that a `limma` analysis would never have tested at all.
 
@@ -89,8 +89,8 @@ Missingness differs by acquisition type, and since summarisation choices are lar
 | | Summarisation | Missing values | Testing |
 |---|---|---|---|
 | TMT | sum PSMs (`base::colSums`) | little within a plex; between plexes handled by bridge correction | `limma` |
-| LFQ-DDA | `robustSummary` | the live decision | `limma`, or model-based |
-| LFQ-DIA | `robustSummary` | live, though less severe than DDA | `limma`, or model-based |
+| LFQ-DDA | `robustSummary` | the live decision | `limma`, or missingness-aware (limpa, missBayes) |
+| LFQ-DIA | `robustSummary` | live, though less severe than DDA | `limma`, or missingness-aware (limpa, missBayes) |
 
 Within a TMT plex, all samples are quantified in the same MS run, so after signal-to-noise filtering the data are close to complete, and reporter ion intensities are additive across the PSMs of a protein. Summing them is both simpler and better justified than a robust method designed to tolerate missing values. TMT's missing value problem appears *between* plexes, and bridge or pooled reference channels address it directly.
 

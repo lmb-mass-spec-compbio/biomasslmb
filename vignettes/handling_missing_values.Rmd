@@ -379,8 +379,8 @@ data.frame(
     'On/off proteins are untested, and they are often the biggest effects',
     'A rule to choose and justify; imputed values still invented',
     'Confident-looking results built from invented values',
-    'Assumes missingness is abundance-driven; wrong for enrichment designs',
-    'Slow; fits proteins with no data in a group; extra dependency'),
+    'Assumes missingness is abundance-driven; wrong for enrichment designs; its matrix is complete because values were estimated',
+    'Slow; fits proteins with no data in a group; returns no quantification matrix'),
   `Use when` = c(
     'Missingness is mild, or you need every result defensible',
     'Missingness is condition-structured and on/off proteins matter',
@@ -391,7 +391,19 @@ data.frame(
   knitr::kable()
 ```
 
-One constraint cuts across all of this and is easy to forget: **the missingness-aware routes return a fitted model, not a quantification matrix.** If the next step is circadian analysis, degradation or turnover rate fitting, kinetic fitting, thermal proteome profiling or clustering, those need a matrix of protein abundances per sample, and limpa's output does not provide one in the form they expect. That rules those routes out regardless of how well they handle the missingness.
+One constraint cuts across all of this and is easy to forget: **what each route hands to the next step is a different kind of object.** If that step is circadian analysis, degradation or turnover rate fitting, kinetic fitting, thermal proteome profiling or clustering, it needs a matrix of protein abundances per sample.
+
+missBayes does not produce one. Its output is a posterior per protein, so those designs rule it out whatever its merits here.
+
+limpa does, and `y_protein$E` from above is a complete one:
+
+```{r}
+c(proteins = nrow(y_protein$E),
+  samples = ncol(y_protein$E),
+  missing_values = sum(is.na(y_protein$E)))
+```
+
+That completeness is the thing to be careful about rather than the thing to be reassured by. It is achieved by estimating the unobserved values from the detection probability curve, and nothing in the matrix records which cells those are. The standard errors that separate a measured value from an estimated one sit in `y_protein$other$standard.error`, beside the matrix rather than in it, so a tool that accepts a bare matrix fits partly to model output and weights every cell as though it had been measured. Taking this route into such an analysis means carrying the standard errors alongside and checking what each result rests on, in the same way the per-condition counts are read above.
 
 # Summary
 

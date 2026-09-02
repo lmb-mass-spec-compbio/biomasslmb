@@ -42,14 +42,28 @@ Below, a survey of 56 experiments processed by the facility: TMT, LFQ-DDA and LF
 missingness_survey <- readRDS(system.file(
   'extdata', 'missingness_survey.rds', package = 'biomasslmb'))
 
-survey <- merge(missingness_survey$features,
-                missingness_survey$experiments, by = 'exp')
+survey_experiments <- missingness_survey$experiments %>%
+  mutate(design = ifelse(sample_type %in% c('BioID', 'Interactome'),
+                         'Enrichment', 'Whole cell or fraction'))
 
-missingness_survey$experiments %>%
+survey <- merge(missingness_survey$features, survey_experiments, by = 'exp')
+
+survey_experiments %>%
   count(ms_type, sample_type) %>%
   pivot_wider(names_from = sample_type, values_from = n, values_fill = 0) %>%
   knitr::kable()
 ```
+
+```{r, echo=FALSE}
+design_mix <- survey_experiments %>%
+  count(ms_type, design) %>%
+  pivot_wider(names_from = design, values_from = n, values_fill = 0)
+
+n_enrich <- function(type) design_mix$Enrichment[design_mix$ms_type == type]
+n_total <- function(type) sum(survey_experiments$ms_type == type)
+```
+
+That table is worth reading before the plots, because it limits what the survey can settle. The facility runs most of its enrichment work label-free and most of its whole-proteome work on TMT, so acquisition type and experimental design are close to collinear here: `r n_enrich('DDA LFQ')` of the `r n_total('DDA LFQ')` LFQ-DDA experiments are IPs or BioID pulldowns, against `r n_enrich('TMT')` of the `r n_total('TMT')` TMT ones. Every comparison between acquisition types below is therefore partly a comparison between designs, and the two have to be separated before either is worth believing.
 
 ```{r, fig.height=3, fig.width=8}
 survey %>%
@@ -70,14 +84,35 @@ survey %>%
   knitr::kable()
 ```
 
-TMT features are missing in `r round(100*mean(survey$perc_missing[survey$ms_type == 'TMT']), 1)`% of samples on average, against `r round(100*mean(survey$perc_missing[survey$ms_type == 'DDA LFQ']), 1)`% for LFQ-DDA. That is an order of magnitude, and it is a consequence of the design rather than of anyone's data being better: within a TMT plex every sample is quantified from the same MS2 spectrum, so a peptide is either measured in all channels of that plex or in none of them. In LFQ each sample is a separate run, and whether a peptide is selected for fragmentation in a given run is partly stochastic and strongly abundance-dependent.
+```{r, echo=FALSE}
+frac_missing <- function(type, whole_cell = FALSE) {
+  s <- survey[survey$ms_type == type, ]
+  if (whole_cell) s <- s[s$sample_type == 'Whole cell', ]
+  round(100 * mean(s$perc_missing), 1)
+}
+```
+
+Pooled like that, TMT features are missing in `r frac_missing('TMT')`% of samples on average against `r frac_missing('DDA LFQ')`% for LFQ-DDA. The mechanism is not in dispute: within a TMT plex every sample is quantified from the same MS2 spectrum, so a peptide is either measured in all channels of that plex or in none of them, while in LFQ each sample is a separate run and whether a peptide is selected for fragmentation there is partly stochastic and strongly abundance-dependent. But the pooled figures also carry the confound, so it is worth splitting them.
+
+```{r}
+survey %>%
+  group_by(ms_type, sample_type) %>%
+  summarise(experiments = n_distinct(exp),
+            mean_fraction_missing = round(mean(perc_missing), 3),
+            .groups = 'drop') %>%
+  knitr::kable()
+```
+
+The order-of-magnitude gap survives. Restricted to whole-cell experiments — the design both the TMT and LFQ-DDA vignettes work through — TMT sits at `r frac_missing('TMT', TRUE)`% against `r frac_missing('DDA LFQ', TRUE)`% for LFQ-DDA, which is the same conclusion on a fair comparison.
+
+What does not survive is the size of the LFQ number. The pooled `r frac_missing('DDA LFQ')`% is inflated by the enrichment experiments, where a protein absent from a control pulldown is missing for a reason that has nothing to do with acquisition. `r frac_missing('DDA LFQ', TRUE)`% is the figure to hold a whole-proteome LFQ-DDA experiment against.
 
 The panels also differ in *shape*, not just in height. In TMT, most features sit on the zero line across the whole abundance range, with what missingness there is concentrated at low abundance. In LFQ, missingness is spread across the whole abundance range.
 
 That is worth being precise about, because it is easy to state backwards. `global_condition_miss_score()` fits a logistic model of missingness against abundance, and then against abundance plus experimental condition, reporting Tjur's R² for each:
 
 ```{r}
-missingness_survey$experiments %>%
+survey_experiments %>%
   group_by(ms_type) %>%
   summarise(
     abundance_only = round(median(tjur_r2_intensity_only), 3),
@@ -85,14 +120,49 @@ missingness_survey$experiments %>%
   knitr::kable()
 ```
 
+```{r, echo=FALSE}
+med <- function(col, type = NULL, design = NULL, whole_cell = FALSE) {
+  e <- survey_experiments
+  if (!is.null(type)) e <- e[e$ms_type == type, ]
+  if (!is.null(design)) e <- e[e$design == design, ]
+  if (whole_cell) e <- e[e$sample_type == 'Whole cell', ]
+  round(median(e[[col]]), 3)
+}
+```
+
 Abundance explains *more* of the missingness in TMT than in LFQ, not less. There is very little TMT missingness, and almost all of it is the low-signal tail. LFQ has a great deal of missingness, and abundance alone accounts for a smaller share of it, because run-to-run sampling and match-between-runs add variation that has nothing to do with how abundant the protein is.
 
-The condition missingness index runs the other way: `r round(median(missingness_survey$experiments$condition_miss_index[missingness_survey$experiments$ms_type == 'TMT']), 3)` for TMT against `r round(median(missingness_survey$experiments$condition_miss_index[missingness_survey$experiments$ms_type == 'DDA LFQ']), 3)` for LFQ-DDA. LFQ missingness is far more often structured by experimental group.
+The condition missingness index appears to run the other way: `r med('condition_miss_index', type = 'TMT')` for TMT against `r med('condition_miss_index', type = 'DDA LFQ')` for LFQ-DDA. This is where the confound bites hardest, because an enrichment design raises that index by construction — absence from a control pulldown is precisely what it detects — and most of these LFQ-DDA experiments are enrichments.
 
-Two conclusions follow, and they set up everything below:
+```{r}
+survey_experiments %>%
+  group_by(design) %>%
+  summarise(experiments = n(),
+            condition_index = round(median(condition_miss_index), 3)) %>%
+  knitr::kable()
+```
 
-- **Imputation and missingness-aware models are responses to LFQ problems.** `robustSummary`, limpa's detection probability curve and imputation all address across-run missingness. Applying them to within-plex TMT data addresses a problem that is largely not there.
+Splitting on design alone reproduces almost the same ratio that splitting on acquisition did — `r med('condition_miss_index', design = 'Enrichment')` against `r med('condition_miss_index', design = 'Whole cell or fraction')` — on a variable that is nearly collinear with it. These experiments cannot tell you whether LFQ missingness is *itself* more condition-structured than TMT's, because the two explanations fit them equally well.
+
+Removing the confound leaves the direction intact, but on three LFQ-DDA experiments rather than thirty:
+
+```{r}
+survey_experiments %>%
+  filter(sample_type == 'Whole cell') %>%
+  group_by(ms_type) %>%
+  summarise(experiments = n(),
+            abundance_only = round(median(tjur_r2_intensity_only), 3),
+            condition_index = round(median(condition_miss_index), 3)) %>%
+  knitr::kable()
+```
+
+The abundance contrast is the one that gets *sharper* under the fair comparison: `r med('tjur_r2_intensity_only', type = 'TMT', whole_cell = TRUE)` for TMT against `r med('tjur_r2_intensity_only', type = 'DDA LFQ', whole_cell = TRUE)` for LFQ-DDA among whole-cell experiments, a wider gap than the pooled figures show.
+
+Three conclusions follow, and they set up everything below:
+
+- **Imputation and missingness-aware models are responses to LFQ problems.** `robustSummary`, limpa's detection probability curve and imputation all address across-run missingness. Applying them to within-plex TMT data addresses a problem that is largely not there. This is the conclusion the survey supports most firmly, since the severity gap holds within whole-cell experiments as well as across all of them.
 - **TMT's missing value problem is between plexes, not within them.** A protein quantified in every channel of plex 1 and absent from plex 2 is missing for structural reasons, and the fix is bridge correction and design, not imputation. See [multi-plex TMT](TMT_multiplex.html).
+- **Experimental design drives condition-structured missingness at least as much as acquisition does.** Whichever way you acquire, an enrichment experiment produces missingness that is explained by the experimental group, and that is signal rather than a defect. Diagnose your own data rather than reading a value off the acquisition type.
 
 # Diagnosing your own data
 
@@ -407,8 +477,9 @@ That completeness is the thing to be careful about rather than the thing to be r
 
 # Summary
 
--   Missing value severity is set by acquisition type: `r round(100*mean(survey$perc_missing[survey$ms_type == 'TMT']), 1)`% of samples missing per feature in TMT against `r round(100*mean(survey$perc_missing[survey$ms_type == 'DDA LFQ']), 1)`% in LFQ-DDA, across 56 real experiments
--   Abundance explains a larger share of TMT's little missingness than of LFQ's abundant missingness; the condition missingness index runs the other way
+-   Missing value severity is set by acquisition type: among whole-cell experiments, `r frac_missing('TMT', TRUE)`% of samples missing per feature in TMT against `r frac_missing('DDA LFQ', TRUE)`% in LFQ-DDA. The pooled figures across all 56 experiments are `r frac_missing('TMT')`% and `r frac_missing('DDA LFQ')`%, but acquisition type is nearly collinear with experimental design in this survey, so the whole-cell comparison is the one to benchmark against
+-   Abundance explains a larger share of TMT's little missingness than of LFQ's abundant missingness, and that contrast widens once the designs are matched
+-   Condition-structured missingness tracks experimental design at least as closely as acquisition: enrichment experiments score high on the condition missingness index whichever way they were acquired, so read it off your own data rather than off the acquisition type
 -   Diagnose before deciding, with `plot_missing_upset()`, `plot_missing_SN()` for TMT, and `global_condition_miss_score()` / `condition_miss_index()` to separate abundance-driven from condition-driven missingness
 -   Handle it early where it is cheap — S:N for TMT, `filterNA()` and `filter_features_per_protein()` for LFQ — and remember that the choice between summing and `robustSummary` is itself a missing value decision
 -   At protein level, compare what each option gains you and read the per-condition counts behind every gained hit before reporting it

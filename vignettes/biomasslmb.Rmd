@@ -239,7 +239,11 @@ dir(system.file("extdata", package = "biomasslmb"))
 
 # Where to go next
 
-If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html). If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, the testing vignette covers the testing stage for both a whole-proteome and an enrichment design, and [comparing search engines](search_engine_comparison.html) asks how much of a result depends on the pipeline that produced it.
+If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html).
+
+The testing stage itself is covered in two places, because an enrichment design asks for different choices from a whole-proteome one. [Data exploration and statistical testing](exploration_and_statistical_testing.html) works through a whole-proteome comparison and a single-plex TMT pulldown, testing both in the conventional two-sided way. Part B of [enrichment designs](interactome_designs.html) works through a label-free pulldown with the treatment that design calls for: a testability rule that keeps the proteins absent from the control, imputation restricted to where absence is defensible, and a one-sided test.
+
+If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, [handling missing values](handling_missing_values.html) sets out the options at each stage and what each one costs, and [comparing search engines](search_engine_comparison.html) asks how much of a result depends on the pipeline that produced it.
 
 Four articles cover steps that look the same whether or not they are working, which is what makes them worth reading before you trust a result rather than after:
 

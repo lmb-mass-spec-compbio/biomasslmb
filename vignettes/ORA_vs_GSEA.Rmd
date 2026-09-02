@@ -39,7 +39,7 @@ library(fgsea)
 
 # Shared input
 
-The same MPXV-vs-control plasma comparison used in the enrichment vignette, and the same GO annotations.
+The same MPXV-vs-control plasma comparison used in [functional enrichment](functional_enrichment.html), and the same GO annotations.
 
 ```{r}
 dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]

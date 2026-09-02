@@ -58,6 +58,20 @@ update_average_sn <- function(obj,
 #' @param verbose `logical`. Default is TRUE, use verbose output messages.
 #'
 #' @return Returns an `summarizedExperiment` with the filtered PSMs.
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+#'   colData = tmt_clock_design,
+#'   quantCols = rownames(tmt_clock_design),
+#'   name = "psms_raw")
+#'
+#' # a more accurate average signal:noise than PD reports
+#' tmt_qf[["psms_raw"]] <- update_average_sn(tmt_qf[["psms_raw"]])
+#'
+#' # drop PSMs with low signal:noise or high co-isolation
+#' psms_filtered <- filter_TMT_PSMs(tmt_qf[["psms_raw"]],
+#'                                  inter_thresh = 50, sn_thresh = 10)
+#'
+#' nrow(psms_filtered)
 #' @export
 filter_TMT_PSMs <- function(obj,
                             inter_thresh=100,

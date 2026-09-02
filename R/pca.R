@@ -15,6 +15,13 @@
 #' @param ... additional arguments passed onto `pcaMethods::pca` (when
 #' `allowing_missing=TRUE`) or `stats::prcomp` (when `allowing_missing=FALSE`)
 #' @return Returns a _ggplot_ object.
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+#'   colData = tmt_clock_design,
+#'   quantCols = rownames(tmt_clock_design),
+#'   name = "psms_raw")
+#'
+#' plot_pca(tmt_qf, "psms_raw", colour_by = "Condition")
 #' @export
 plot_pca <- function(obj,
                      i,

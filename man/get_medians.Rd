@@ -15,3 +15,7 @@ get_medians(obj)
 \description{
 Extract the assay column medians from an MSnSet
 }
+\examples{
+# per-sample median abundance, used as a normalisation reference
+get_medians(tmt_qf[["protein"]])
+}

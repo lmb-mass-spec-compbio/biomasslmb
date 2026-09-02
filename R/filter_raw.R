@@ -138,31 +138,30 @@ remove_contaminant <- function(obj,
 #' @param cont_string `string`. string to search for contaminants
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @examples
-#' \dontrun{
+#' # load PD PSM-level output
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+#'   colData = tmt_clock_design,
+#'   quantCols = rownames(tmt_clock_design),
+#'   name = "psms_raw")
 #'
-#' #### PSMs.txt example ####
-#' # load PD PSMs.txt output
-#' tmt_qf <- readQFeatures(assayData = psm_tmt_total,
-#'  quantCols = 36:45,
-#'  name = "psms_raw")
+#' # extract the accessions from the contaminant FASTA, in both the prefixed
+#' # and bare forms, since the search may not have renamed its entries
+#' contaminant_fasta <- system.file(
+#'   "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb")
 #'
-#' # extract the UniProt accessions from the contaminant FASTA headers
-#' contaminant_accessions <- get_crap_fasta_accessions(contaminant_fasta_inf)
+#' contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta)
+#' contaminant_accessions <- c(contaminant_accessions,
+#'                             sub("^Cont_", "", contaminant_accessions))
 #'
-#' # filter the PSMs
-#' psm2 <- filter_features_pd_dda(
-#'   obj = tmt_qf[['psms_raw']],
-#'   master_protein_col = "Master.Protein.Accessions",
-#'   protein_col = "Protein.Accessions",
-#'   unique_master = TRUE,
-#'   TMT = TRUE,
-#'   filter_contaminant = TRUE,
+#' # remove contaminants and PSMs without a unique master protein
+#' psms_filtered <- filter_features_pd_dda(
+#'   obj = tmt_qf[["psms_raw"]],
 #'   contaminant_proteins = contaminant_accessions,
-#'   filter_associated_contaminant = TRUE
-#' )
+#'   filter_contaminant = TRUE,
+#'   filter_associated_contaminant = TRUE,
+#'   unique_master = TRUE)
 #'
-#'
-#' }
+#' c(before = nrow(tmt_qf[["psms_raw"]]), after = nrow(psms_filtered))
 #' @export
 filter_features_pd_dda <- function(obj,
                                    master_protein_col = "Master.Protein.Accessions",

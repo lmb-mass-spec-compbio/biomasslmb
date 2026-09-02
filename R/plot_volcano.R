@@ -13,6 +13,14 @@
 #' @param title `string`. Plot title
 #'
 #' @return Returns a _ggplot_ object.
+#' @examples
+#' # plot_volcano takes a statistical testing results data.frame, such as
+#' # the output of limma::topTable(), with logFC and adj.P.Val columns
+#' results <- data.frame(
+#'   logFC = rnorm(500),
+#'   adj.P.Val = runif(500))
+#'
+#' plot_volcano(results)
 #' @export
 #' @importFrom naniar gg_miss_upset
 plot_volcano <- function(obj,

@@ -17,3 +17,13 @@ For a given number of categories, identify a suitable
 palette of colours which are colour-blind friendly. Palettes are derived from
 \url{http://mkweb.bcgsc.ca/colorblind/palettes.mhtml#page-container}
 }
+\examples{
+# a colourblind-friendly categorical palette
+get_cat_palette(4)
+
+library(ggplot2)
+ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
+  geom_point() +
+  scale_colour_manual(values = get_cat_palette(3)) +
+  theme_biomasslmb()
+}

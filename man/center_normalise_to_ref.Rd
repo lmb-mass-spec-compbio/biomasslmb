@@ -37,3 +37,13 @@ in a separate run to the non-enriched (total) sample. In this case, it may make
 more sense to center-median normalise the PTM-enriched samples using the median
 from the total samaples.
 }
+\examples{
+# normalise one assay using medians taken from another, as in a PTM
+# experiment where the total fraction supplies the reference
+reference_medians <- get_medians(tmt_qf[["protein"]])
+
+normalised <- center_normalise_to_ref(
+  tmt_qf[["protein"]], reference_medians, on_log_scale = TRUE)
+
+round(get_medians(normalised), 3)
+}

@@ -35,6 +35,17 @@ plot_rt_vs_delta <- function(obj,
 #' @param obj `SummarisedExperiment` containing peptide-level output from Proteome Discoverer.
 #' @param rt_col `string`. Name of column with retention time
 #' @return Returns a `ggplot` with the RT vs delta PPM
+#' @examples
+#' lfq_inf <- system.file("extdata", "lfq_dda_pd_PeptideGroups.txt",
+#'                        package = "biomasslmb")
+#'
+#' lfq_qf_raw <- QFeatures::readQFeatures(
+#'   assayData = read.delim(lfq_inf),
+#'   quantCols = grep("^Abundance", colnames(read.delim(lfq_inf))),
+#'   name = "peptides")
+#'
+#' plot_rt_dist(lfq_qf_raw[["peptides"]],
+#'              rt_col = "PSM.RT.in.min.by.Search.Engine.CHIMERYS")
 #' @export
 plot_rt_dist <- function(obj,
                          rt_col = 'RT.in.min.by.Search.Engine.Sequest.HT'){

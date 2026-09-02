@@ -27,3 +27,14 @@ plot_quant(
 Given a \code{SummarizedExperiment}, return a plot
 of the feature quantifications per sample.
 }
+\examples{
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+  colData = tmt_clock_design,
+  quantCols = rownames(tmt_clock_design),
+  name = "psms_raw")
+
+plot_quant(tmt_qf[["psms_raw"]], log2transform = TRUE, method = "density")
+
+# boxplot instead, coloured by a colData column
+plot_quant(tmt_qf[["psms_raw"]], log2transform = TRUE, method = "box")
+}

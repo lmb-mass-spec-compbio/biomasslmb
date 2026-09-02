@@ -36,3 +36,10 @@ which we can use to replace protein-level quantification values with NA.
 This is what this function does. This can then be combined with the \code{\link{mask_protein_level_quant}} function
 to replace protein level quantification values with NA where they were derived from too few quantification values
 }
+\examples{
+# which protein-by-sample values rest on fewer than 2 PSMs?
+mask <- get_protein_no_quant_mask(
+  tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+
+table(retained = mask, useNA = "ifany")
+}

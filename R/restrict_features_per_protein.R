@@ -43,6 +43,12 @@ get_n_feature_per_prot <- function(obj,
 #' @param plot Set TRUE to plot histogram of features per protein per sample
 #'
 #' @return `SummarizedExperiment`
+#' @examples
+#' # keep only features from proteins with at least 2 features
+#' psms <- tmt_qf[["psms_filtered_sn"]]
+#'
+#' c(before = nrow(psms),
+#'   after = nrow(filter_features_per_protein(psms, min_features = 2)))
 #' @export
 filter_features_per_protein <- function(obj,
                                         min_features,
@@ -92,6 +98,12 @@ filter_features_per_protein <- function(obj,
 #'  Horizontal line represents total number of proteins quantified across all samples
 #'
 #' @return `Matrix` defining whether the protein was quantified from sufficient features
+#' @examples
+#' # which protein-by-sample values rest on fewer than 2 PSMs?
+#' mask <- get_protein_no_quant_mask(
+#'   tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+#'
+#' table(retained = mask, useNA = "ifany")
 #' @export
 get_protein_no_quant_mask <- function(obj,
                                       min_features,
@@ -147,6 +159,13 @@ get_protein_no_quant_mask <- function(obj,
 #'  quantification values for each sample. Can be obtained with \code{\link{get_protein_no_quant_mask }}
 #'
 #' @return `SummarizedExperiment` with quantification values replaced by NA where they derive from too few lower feature level quantifications
+#' @examples
+#' mask <- get_protein_no_quant_mask(
+#'   tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+#'
+#' masked <- mask_protein_level_quant(tmt_qf[["protein"]], mask)
+#'
+#' sum(is.na(SummarizedExperiment::assay(masked)))
 #' @export
 mask_protein_level_quant <- function(obj, retain_mask){
 

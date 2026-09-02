@@ -9,6 +9,16 @@
 #' @param facet_by_sample `logical`. Facet the plot by sample.
 #'
 #' @return `ggplot` object.
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+#'   colData = tmt_clock_design,
+#'   quantCols = rownames(tmt_clock_design),
+#'   name = "psms_raw")
+#'
+#' plot_quant(tmt_qf[["psms_raw"]], log2transform = TRUE, method = "density")
+#'
+#' # boxplot instead, coloured by a colData column
+#' plot_quant(tmt_qf[["psms_raw"]], log2transform = TRUE, method = "box")
 #' @export
 plot_quant <- function(obj,
                        method=c('box', 'density', 'histogram'),

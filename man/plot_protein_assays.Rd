@@ -52,3 +52,11 @@ For the exploration of specific proteins, it's often useful to visualise the qua
 e.g PSM, peptide, filtered peptides and protein.
 This function plots the quantitative data at multiple levels (assays) for a given list of proteins of interest.
 }
+\examples{
+# follow one protein through every assay in a processed QFeatures object
+poi <- rownames(tmt_qf[["protein"]])[1]
+
+plot_protein_assays(tmt_qf, poi,
+  experiments_to_plot = c("psms_filtered_sn", "protein"),
+  log2transform_cols = "psms_filtered_sn")
+}

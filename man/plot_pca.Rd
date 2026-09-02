@@ -42,3 +42,11 @@ allow one to see how the experimental conditions relate to the sources of varian
 This function plots a PCA, with the option to colour and/or shape the points by experimental conditions.
 The percentage values indicated on the axes are the variance explained by the PCs.
 }
+\examples{
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+  colData = tmt_clock_design,
+  quantCols = rownames(tmt_clock_design),
+  name = "psms_raw")
+
+plot_pca(tmt_qf, "psms_raw", colour_by = "Condition")
+}

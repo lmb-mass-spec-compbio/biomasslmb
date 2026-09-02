@@ -27,3 +27,11 @@ which we can use to replace protein-level quantification values with NA.
 This is can be obtained with \code{\link{get_protein_no_quant_mask }}. This can then be combined with this function
 to replace protein level quantification values with NA where they were derived from too few quantification values
 }
+\examples{
+mask <- get_protein_no_quant_mask(
+  tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+
+masked <- mask_protein_level_quant(tmt_qf[["protein"]], mask)
+
+sum(is.na(SummarizedExperiment::assay(masked)))
+}

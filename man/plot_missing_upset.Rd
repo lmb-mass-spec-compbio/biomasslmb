@@ -21,18 +21,11 @@ function uses an 'upset' plot to show the top 50 most common missing value patte
 across the samples
 }
 \examples{
-set.seed(11)
-library(ggplot2)
-
-df <- diamonds[sample(nrow(diamonds), 1000), ]
-
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
   quantCols = 36:45,
   name = "psms_raw")
 
-
-
-
-
+# which combinations of samples are missing together?
+plot_missing_upset(tmt_qf, "psms_raw")
 
 }

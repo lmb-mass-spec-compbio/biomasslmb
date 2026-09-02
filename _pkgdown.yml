@@ -41,3 +41,182 @@ articles:
   - gotcha_contaminants_and_FDR
   - gotcha_technical_replicates
 
+reference:
+- title: Protein annotation
+  desc: >
+    Retrieving UniProt annotations, GO terms and membrane topology for the
+    accessions in your data. Worked through in the
+    [protein annotation](articles/protein_annotation.html) article.
+  contents:
+  - get_uniprot_details
+  - collapse_uniprot_details_multi_accession
+  - get_uniparc_fallback
+  - check_uniprot_release
+  - add_gene_long_protein_name_pd
+  - get_go_terms
+  - get_all_mappings
+  - get_ancestor_go
+  - expand_terms
+  - determine_ancestor_function
+  - determine_offspring_function
+  - get_protein_tm_topology
+  - query_protein_tm_topology
+  - add_tm_info
+  - add_topology_info
+
+- title: Reading and filtering search engine output
+  desc: >
+    Getting features out of Proteome Discoverer, MaxQuant, DIA-NN or
+    Spectronaut output and removing the ones that should not be quantified.
+    One function per search engine, plus the filters common to all of them.
+  contents:
+  - filter_features_pd_dda
+  - filter_features_mq_dda
+  - filter_features_diann
+  - filter_features_sn
+  - readDIANNFilterQJoin
+  - filter_TMT_PSMs
+  - filter_features_per_protein
+  - filter_complete_groups
+  - filter_by_protein_fdr
+  - remove_redundant_psm_quant
+  - update_peptide_assignments
+  - update_average_sn
+
+- title: Contaminants
+  desc: >
+    Building the accession lists the filtering functions match against. See
+    [contaminants and protein FDR](articles/gotcha_contaminants_and_FDR.html)
+    for what each defence actually catches.
+  contents:
+  - get_contaminant_fasta_accessions
+  - get_maxquant_cont_accessions
+  - get_crap_fasta_accessions
+  - sub_crap
+
+- title: Summarisation and normalisation
+  desc: >
+    Turning features into protein-level abundance, and putting samples or
+    plexes onto a common scale.
+  contents:
+  - maxlfq_wrapper
+  - get_protein_no_quant_mask
+  - mask_protein_level_quant
+  - get_n_feature_per_prot
+  - get_medians
+  - center_normalise_to_ref
+  - bridge_normalise
+
+- title: Missing values
+  desc: >
+    Diagnosing how much missingness there is and whether it is explained by
+    abundance or by experimental condition, and imputing where that is
+    defensible. See [handling missing values](articles/handling_missing_values.html).
+  contents:
+  - condition_miss_score
+  - condition_miss_index
+  - global_condition_miss_score
+  - restrict_imputation
+  - create_long_form_imputed_data
+  - plot_missing_upset
+  - plot_missing_SN
+  - plot_missing_SN_per_sample
+  - mnar_score
+  - mnar_index
+  - mnar_global_score
+
+- title: Post-translational modifications
+  desc: >
+    Localising a modification to a residue, placing it within the protein and
+    summarising to sites. Worked through in
+    [PTM site quantification](articles/PTM_site_quantification.html).
+  contents:
+  - parse_PTM_scores_pd
+  - filter_maxquant_ptm
+  - add_ptm_positions
+  - add_ptm_pos_rowdata_mq
+  - add_filter_ptm_pos_rowdata_mq
+  - add_site_sequence
+
+- title: Peptides, sequences and FASTA files
+  desc: >
+    In silico digestion, peptide positions within a protein, and retrieving or
+    assembling sequence databases.
+  contents:
+  - make_fasta
+  - append_fasta
+  - get_sequence
+  - add_peptide_positions
+  - add_peptide_positions_from_cleavage
+  - extract_peptide_positions
+  - add_tryptic_termini_flags
+
+- title: Exploration and plotting
+  desc: >
+    Checking that an experiment worked, and displaying a result. Every function
+    here returns a `ggplot` object, so it can be modified in the usual way.
+  contents:
+  - plot_quant
+  - plot_pca
+  - plot_cor_samples
+  - plot_protein_assays
+  - plot_volcano
+  - plot_rt_dist
+  - plot_rt_vs_delta
+  - get_samples_present
+  - plot_samples_present
+  - theme_biomasslmb
+  - get_cat_palette
+
+- title: Functional enrichment
+  desc: >
+    Over-representation testing against the proteins that were tested, with a
+    correction for abundance bias. See
+    [functional enrichment](articles/functional_enrichment.html) and
+    [ORA or GSEA?](articles/ORA_vs_GSEA.html).
+  contents:
+  - get_enriched_go
+  - estimate_overrep
+  - add_independent_filtering_padj
+  - remove_redundant_go
+  - plot_go
+  - plot_go_terms_upset
+
+- title: Statistics
+  desc: >
+    Fitting and adjustment helpers used by the articles.
+  contents:
+  - tls
+  - predict.tls_model
+  - bb2014
+
+- title: Example data
+  desc: >
+    Search engine output and processed `QFeatures` objects used throughout the
+    articles, so that every example can be run without your own data.
+  contents:
+  - psm_tmt_clock
+  - tmt_clock_design
+  - psm_tmt_2plex
+  - tmt_2plex_design
+  - psm_tmt_per2_mq
+  - tmt_per2_mq_design
+  - psm_tmt_phospho
+  - psm_tmt_phospho_total
+  - tmt_phospho_design
+  - psm_tmt_total
+  - tmt_qf
+  - tmt_qf_mq
+  - lfq_qf
+  - lfq_qf_turboid
+  - dia_qf
+
+- title: Utilities
+  desc: >
+    Small helpers for tidying column names and identifiers.
+  contents:
+  - make_unique_all
+  - remove_dots
+  - remove_x
+  - qfeatures_long
+

@@ -1,0 +1,243 @@
+---
+title: "Working with QFeatures objects"
+author: "Tom Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: biomasslmb.json
+vignette: >
+  %\VignetteIndexEntry{Working with QFeatures objects}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Every analysis in these vignettes keeps its data in a `QFeatures` object, and the operations used to move through a pipeline — adding an assay, filtering rows, aggregating to protein level — are `QFeatures` operations rather than `biomasslmb` ones. This article covers the handful you need, so that the other vignettes can concentrate on the proteomics.
+
+It is worth twenty minutes before starting an analysis of your own. Nothing here is specific to any acquisition type. The [QFeatures documentation](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) covers the object in more depth.
+
+```{r, message=FALSE, warning=FALSE}
+library(QFeatures)
+library(biomasslmb)
+```
+
+# The idea: assays accumulate
+
+A `QFeatures` object holds a list of assays. Each assay is a `SummarizedExperiment`: a matrix of quantification values, with `rowData` describing the features (PSMs, peptides, precursors or proteins) and `colData` describing the samples.
+
+What makes it suited to proteomics is that a processing step adds a *new* assay rather than overwriting the previous one. `tmt_qf` is the object built by the [TMT workflow](TMT_PSM_QC_Summarisation.html) vignette, and its assay names are a record of what was done to it:
+
+```{r}
+tmt_qf
+```
+
+Each of those is a snapshot. Nothing was thrown away, so a protein-level value can always be traced back to the PSMs behind it — which is what `plot_protein_assays()` does, and why the QC vignettes accumulate names like `psms_filtered_sn` rather than reassigning one matrix.
+
+The cost is that you have to name every intermediate. The names are yours to choose; the vignettes use a convention of the feature level followed by what was done (`psms_filtered_rank`, `peptides_for_summarisation`).
+
+# Getting at the parts
+
+`[[` extracts one assay as a `SummarizedExperiment`:
+
+```{r}
+protein_se <- tmt_qf[['protein']]
+
+protein_se
+```
+
+From there the usual `SummarizedExperiment` accessors apply — `assay()` for the quantification matrix, `rowData()` for the feature annotations, `colData()` for the sample annotations:
+
+```{r}
+dim(assay(protein_se))
+
+head(colnames(rowData(protein_se)))
+```
+
+Single brackets subset the object itself, and take three arguments: rows, columns (samples), and assays. This is how you restrict to a subset of samples, as the testing vignette does when it drops the conditions it is not comparing:
+
+```{r, message=FALSE, warning=FALSE}
+# every assay, control samples only
+control_only <- tmt_qf[, tmt_qf$Condition == 'Control']
+
+dim(assay(control_only[['protein']]))
+```
+
+The third argument selects assays, which is useful when a function should only see part of the object:
+
+```{r, message=FALSE, warning=FALSE}
+names(tmt_qf[, , c('psms_raw', 'protein')])
+```
+
+Assigning into `[[` adds or replaces an assay. This is the workhorse of the QC vignettes:
+
+```{r, eval=FALSE}
+tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']], ...)
+```
+
+# The experimental design
+
+`colData` holds one row per sample, and it is what every function that knows about experimental conditions reads — `plot_pca(colour_by = )`, `condition_miss_score(group_cols = )`, and the `model.matrix()` calls in the testing vignettes.
+
+```{r}
+colData(tmt_qf)
+```
+
+## What your design table needs
+
+The design table you pass as `colData` when reading data in has to satisfy a small contract, and getting it wrong is the most common thing to go wrong at the first step.
+
+- **A `quantCols` column**, holding the names of the columns in your data file that contain quantification values. This is how `readQFeatures()` knows which columns are abundances and which are annotation. Alternatively, pass `quantCols` directly to `readQFeatures()` as a column index or name vector, and the design table does not need the column.
+- **Rownames, or a `quantCols` column, matching the sample identifiers.** After reading, the assay's column names come from `quantCols`, and `colData` rows are matched to them by name. If they disagree, samples silently fail to line up.
+- **A `runCol` column**, only when one file holds several runs that should become separate assays — several TMT plexes, or the per-run output of DIA-NN. See [multi-plex TMT](TMT_multiplex.html).
+- **Your experimental variables**, named as you like: `Condition`, `Replicate`, `Timepoint`, `Genotype`. These are what you refer to later by name.
+
+`tmt_clock_design` is a minimal example:
+
+```{r}
+knitr::kable(tmt_clock_design)
+```
+
+Its rownames are the quantification column names in `psm_tmt_clock`, which is why the vignette passes `quantCols = rownames(tmt_clock_design)`.
+
+In practice the design usually arrives as a spreadsheet from whoever ran the samples, and the first job of an analysis is to read it in and check it against the column names in the data file. That check is worth making explicitly — a mismatch produces a working-looking object with the labels shuffled.
+
+## Attaching the design to an assay
+
+`readQFeatures()` attaches `colData` at the object level only, so the assays inside start with an empty `colData`:
+
+```{r}
+tmt_qf_new <- readQFeatures(assayData = psm_tmt_clock,
+                            colData = tmt_clock_design,
+                            quantCols = rownames(tmt_clock_design),
+                            name = 'psms_raw')
+
+dim(colData(tmt_qf_new))
+dim(colData(tmt_qf_new[['psms_raw']]))
+```
+
+Functions that plot or model a single assay need the design on that assay. `sync_coldata()` copies it across, matching on sample name:
+
+```{r}
+tmt_qf_new <- sync_coldata(tmt_qf_new)
+
+dim(colData(tmt_qf_new[['psms_raw']]))
+```
+
+Assays created by `aggregateFeatures()` and `joinAssays()` also start without `colData`, so it is worth calling again after those. Calling it on the whole object is cheap and idempotent.
+
+# Filtering rows
+
+`filterFeatures()` filters on `rowData` columns, across the whole object or one named assay, using a formula:
+
+```{r}
+nrow(tmt_qf[['psms_raw']])
+
+filtered <- filterFeatures(tmt_qf, ~ Rank == 1, i = 'psms_raw')
+
+nrow(filtered[['psms_raw']])
+```
+
+Note that `filterFeatures()` modifies the assay in place rather than adding a new one, which is why the vignettes usually copy an assay to a new name first and then filter it.
+
+`filterNA()` filters on missingness instead, taking the maximum proportion of missing values a feature may have:
+
+```{r}
+peptides <- lfq_qf[['peptides_filtered_norm']]
+
+c(all = nrow(peptides),
+  at_most_4_of_6_missing = nrow(filterNA(peptides, pNA = 4/6)),
+  complete_only = nrow(filterNA(peptides, pNA = 0)))
+```
+
+`pNA = 0` means no missing values at all. The threshold is a real decision rather than a tidying step, and [handling missing values](handling_missing_values.html) covers how to choose it.
+
+# Aggregating to protein level
+
+`aggregateFeatures()` summarises features into a new assay, grouping by a `rowData` column and applying a function:
+
+```{r, eval=FALSE}
+tmt_qf <- aggregateFeatures(tmt_qf,
+                            i = 'psms_filtered_forSum',
+                            fcol = 'Master.Protein.Accessions',
+                            name = 'protein',
+                            fun = base::colSums)
+```
+
+`fcol` is the grouping column — the protein each feature was assigned to — and `fun` is the summarisation method. Which `fun` to use is the subject of [choosing a summarisation method](summarisation_methods.html).
+
+Unlike the filtering functions, this one takes the whole object and returns the whole object, because it needs to record the link between the input and output assays.
+
+# Assay links
+
+Those links are what lets you go back. `aggregateFeatures()` records which features contributed to which protein, so a protein-level value can be traced to the PSMs behind it:
+
+```{r}
+poi <- rownames(tmt_qf[['protein']])[2]
+
+contributing <- tmt_qf[[ 'psms_filtered_forSum' ]]
+contributing <- contributing[
+  rowData(contributing)$Master.Protein.Accessions == poi, ]
+
+c(protein = poi, n_psms = nrow(contributing))
+```
+
+`plot_protein_assays()` does this across several assays at once, which is the quickest way to check whether a hit rests on agreeing features or on one outlier:
+
+```{r, fig.height=5, fig.width=7, out.width='75%', warning=FALSE, message=FALSE}
+plot_protein_assays(tmt_qf, poi,
+                    experiments_to_plot = c('psms_filtered_sn', 'protein'),
+                    log2transform_cols = 'psms_filtered_sn')
+```
+
+# Transformations
+
+Two operations return a modified assay rather than a whole object, and both are used in every QC vignette:
+
+```{r, eval=FALSE}
+# log2 transform
+tmt_qf[['protein']] <- logTransform(tmt_qf[['protein']], base = 2)
+
+# normalise, here shifting every sample to a common median
+tmt_qf[['peptides_norm']] <- normalize(tmt_qf[['peptides']], method = 'diff.median')
+```
+
+`normalize()` expects log-scale values. Where a later step needs the original scale — summing PSMs, for instance — the vignettes exponentiate back with `assay(x) <- 2^assay(x)`.
+
+# Joining assays
+
+`joinAssays()` merges several assays into one, matching features by row name. This is how separately processed TMT plexes are brought together, and how DIA-NN's per-run assays are combined:
+
+```{r, eval=FALSE}
+qf <- joinAssays(qf, i = c('protein_1', 'protein_2'), name = 'protein_joined')
+```
+
+Features present in one assay and not another become `NA`, which for multi-plex TMT is a meaningful category rather than a nuisance — see [batch effects](gotcha_batch_effects.html).
+
+# A summary of the vocabulary
+
+| Operation | Function | Returns |
+|---|---|---|
+| Read data in | `readQFeatures()` | `QFeatures` |
+| Extract one assay | `obj[[i]]` | `SummarizedExperiment` |
+| Subset samples or assays | `obj[rows, cols, assays]` | `QFeatures` |
+| Add or replace an assay | `obj[[i]] <- ...` | — |
+| Attach the design to assays | `sync_coldata()` | `QFeatures` |
+| Filter on feature annotation | `filterFeatures()` | `QFeatures` |
+| Filter on missingness | `filterNA()` | same as input |
+| Log transform | `logTransform()` | `SummarizedExperiment` |
+| Normalise | `normalize()` | same as input |
+| Summarise to protein | `aggregateFeatures()` | `QFeatures` |
+| Merge assays | `joinAssays()` | `QFeatures` |
+
+# Where to go next
+
+With the vocabulary in hand, [getting started](biomasslmb.html) explains which analysis vignette applies to your experiment, and the vignette for your acquisition type works through one from search engine output to protein-level quantification.
+
+```{r}
+sessionInfo()
+```

@@ -55,7 +55,7 @@ knitr::kable(exp_design)
 ```{r, message=FALSE, warning=FALSE}
 qf <- readQFeatures(assayData = infdf, quantCols = intensity_cols_ix,
                     colData = exp_design, name = 'peptides_raw')
-colData(qf[['peptides_raw']]) <- colData(qf)
+qf <- sync_coldata(qf, 'peptides_raw')
 qf[['peptides_raw']] <- zeroIsNA(qf[['peptides_raw']])
 
 qf[['peptides']] <- filter_features_mq_dda(
@@ -66,7 +66,7 @@ qf[['peptides']] <- filter_features_mq_dda(
 
 qf[['peptides']] <- normalize(logTransform(qf[['peptides']], base = 2),
                               method = 'diff.median')
-colData(qf[['peptides']]) <- colData(qf)
+qf <- sync_coldata(qf, 'peptides')
 
 nrow(qf[['peptides']])
 ```
@@ -107,7 +107,7 @@ Two acquisitions of the same digest disagree about half as much as two separate 
 qf <- aggregateFeatures(qf, i = 'peptides',
                         fcol = 'Leading.razor.protein', name = 'protein',
                         fun = MsCoreUtils::robustSummary, maxit = 10000)
-colData(qf[['protein']]) <- colData(qf)
+qf <- sync_coldata(qf, 'protein')
 
 protein <- assay(qf[['protein']])
 sample_data <- colData(qf[['protein']])

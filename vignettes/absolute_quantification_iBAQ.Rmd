@@ -68,7 +68,7 @@ qf <- readQFeatures(assayData = infdf,
                     colData = exp_design,
                     name = 'peptides_raw')
 
-colData(qf[['peptides_raw']]) <- colData(qf)
+qf <- sync_coldata(qf, 'peptides_raw')
 ```
 
 # Filtering

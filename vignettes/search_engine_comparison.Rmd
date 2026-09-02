@@ -79,7 +79,7 @@ mq_qf <- readQFeatures(assayData = infdf,
                        colData = exp_design,
                        name = 'peptides_raw')
 
-colData(mq_qf[['peptides_raw']]) <- colData(mq_qf)
+mq_qf <- sync_coldata(mq_qf, 'peptides_raw')
 mq_qf[['peptides_raw']] <- zeroIsNA(mq_qf[['peptides_raw']])
 ```
 
@@ -96,7 +96,7 @@ mq_qf[['peptides_filtered']] <- filter_features_mq_dda(
   unique_master = FALSE,
   remove_no_quant = TRUE)
 
-colData(mq_qf[['peptides_filtered']]) <- colData(mq_qf)
+mq_qf <- sync_coldata(mq_qf, 'peptides_filtered')
 
 mq_qf[['peptides_filtered']] <- logTransform(
   mq_qf[['peptides_filtered']], base = 2)
@@ -123,7 +123,7 @@ mq_qf <- aggregateFeatures(mq_qf,
                            fun = MsCoreUtils::robustSummary,
                            maxit = 10000)
 
-colData(mq_qf[['protein']]) <- colData(mq_qf)
+mq_qf <- sync_coldata(mq_qf, 'protein')
 
 protein_retain_mask <- get_protein_no_quant_mask(
   mq_qf[['peptides_for_summarisation']], min_features = min_peps,

@@ -7,11 +7,12 @@ redirects:
 
 articles:
 - title: Start here
-  navbar: ~
+  navbar: Start here
   contents:
   - biomasslmb
+  - qfeatures_objects
 - title: Core workflow
-  navbar: ~
+  navbar: Core workflow
   contents:
   - protein_annotation
   - TMT_PSM_QC_Summarisation
@@ -21,20 +22,20 @@ articles:
   - exploration_and_statistical_testing
   - functional_enrichment
 - title: Specialised designs
-  navbar: ~
+  navbar: Specialised designs
   contents:
   - interactome_designs
   - PTM_site_quantification
   - absolute_quantification_iBAQ
 - title: Choosing between options
-  navbar: ~
+  navbar: Choosing between options
   contents:
   - handling_missing_values
   - summarisation_methods
   - search_engine_comparison
   - ORA_vs_GSEA
 - title: Cautionary tales
-  navbar: ~
+  navbar: Cautionary tales
   contents:
   - gotcha_peptide_to_protein
   - gotcha_batch_effects
@@ -106,6 +107,14 @@ reference:
   - get_medians
   - center_normalise_to_ref
   - bridge_normalise
+
+- title: Working with QFeatures objects
+  desc: >
+    Helpers for the object every analysis is built in. See
+    [working with QFeatures objects](articles/qfeatures_objects.html) for the
+    object model and the design-table contract.
+  contents:
+  - sync_coldata
 
 - title: Missing values
   desc: >

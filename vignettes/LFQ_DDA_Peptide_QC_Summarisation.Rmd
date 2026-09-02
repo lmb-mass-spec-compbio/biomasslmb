@@ -113,12 +113,10 @@ lfq_qf <- readQFeatures(assayData = infdf,
 
 ```
 
-Adding the `colData` to the peptide-level data too.
+`readQFeatures()` attaches the design at the object level only, so `sync_coldata()` copies it onto the assay as well, which is what the plotting and modelling functions read. See [working with QFeatures objects](qfeatures_objects.html).
 
 ```{r}
-colData(lfq_qf[['peptides_raw']]) <- colData(lfq_qf)
-
-
+lfq_qf <- sync_coldata(lfq_qf, 'peptides_raw')
 ```
 
 It's helpful to assess the retention time (RT) distribution for the peptides. `plot_rt_dist` defaults to the column name Proteome Discoverer uses for a Sequest HT search; this search was run with CHIMERYS, so we name the column explicitly.
@@ -155,7 +153,7 @@ lfq_qf[['peptides_filtered']] <- filter_features_pd_dda(lfq_qf[['peptides_raw']]
                                                  unique_master=FALSE,
                                                  remove_no_quant = TRUE)
 
-colData(lfq_qf[['peptides_filtered']]) <- colData(lfq_qf)
+lfq_qf <- sync_coldata(lfq_qf, 'peptides_filtered')
 ```
 
 
@@ -199,7 +197,7 @@ The same amount of material was injected for every sample, and this is a whole-p
 lfq_qf[['peptides_filtered_norm']] <- QFeatures::normalize(
   lfq_qf[['peptides_filtered']], method = 'diff.median')
 
-colData(lfq_qf[['peptides_filtered_norm']]) <- colData(lfq_qf)
+lfq_qf <- sync_coldata(lfq_qf, 'peptides_filtered_norm')
 
 plot_quant(lfq_qf[['peptides_filtered_norm']], log2transform=FALSE, method='density') +
   theme_biomasslmb() +
@@ -267,7 +265,7 @@ lfq_qf <- aggregateFeatures(lfq_qf,
                             fun = MsCoreUtils::robustSummary,
                             maxit=10000)
 
-colData(lfq_qf[['protein']]) <- colData(lfq_qf)
+lfq_qf <- sync_coldata(lfq_qf, 'protein')
 ```
 
 Prior to summarisation, we removed peptides from proteins with fewer than 2

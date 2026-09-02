@@ -60,7 +60,7 @@ tmt_qf_mq <- QFeatures::readQFeatures(assayData = psm_tmt_per2_mq,
                                       quantCols = rownames(tmt_per2_mq_design),
                                       name = "psms_raw")
 
-colData(tmt_qf_mq[['psms_raw']]) <- colData(tmt_qf_mq)
+tmt_qf_mq <- sync_coldata(tmt_qf_mq, 'psms_raw')
 
 tmt_qf_mq[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf_mq[['psms_raw']])
 
@@ -84,7 +84,7 @@ tmt_qf_mq[['psms_filtered']] <- filter_features_mq_dda(
   filter_associated_contaminant = TRUE,
   unique_master = TRUE)
 
-colData(tmt_qf_mq[['psms_filtered']]) <- colData(tmt_qf_mq)
+tmt_qf_mq <- sync_coldata(tmt_qf_mq, 'psms_filtered')
 ```
 
 ## Normalise (or not)
@@ -109,7 +109,7 @@ tmt_qf_mq[['psms_filtered_interference']] <- filter_TMT_PSMs(
   master_protein_col = 'Leading.razor.protein',
   from_PD = FALSE)
 
-colData(tmt_qf_mq[['psms_filtered_interference']]) <- colData(tmt_qf_mq)
+tmt_qf_mq <- sync_coldata(tmt_qf_mq, 'psms_filtered_interference')
 ```
 
 ## Exploring missing values
@@ -151,7 +151,7 @@ tmt_qf_mq <- QFeatures::aggregateFeatures(
   name = "protein",
   fun = MsCoreUtils::robustSummary)
 
-colData(tmt_qf_mq[['protein']]) <- colData(tmt_qf_mq)
+tmt_qf_mq <- sync_coldata(tmt_qf_mq, 'protein')
 ```
 
 ## Requiring more than one PSM behind every value
@@ -275,7 +275,7 @@ lfq_qf_turboid <- readQFeatures(assayData = infdf,
                                 colData = turboid_design,
                                 name = 'peptides_raw')
 
-colData(lfq_qf_turboid[['peptides_raw']]) <- colData(lfq_qf_turboid)
+lfq_qf_turboid <- sync_coldata(lfq_qf_turboid, 'peptides_raw')
 ```
 
 ## Filtering
@@ -298,7 +298,7 @@ lfq_qf_turboid[['peptides']] <- filter_features_pd_dda(
 
 lfq_qf_turboid[['peptides']] <- logTransform(
   lfq_qf_turboid[['peptides']], base = 2)
-colData(lfq_qf_turboid[['peptides']]) <- colData(lfq_qf_turboid)
+lfq_qf_turboid <- sync_coldata(lfq_qf_turboid, 'peptides')
 ```
 
 As in Part A, we do not median-normalise: the biotin samples are expected to contain a different set of proteins from the controls, which is the whole point of the experiment.
@@ -351,7 +351,7 @@ lfq_qf_turboid <- aggregateFeatures(
   fcol = 'Master.Protein.Accessions', name = 'protein',
   fun = MsCoreUtils::robustSummary, maxit = 10000)
 
-colData(lfq_qf_turboid[['protein']]) <- colData(lfq_qf_turboid)
+lfq_qf_turboid <- sync_coldata(lfq_qf_turboid, 'protein')
 
 retain_mask_turboid <- get_protein_no_quant_mask(
   lfq_qf_turboid[['peptides_for_summarisation']], min_features = 2)

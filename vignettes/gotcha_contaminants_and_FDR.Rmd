@@ -45,7 +45,7 @@ exp_design <- data.frame(
 read_peptides <- function(df) {
   qf <- readQFeatures(assayData = df, quantCols = abundance_cols_ix,
                       colData = exp_design, name = 'peptides')
-  colData(qf[['peptides']]) <- colData(qf)
+  qf <- sync_coldata(qf, 'peptides')
   qf[['peptides']]
 }
 

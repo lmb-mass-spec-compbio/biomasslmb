@@ -61,6 +61,8 @@ We start by reading in quantitative proteomics data into a `QFeatures` object, w
 
 `psm_tmt_clock` contains the PSM-level output from PD for this experiment, with the abundance columns already renamed to match the sample names used in `tmt_clock_design`. We pass `tmt_clock_design` as the `colData`, so the experimental design travels with the quantification data.
 
+`readQFeatures()` attaches the design at the object level only, so `sync_coldata()` copies it onto the assay as well — functions that plot or model a single assay, such as `plot_quant()` below, read it from there. [Working with QFeatures objects](qfeatures_objects.html) covers this and the rest of the object's vocabulary.
+
 ```{r}
 
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
@@ -68,10 +70,7 @@ tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
                                    quantCols = rownames(tmt_clock_design),
                                    name = "psms_raw")
 
-# QFeatures::readQFeatures only attaches colData at the QFeatures level;
-# we also want it directly on the PSM-level SummarizedExperiment so that
-# functions which plot/model a single assay (e.g. plot_quant) can use it.
-colData(tmt_qf[["psms_raw"]]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, "psms_raw")
 
 ```
 
@@ -111,7 +110,7 @@ tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']],
                                              filter_associated_contaminant=TRUE,
                                              unique_master=TRUE)
 
-colData(tmt_qf[['psms_filtered']]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, 'psms_filtered')
 ```
 
 # Normalise
@@ -141,7 +140,7 @@ tmt_qf[['psms_filtered_norm']] <- QFeatures::normalize(
 # Exponentiate the quantification values back to the initial scale.
 assay(tmt_qf[['psms_filtered_norm']]) <- 2^assay(tmt_qf[['psms_filtered_norm']])
 
-colData(tmt_qf[['psms_filtered_norm']]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, 'psms_filtered_norm')
 
 # Plot the peptide-level quantification distributions per sample
 biomasslmb::plot_quant(tmt_qf[['psms_filtered_norm']],
@@ -179,7 +178,7 @@ Based on the above, we will filter the PSMs to only retain those with S:N \> 10 
 # Then filter PSMs to remove low S:N and/or high interference
 tmt_qf[['psms_filtered_sn']] <- filter_TMT_PSMs(tmt_qf[['psms_filtered_norm']],
                                                 inter_thresh=50, sn_thresh=10)
-colData(tmt_qf[['psms_filtered_sn']]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, 'psms_filtered_sn')
 ```
 We will also remove peptides that are not rank 1 according to the search engine.
 
@@ -250,7 +249,7 @@ tmt_qf <- QFeatures::aggregateFeatures(tmt_qf,
                                        name = "protein",
                                        fun = base::colSums)
 
-colData(tmt_qf[['protein']]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, 'protein')
 ```
 
 ```{r}

@@ -167,7 +167,7 @@ tmt_qf_2plex <- QFeatures::joinAssays(
   i = paste0("protein_", plexes),
   name = "protein_joined")
 
-colData(tmt_qf_2plex[["protein_joined"]]) <- colData(tmt_qf_2plex)
+tmt_qf_2plex <- sync_coldata(tmt_qf_2plex, "protein_joined")
 
 dim(tmt_qf_2plex[["protein_joined"]])
 ```

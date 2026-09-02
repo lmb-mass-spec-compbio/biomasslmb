@@ -86,7 +86,7 @@ for (plex in plexes) {
 
 tmt_qf <- joinAssays(tmt_qf, i = paste0("protein_", plexes),
                      name = "protein_joined")
-colData(tmt_qf[["protein_joined"]]) <- colData(tmt_qf)
+tmt_qf <- sync_coldata(tmt_qf, "protein_joined")
 ```
 
 That gives the naive merge — every plex processed properly on its own, then stacked side by side. The corrected version differs from it by one function call.

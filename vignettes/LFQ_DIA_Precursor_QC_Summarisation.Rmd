@@ -153,7 +153,7 @@ dia_qf <- joinAssays(
 # this vignette.
 dia_qf <- removeAssay(dia_qf, i = which(names(dia_qf) != "precursors"))
 
-colData(dia_qf[['precursors']]) <- colData(dia_qf)
+dia_qf <- sync_coldata(dia_qf, 'precursors')
 ```
 
 We first perform routine filtering to remove precursors that:
@@ -168,7 +168,7 @@ dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(
   contaminant_proteins = contaminant_accessions
 )
 
-colData(dia_qf[['peptides_filtered']]) <- colData(dia_qf)
+dia_qf <- sync_coldata(dia_qf, 'peptides_filtered')
 ```
 
 For the summarisation, we need our quantification values to be on a log-scale, so we log-transform below
@@ -195,7 +195,7 @@ This is a whole-plasma-proteome comparison between clinical groups, where we don
 dia_qf <- QFeatures::normalize(
   dia_qf, i = 'peptides_filtered', name = 'peptides_filtered_norm', method = 'diff.median')
 
-colData(dia_qf[['peptides_filtered_norm']]) <- colData(dia_qf)
+dia_qf <- sync_coldata(dia_qf, 'peptides_filtered_norm')
 ```
 
 ```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
@@ -270,7 +270,7 @@ dia_qf <- aggregateFeatures(dia_qf,
                             fun = MsCoreUtils::robustSummary,
                             maxit = 10000)
 
-colData(dia_qf[['protein']]) <- colData(dia_qf)
+dia_qf <- sync_coldata(dia_qf, 'protein')
 ```
 
 Prior to summarisation, we removed peptides from proteins with fewer than 2
@@ -411,7 +411,7 @@ sn_qf <- sn_qf %>%
 sn_qf <- joinAssays(
   x = sn_qf, i = names(sn_qf), name = "precursors", fcol = "Precursor.Id")
 
-colData(sn_qf[['precursors']]) <- colData(sn_qf)
+sn_qf <- sync_coldata(sn_qf, 'precursors')
 
 dim(sn_qf[['precursors']])
 ```

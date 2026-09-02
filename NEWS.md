@@ -1,5 +1,14 @@
 # biomasslmb (development version)
 
+* New `sync_coldata()` copies the object-level `colData` onto named assays,
+  matching on sample name. It replaces the
+  `colData(obj[[i]]) <- colData(obj)` idiom, which appeared 32 times across
+  the vignettes.
+
+* New `Working with QFeatures objects` article covering the object model and
+  the design-table contract, and a complete forty-line worked analysis at the
+  top of the getting-started article.
+
 * New `lfq_qf_turboid` dataset: an LFQ-DDA TurboID pulldown (three biotin
   against three control), processed to protein level in Part B of the
   `Enrichment designs` vignette, which now carries an enrichment experiment

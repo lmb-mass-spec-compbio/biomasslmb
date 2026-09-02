@@ -23,6 +23,8 @@ DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN),
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between groups, with no enrichment step and a single acquisition batch. That is the common case, and the choices made below are the conventional ones for it. An enrichment experiment — an IP, BioID or TurboID pulldown — needs different reasoning about normalisation and about missing values, and is covered in [enrichment designs](interactome_designs.html).
 
+If this is your first analysis with the package, [getting started](biomasslmb.html) explains which route applies to your experiment and shows a complete one in forty lines, and [working with QFeatures objects](qfeatures_objects.html) covers the object every step below operates on. Annotations are worth retrieving before any of this — see [protein annotation](protein_annotation.html).
+
 The data used in this vignette is a real DIA-NN `report.parquet` output for a plasma proteomics case series comparing Mpox (MPXV) infection, COVID-19, and healthy controls [@Wang2022]. It is also used, with accompanying teaching material, in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Unlike the truncated demonstration files used elsewhere in `biomasslmb`, this dataset is used here in full - it is small enough not to need subsetting
 
 Spectronaut is the other search engine in common use for DIA data. Only the reading step differs: [reading Spectronaut output](#reading-spectronaut-output) at the end of this vignette shows how to reach the same `precursors` assay, after which every step below applies unchanged.

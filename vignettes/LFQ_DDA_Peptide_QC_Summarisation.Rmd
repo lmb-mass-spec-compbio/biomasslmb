@@ -26,6 +26,8 @@ Despite the pitfalls of LFQ, the data analysis is still relatively straightforwa
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between two conditions, three replicates each. That is the common case, and the choices made below are the conventional ones for it. An enrichment experiment — an IP, BioID or TurboID pulldown — needs different reasoning about normalisation and about missing values, and is covered in [enrichment designs](interactome_designs.html).
 
+If this is your first analysis with the package, [getting started](biomasslmb.html) explains which route applies to your experiment and shows a complete one in forty lines, and [working with QFeatures objects](qfeatures_objects.html) covers the object every step below operates on. Annotations are worth retrieving before any of this — see [protein annotation](protein_annotation.html).
+
 # Load required packages
 
 ```{r, message=FALSE}

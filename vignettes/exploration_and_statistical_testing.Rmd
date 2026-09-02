@@ -293,6 +293,86 @@ plot_protein_assays(
 
 The PSMs consistently show higher abundance in the IP samples than the Control samples, supporting this as a genuine interactor rather than an artefact of a single PSM or a missing-value pattern.
 
+# Reporting the result
+
+A volcano plot is a summary, not a deliverable. What goes back to whoever ran the experiment is a table, and what makes it usable is the columns that let a reader judge each row without re-running the analysis.
+
+## The results table
+
+Four kinds of column belong in it: the identifier, something human-readable, the statistics, and the evidence behind them.
+
+```{r}
+report <- limma_results %>%
+  select(Protein, Genes, logFC, AveExpr, P.Value, adj.P.Val,
+         n_quant_control, n_quant_MPXV) %>%
+  arrange(adj.P.Val)
+
+head(report, 5) %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 3))) %>%
+  knitr::kable()
+```
+
+The per-condition counts are the column most often left out and the one a reader most needs. A two-fold change resting on 6 measurements against 15 is a different claim from the same fold change resting on 2 against 2, and nothing else in the table distinguishes them.
+
+Two things are worth adding explicitly rather than leaving implicit.
+
+**The proteins that were not tested.** They are absent from `limma_results` altogether, so a reader has no way to tell a protein that was quantified and found unchanged from one that never entered the model. Reporting them in the same file, flagged, prevents that being read as evidence of no change.
+
+```{r}
+untested <- setdiff(rownames(dia_prot[['protein']]), limma_results$Protein)
+
+untested_report <- data.frame(
+  Protein = untested,
+  Genes = gene_names$Genes[match(untested, gene_names$Protein.Group)],
+  n_quant_control = n_quant[untested, 'control'],
+  n_quant_MPXV = n_quant[untested, 'MPXV'])
+
+c(tested = nrow(report), untested = nrow(untested_report))
+```
+
+**Which threshold was applied.** Add the call rather than leaving the reader to apply their own cutoff to the adjusted p-values, since the fold-change threshold used by `treat` is already baked into them and is not recoverable from the table.
+
+```{r}
+report$significant <- report$adj.P.Val < 0.05
+```
+
+## Writing it out
+
+`openxlsx` writes a workbook with one sheet per data frame, which keeps the tested and untested proteins in one file without merging them.
+
+```{r, eval=FALSE}
+openxlsx::write.xlsx(
+  list(tested = report, untested = untested_report),
+  file = 'MPXV_vs_control_results.xlsx')
+```
+
+A plain CSV is the better choice where the result feeds another script rather than a person.
+
+```{r, eval=FALSE}
+write.csv(report, 'MPXV_vs_control_results.csv', row.names = FALSE)
+```
+
+Save the `QFeatures` object alongside it. It holds every intermediate assay, so it is the only artefact that makes the analysis reproducible without re-running it, and it is what you will want if a question comes back in six months.
+
+```{r, eval=FALSE}
+saveRDS(dia_prot, 'MPXV_vs_control_qfeatures.rds')
+```
+
+## What to put in a methods section
+
+The numbers a reader needs to judge the analysis are all produced above, but they are scattered across the vignettes that produced them. Collected in one place:
+
+- **Search engine and version**, the sequence database and its release, and the contaminant database — all upstream of this package, and all determining what the input table contains.
+- **Feature-level filtering**: the contaminant removal, the confidence or FDR thresholds, and any signal:noise or co-isolation cutoffs, with the values used.
+- **How missing values were handled**: the `filterNA` threshold, whether anything was imputed and by what method, and the minimum features per protein.
+- **The summarisation method**, and whether protein values resting on too few features were masked.
+- **The normalisation**, and what it assumed was unchanged.
+- **The testability rule**, and how many proteins passed it out of how many were quantified. This is the number that defines the multiple-testing burden, and it is rarely reported.
+- **The test**, its fold-change threshold if any, and the multiple-testing correction.
+- **Software versions.** `sessionInfo()` at the end of every vignette here exists for this.
+
+`get_samples_present()` and `plot_samples_present()`, used in each QC vignette, produce the feature and protein counts at every stage in a form that goes straight into a supplementary figure.
+
 # Summary
 
 Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecipitation (Part B):

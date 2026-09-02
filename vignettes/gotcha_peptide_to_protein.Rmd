@@ -157,6 +157,8 @@ with(assignments, table(peptide_is_shared = shared, same_protein_assigned = agre
 
 Overall agreement is high, and it is entirely carried by the unshared peptides, where there was never a decision to make. Among the peptides that genuinely map to more than one protein, the two engines pick the same one less than half the time.
 
+That last figure rests on the `r sum(assignments$shared)` shared peptides in this one truncated dataset, so treat it as an indication of the size of the problem rather than as a rate to quote. What it does establish is that the assignment is a decision the search engine makes and not a measurement it reports, since two engines given identical spectra reach different answers often enough to matter.
+
 ```{r}
 assignments %>%
   filter(shared, !agree) %>%
@@ -178,7 +180,7 @@ Everything above assumes the search database is a reference proteome: one entry 
 
 - The overwhelming majority of tryptic peptides map to exactly one protein, so protein inference is uncontroversial for most of the proteome and this is not a reason to distrust proteomics generally.
 - The exceptions are concentrated, not scattered. In the human proteome around `r round(100 * mean(peptide_uniqueness[['Homo sapiens']]$proteins$perc_unique < 50), 0)`% of proteins have under half their peptides to themselves, and `r format(sum(peptide_uniqueness[['Homo sapiens']]$proteins$n_unique == 0), big.mark = ',')` have none at all. In a small bacterial proteome the problem is close to absent.
-- Master and razor protein assignments are inferences. Two search engines given identical spectra agree on which protein a shared peptide belongs to less than half the time.
+- Master and razor protein assignments are inferences, not measurements. On the `r sum(assignments$shared)` shared peptides in the dataset above, two search engines given identical spectra agreed on the protein less than half the time.
 - Before believing a protein-level result, check whether that protein had unique peptides — `Number.of.Proteins` in a PD export, `Unique..Proteins.` in MaxQuant — and be especially careful with members of paralogue families and with any result that distinguishes between two closely related proteins.
 
 The QC vignettes for each acquisition type apply `unique_master` filtering at the point where it belongs: [TMT](TMT_PSM_QC_Summarisation.html), [LFQ-DDA](LFQ_DDA_Peptide_QC_Summarisation.html) and [LFQ-DIA](LFQ_DIA_Precursor_QC_Summarisation.html).

@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DIA.
+Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Acquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Acquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DIA.
 
 DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN), which reports results at multiple levels. Here, we will use the data from the precursor level (a specific peptide sequence, with modifications, at a specific charge state). Since DIA co-fragments many precursors at once, DIA-NN infers identifications either from a project-specific spectral library or via a library predicted in-silico from the sequence database, then rescores them, optionally using match-between-runs (MBR) to borrow confidence across runs. As with DDA, we still need to filter to confident identifications, remove contaminants, handle missing values, and summarise to protein-level abundance before any statistical analysis.
 
@@ -316,7 +316,7 @@ We'll start by inspecting the number of peptides in each experiment. We therefor
 ```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each precursor at each level of processing", out.width='75%'}
 rename_cols <- c('All precursors' = 'precursors',
                  'Quantified, contaminants removed' = 'peptides_filtered',
-                 'No missing values' = 'peptides_filtered_missing',
+                 'At most 75% missing values' = 'peptides_filtered_missing',
                  '>1 peptide per protein' = 'peptides_for_summarisation')
 
 rowvars <- c('Precursor.Id')
@@ -338,7 +338,7 @@ samples_present <- get_samples_present(dia_qf, rowvars_prot, rename_cols_prot)
 plot_samples_present(samples_present, rowvars_prot, breaks = seq(5, 30, 5))
 ```
 
-From these two plots, we can see that the filtering to ensure that all proteins have no missing values and \>1 peptides removed only a few peptides, but many proteins. Whether this is appropriate will depend on your data in hand.
+From these two plots, we can see that the filtering to remove precursors with more than 75% missing values and to require \>1 precursor per protein removed relatively few precursors, but many proteins. Whether this is appropriate will depend on your data in hand.
 
 ```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes

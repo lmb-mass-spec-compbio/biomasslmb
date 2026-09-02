@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.R
 \name{plot_pca}
 \alias{plot_pca}
-\title{Create a Principle Component plot from the feature quantification}
+\title{Create a Principal Component plot from the feature quantification}
 \usage{
 plot_pca(
   obj,
@@ -26,9 +26,9 @@ plot_pca(
 
 \item{shape_by}{\code{string}. ColData column to shape points by}
 
-\item{x}{\code{numeric}. Principle component to plot on x-axis}
+\item{x}{\code{numeric}. Principal component to plot on x-axis}
 
-\item{y}{\code{numeric}. Principle component to plot on x-axis}
+\item{y}{\code{numeric}. Principal component to plot on y-axis}
 
 \item{...}{additional arguments passed onto \code{pcaMethods::pca} (when
 \code{allowing_missing=TRUE}) or \code{stats::prcomp} (when \code{allowing_missing=FALSE})}
@@ -38,7 +38,7 @@ Returns a \emph{ggplot} object.
 }
 \description{
 A PCA visualisation of feature quantifications in each sample can
-allow one to see how the experimental conditions relate to the sources of variance (principle components).
+allow one to see how the experimental conditions relate to the sources of variance (principal components).
 This function plots a PCA, with the option to colour and/or shape the points by experimental conditions.
 The percentage values indicated on the axes are the variance explained by the PCs.
 }

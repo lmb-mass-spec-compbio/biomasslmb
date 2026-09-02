@@ -1,7 +1,7 @@
-#' Create a Principle Component plot from the feature quantification
+#' Create a Principal Component plot from the feature quantification
 #'
 #' @description A PCA visualisation of feature quantifications in each sample can
-#' allow one to see how the experimental conditions relate to the sources of variance (principle components).
+#' allow one to see how the experimental conditions relate to the sources of variance (principal components).
 #' This function plots a PCA, with the option to colour and/or shape the points by experimental conditions.
 #' The percentage values indicated on the axes are the variance explained by the PCs.
 #'
@@ -10,8 +10,8 @@
 #' @param allowing_missing `logical`. If TRUE, will use pcaMethods::pca to allow for missing values. If FALSE (default), will use stats::prcomp and remove any features with missing values
 #' @param colour_by `string`. ColData column to colour points by
 #' @param shape_by `string`. ColData column to shape points by
-#' @param x `numeric`. Principle component to plot on x-axis
-#' @param y `numeric`. Principle component to plot on x-axis
+#' @param x `numeric`. Principal component to plot on x-axis
+#' @param y `numeric`. Principal component to plot on y-axis
 #' @param ... additional arguments passed onto `pcaMethods::pca` (when
 #' `allowing_missing=TRUE`) or `stats::prcomp` (when `allowing_missing=FALSE`)
 #' @return Returns a _ggplot_ object.

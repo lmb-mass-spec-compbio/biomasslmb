@@ -20,11 +20,11 @@ knitr::opts_chunk$set(
 Quantitative proteomics using isobaric tagging such as Tandem Mass Tags (TMT) has a considerable benefit over Label-Free Quantification (LFQ) in that up to 35 samples can be quantified for each Peptide Spectrum Match (PSM). This has multiple benefits over analysing samples in separate runs (LFQ):
 
 1.  TMT reduces protein quantification variance since PSM-level quantification is derived from the same MS1 ion for all samples
-2.  LFQ suffers from much higher missing values when comparing across samples due to the limited number of ions that can be fragmented in each run and the associated issue of peptides being identified in only a subset of runs [@http://zotero.org/users/5634351/items/ME322P2A]. This is ameliorated to a significant degree by Data-Independent Aquisition (DIA) LFQ. However, DIA still involves quantifying each sample separately, so missing values are not entirely removed, and proteins in each sample may be quantified from different sets of peptides.
+2.  LFQ suffers from much higher missing values when comparing across samples due to the limited number of ions that can be fragmented in each run and the associated issue of peptides being identified in only a subset of runs [@http://zotero.org/users/5634351/items/ME322P2A]. This is ameliorated to a significant degree by Data-Independent Acquisition (DIA) LFQ. However, DIA still involves quantifying each sample separately, so missing values are not entirely removed, and proteins in each sample may be quantified from different sets of peptides.
 
 Because TMT quantifies from the same MS1 ion for all samples, this standardises the features quantified in each sample, which simplifies the comparison between samples and increases quantification accuracy of summarised features such as proteins.
 
-However, TMT does suffer from ratio compression, which should be avoiding by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
+However, TMT does suffer from ratio compression, which should be avoided by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between two conditions, labelled in a single TMT plex and searched with Proteome Discoverer (PD). That combination covers the majority of TMT experiments, and the choices made below are the conventional ones for it.
 
@@ -221,7 +221,7 @@ miss_res <- condition_miss_score(tmt_qf, i = 'psms_filtered_rank', group_cols = 
 condition_miss_index(miss_res$summary)$index
 ```
 
-Only a small fraction of PSMs have any missing values at all (`r miss_res$global['n_features_informative']` out of `r miss_res$global['n_features_total']`), and the condition missingness index is close to zero, so we have no evidence that the missingness we do have is structured by `Condition`. On that basis, we'll proceed with the simplest approach: remove PSMs with any missing value, rather than reaching for `robustSummary` or imputation strategies designed to handle structured missingness (see Part B below for a dataset where that trade-off comes out differently).
+Only a small fraction of PSMs have any missing values at all (`r miss_res$global['n_features_informative']` out of `r miss_res$global['n_features_total']`), and the condition missingness index is close to zero, so we have no evidence that the missingness we do have is structured by `Condition`. On that basis, we'll proceed with the simplest approach: remove PSMs with any missing value, rather than reaching for `robustSummary` or imputation strategies designed to handle structured missingness (the [LFQ-DDA workflow](LFQ_DDA_Peptide_QC_Summarisation.html) works through a dataset where that trade-off comes out the other way).
 
 We'll use the simple `sum` summarisation, which requires complete data: leaving missing values in would mean either allowing some protein quantifications to be `NA`, or summing over whatever PSMs happen to be present, so that a given protein's abundance is built from different PSMs in different samples and becomes less accurately comparable across them. We therefore remove all PSMs with missing values before summarising.
 
@@ -293,7 +293,7 @@ plot_samples_present(samples_present, rowvars, breaks=seq(2,12,2)) + ylab('PSM')
 
 ### Samples per Protein
 
-Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accesions` column.
+Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accessions` column.
 
 ```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
 

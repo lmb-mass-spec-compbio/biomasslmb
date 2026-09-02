@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 ```
 
 
-Label-Free Quantification (LFQ) is the simplest form of quantitative bottom-up proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Aquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Aquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DDA.
+Label-Free Quantification (LFQ) is the simplest form of quantitative bottom-up proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Acquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Acquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DDA.
 
 Since each sample is run separately, different peptides will be quantified in each sample and the peptide intensities may not be directly comparable between samples. The common solution to the higher burden of missing values is to use the 'match-between-runs' [@http://zotero.org/users/5634351/items/87YIDK69], or the functionally equivalent 'Minora' algorithm employed by Proteome Discoverer (PD). These algorithms use the observed retention times of MS1 ions which were successfully spectrum matched in one sample to identify the likely peptide sequence of MS1 ions that could not be spectrum matched in another sample. However, even with these algorithms enabled, DDA LFQ will still typically have many more missing values than labelled proteomics, e.g TMT.
 
@@ -136,17 +136,17 @@ The companion check, `plot_rt_vs_delta`, plots the precursor mass error against 
 
 # Filter peptides
 
-We first perform routine filtering to remove PSMs that:
+We first perform routine filtering to remove peptides that:
 
 -   Could originate from contaminants. See `?filter_features_pd_dda` for
-    further details, including the removal of 'associated cRAP'.
+    further details, including the removal of 'associated' contaminants.
 -   Don't have a unique master protein
 -   Don't have any quantification values
 
 ```{r}
 # Perform routine raw data filtering.
-# - Remove PSMs from contaminant proteins
-# - Remove PSMs where protein ID is empty or not unique
+# - Remove peptides from contaminant proteins
+# - Remove peptides where protein ID is empty or not unique
 
 lfq_qf[['peptides_filtered']] <- filter_features_pd_dda(lfq_qf[['peptides_raw']],
                                                  contaminant_proteins=contaminant_accessions,
@@ -270,7 +270,7 @@ lfq_qf <- aggregateFeatures(lfq_qf,
 colData(lfq_qf[['protein']]) <- colData(lfq_qf)
 ```
 
-Prior to summaristaion, we removed PSMs from proteins with fewer than 2
+Prior to summarisation, we removed peptides from proteins with fewer than 2
 peptides. However, since we left in peptides with missing values, it's
 possible for some protein-level abundances to be derived from just a
 single peptide. We can use the `get_protein_no_quant_mask` from
@@ -313,7 +313,7 @@ names(lfq_qf)
 
 We'll start by inspecting the number of peptides in each experiment. We therefore define a named character vector all the peptides-level experiments. We set the row variables to be `Annotated.Sequence` and `Modifications` so that we count the number of unique peptides.
 
-```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each PSM at each level of processing", out.width='75%'}
+```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each peptide at each level of processing", out.width='75%'}
 
 
 rename_cols <- c('All peptides' = 'peptides_raw' ,
@@ -332,7 +332,7 @@ plot_samples_present(samples_present, rowvars, breaks=seq(2,6,2)) + ylab('Peptid
 
 ### Samples per Protein
 
-Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accesions` column.
+Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variables to be just the `Master.Protein.Accessions` column.
 
 ```{r, fig.height=7, , fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
 

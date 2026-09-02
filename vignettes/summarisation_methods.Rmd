@@ -38,7 +38,7 @@ library(dplyr)
 
 ## Summarisation with robustSummary
 
-With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs with at most 5/10 missing values.
+With `robustSummary`, we do not need to remove all PSMs with missing values since the summarisation algorithm deals with them appropriately. However, we still don't want to retain PSMs with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain PSMs missing from at most half the channels.
 
 ```{r}
 tmt_qf[['psms_filtered_forRobust']] <- QFeatures::filterNA(

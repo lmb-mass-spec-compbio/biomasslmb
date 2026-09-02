@@ -11,6 +11,9 @@ An object of class \code{QFeatures} of length 8.
 tmt_qf
 }
 \description{
-Qfeature containing TMT data processed in the \verb{TMT QC PSM-level quantification and summarisation to protein-level abundance} vignette
+\code{QFeatures} object holding the single-plex TMT dataset
+(\code{psm_tmt_clock}) processed through PSM QC, filtering and summarisation to
+protein level with \code{sum}, as produced in the
+\verb{TMT workflow: PSM QC and protein summarisation} vignette.
 }
 \keyword{datasets}

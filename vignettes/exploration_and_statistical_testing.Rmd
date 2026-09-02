@@ -177,9 +177,11 @@ plot_protein_assays(
 
 The precursor-level trend is consistent across the processing steps and across the individual precursors contributing to the protein, giving confidence that this is a genuine change rather than an artefact of summarisation.
 
-# Part B: MaxQuant (MQ) input
+# Part B: a TMT immunoprecipitation
 
-`tmt_qf_mq` is the immunoprecipitation dataset from the [enrichment designs](interactome_designs.html) vignette: a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each, summarised to protein level with `robustSummary`.
+`tmt_qf_mq` is the immunoprecipitation dataset from Part A of the [enrichment designs](interactome_designs.html) vignette: a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each, searched with MaxQuant and summarised to protein level with `robustSummary`. Its `rowData` uses MaxQuant's column names rather than Proteome Discoverer's, which is visible in the calls below.
+
+An enrichment design also calls for choices at the testing stage that a whole-proteome comparison does not, and how far those matter depends on the acquisition. Part B of the [enrichment designs](interactome_designs.html) vignette works through them on a label-free pulldown, where they decide the result; here they are comparatively mild, and the section on testability below shows why.
 
 ```{r}
 names(tmt_qf_mq)
@@ -194,7 +196,7 @@ plot_cor_samples(tmt_qf_mq, 'protein')
 
 ## Principal component analysis
 
-As in Part A, `robustSummary` doesn't require complete PSMs, so `tmt_qf_mq[['protein']]` retains a small number of missing values (`r round(100*mean(is.na(assay(tmt_qf_mq[['protein']]))), 2)` % of the matrix), and we set `allowing_missing=TRUE` so the PCA runs via `pcaMethods::pca`.
+As in Part A, `tmt_qf_mq[['protein']]` retains missing values (`r round(100*mean(is.na(assay(tmt_qf_mq[['protein']]))), 1)` % of the matrix), so we set `allowing_missing=TRUE` and the PCA runs via `pcaMethods::pca`. Most of that missingness is contributed by the proteins the QC vignette masked for resting on a single PSM per channel.
 
 ```{r, fig.height=4, fig.width=5, out.width='60%'}
 plot_pca(tmt_qf_mq, 'protein', colour_by='Condition', scale='uv', center=TRUE, allowing_missing=TRUE) +
@@ -205,7 +207,7 @@ IP and Control samples separate clearly, as expected for a specific enrichment.
 
 ## Which proteins can be tested?
 
-The same testability rule applies here, but TMT quantification within a plex is close to complete once the S:N and interference filters of the QC vignette have been applied, so it excludes nothing.
+The same testability rule applies here.
 
 ```{r}
 condition_mq <- factor(tmt_qf_mq[['protein']]$Condition, levels = c('Control', 'IP'))
@@ -214,10 +216,16 @@ n_quant_mq <- sapply(levels(condition_mq), function(g){
   rowSums(!is.na(assay(tmt_qf_mq[['protein']])[, condition_mq == g, drop = FALSE]))
 })
 
-table(testable = apply(n_quant_mq, 1, min) >= 2)
+testable_mq <- rownames(n_quant_mq)[apply(n_quant_mq, 1, min) >= 2]
+
+c(proteins = nrow(n_quant_mq),
+  testable = length(testable_mq),
+  absent_from_control = sum(n_quant_mq[, 'Control'] == 0))
 ```
 
-That is the usual position for a single-plex TMT experiment, and it is worth checking rather than assuming: the filter matters where missingness is common, which for TMT means comparisons that span plexes rather than comparisons within one.
+It excludes almost nothing, and — more to the point — not one protein is absent from the control pulldown, which is the pattern an enrichment design would lead you to expect and to worry about discarding.
+
+That is the usual position for a single-plex TMT experiment, and the QC vignette measures it directly: all twelve channels are quantified from the same spectrum, so a protein enriched in the IP registers in the control channels too, at a lower intensity rather than as a missing value. The testability filter is doing ordinary work here, not the enrichment-specific work it does when each sample is acquired separately — which is where Part B of the [enrichment designs](interactome_designs.html) vignette picks up, with a testability rule and an imputation strategy chosen for that case.
 
 ## Differential abundance testing with limma
 
@@ -226,7 +234,7 @@ The statistical model itself is the same as Part A, but the biological question 
 ```{r, fig.show='hide'}
 design_mq <- model.matrix(~condition_mq)
 
-fit_mq <- lmFit(assay(tmt_qf_mq[['protein']]), design_mq)
+fit_mq <- lmFit(assay(tmt_qf_mq[['protein']])[testable_mq, ], design_mq)
 final_model_mq <- treat(fit_mq, fc = 2, trend = TRUE, robust = TRUE)
 
 limma_results_mq <- topTreat(final_model_mq, coef = 'condition_mqIP', number = Inf) %>%
@@ -238,6 +246,8 @@ table(direction = ifelse(limma_results_mq$logFC < 0, 'Dec.', 'Inc.'),
 ```
 
 Both enriched and depleted proteins can be statistically significant here, but for identifying interactors we care specifically about enrichment in the IP: a depleted protein doesn't indicate an interaction with the bait, so below we restrict to the significantly *enriched* proteins as our candidate interactors.
+
+Filtering the results this way is not the same as testing one-sidedly. The p-values above were computed against a two-sided null, so half of each one covers a direction we have just discarded, and the multiple-testing correction was applied across both directions. A one-sided test spends that power on the direction of interest instead; the [enrichment designs](interactome_designs.html) vignette shows how, and what it does and does not buy.
 
 ```{r}
 sig_hits_mq <- limma_results_mq %>%
@@ -288,7 +298,7 @@ The PSMs consistently show higher abundance in the IP samples than the Control s
 Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecipitation (Part B):
 
 -   Checked that replicate samples correlate more strongly with each other than with the other condition, and that PCA separates the conditions — using `allowing_missing=TRUE` in both parts, since `robustSummary` retains some missing values
--   Checked whether protein-level missingness was structured by experimental condition: unrelated to group in the whole-proteome comparison (Part A), but strongly condition-informative in the immunoprecipitation (see the QC vignette), where a protein absent from the control pulldown is itself the signal of interest
+-   Checked whether protein-level missingness was structured by experimental condition: unrelated to group in the whole-proteome comparison (Part A), and in the single-plex immunoprecipitation (Part B) not present in the on/off form an enrichment design predicts, because all channels are quantified from one spectrum
 -   Restricted testing to proteins with at least 2 quantified values in both conditions, and kept the per-condition counts in the results so that untested proteins are distinguishable from proteins tested and found unchanged
 -   Tested for differential protein abundance with `limma::treat`, using a fold-change threshold appropriate to the biological question: a modest threshold for whole-proteome changes in Part A, and a strict threshold to identify substantially-enriched candidate interactors in Part B
 -   Visualised the results with a volcano plot and inspected the feature-to-protein trend for a top hit
@@ -297,7 +307,7 @@ Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecip
 
 -   [Functional enrichment](functional_enrichment.html) asks whether the proteins that changed share a function, location or complex, rather than reading them one at a time. It picks up from the Part A results.
 -   [Choosing a summarisation method](summarisation_methods.html) covers how the protein-level values tested here were arrived at, and what a different choice would have changed.
--   [Enrichment designs](interactome_designs.html) covers the QC and normalisation decisions behind the Part B dataset, which differ from those a whole-proteome experiment calls for.
+-   [Enrichment designs](interactome_designs.html) covers the QC and normalisation decisions behind the Part B dataset, and works a label-free pulldown through the testing choices an enrichment design calls for: a testability rule that keeps the control-absent proteins, imputation restricted to the condition where absence is defensible, and a one-sided test.
 
 ```{r}
 sessionInfo()

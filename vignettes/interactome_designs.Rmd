@@ -23,9 +23,12 @@ An enrichment experiment — an immunoprecipitation, or a proximity labelling me
 - **Absence is frequently real.** A protein missing from every control pulldown is usually absent rather than undetected, so discarding features with missing values discards the strongest hits, and imputing them invents a background level that was never observed.
 - **The comparison is often one-sided.** Depletion relative to control is rarely of interest, so a two-sided test spends power on a direction you do not care about.
 
-This vignette works through the QC and summarisation half of an enrichment experiment, where the first two of those consequences bite. The testing half, including the bait sanity check and one-sided testing, is covered in the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette, which continues with the object built here.
+Two experiments are worked through below, because the three consequences do not all bite in the same place and no single dataset shows all of them well.
 
-The data are a real MaxQuant TMT18plex immunoprecipitation comparing a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each. The MaxQuant input also differs in shape from the Proteome Discoverer output used in the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette: the `evidence.txt` file uses different column names (`Leading.razor.protein` instead of `Master.Protein.Accessions`, `Reporter.intensity.corrected.*` instead of `Abundance.*`), and it does not report the PD-specific QC metrics (signal:noise, interference, SPS-MM). Those differences are noted as they arise.
+- **Part A: a TMT immunoprecipitation.** The normalisation consequence is the live one. Within a TMT plex the channels are quantified from the same spectrum, and Part A shows by measurement that the second consequence does not materialise there at all.
+- **Part B: an LFQ-DDA TurboID pulldown**, taken through to a tested list of candidate interactors. Here each sample is a separate run, absence from the control is common and real, and the second and third consequences decide the result.
+
+Which of the two your own experiment resembles is set by the acquisition rather than by the pulldown, so it is worth reading both.
 
 # Load required packages
 
@@ -35,9 +38,14 @@ library(biomasslmb)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(limma)
 ```
 
-# Read in input data and design
+# Part A: a TMT immunoprecipitation
+
+The data are a real MaxQuant TMT18plex immunoprecipitation comparing a bait pulldown (`IP`) against a control pulldown (`Control`), 6 replicates each. The MaxQuant input also differs in shape from the Proteome Discoverer output used in the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette: the `evidence.txt` file uses different column names (`Leading.razor.protein` instead of `Master.Protein.Accessions`, `Reporter.intensity.corrected.*` instead of `Abundance.*`), and it does not report the PD-specific QC metrics (signal:noise, interference, SPS-MM). Those differences are noted as they arise.
+
+## Read in input data and design
 
 `psm_tmt_per2_mq` and `tmt_per2_mq_design` are the MaxQuant analogues of `psm_tmt_clock`/`tmt_clock_design` above: `psm_tmt_per2_mq` is the `evidence.txt` PSM-level output (truncated to a subset of proteins), and `tmt_per2_mq_design` gives the `Condition`/`Replicate` for each sample.
 
@@ -58,7 +66,7 @@ tmt_qf_mq[['psms_raw']] <- QFeatures::zeroIsNA(tmt_qf_mq[['psms_raw']])
 
 ```
 
-# Defining the contaminant proteins
+## Defining the contaminant proteins
 
 MaxQuant has its own contaminants FASTA convention (`CON__` prefixed accessions). `get_maxquant_cont_accessions` extracts these from the contaminants FASTA bundled with the package, in the same way `get_contaminant_fasta_accessions` did for the PD contaminants FASTA above.
 
@@ -79,7 +87,7 @@ tmt_qf_mq[['psms_filtered']] <- filter_features_mq_dda(
 colData(tmt_qf_mq[['psms_filtered']]) <- colData(tmt_qf_mq)
 ```
 
-# Normalise (or not)
+## Normalise (or not)
 
 Since this is an immunoprecipitation, the IP samples are expected to have a genuinely different protein composition to the controls: the bait and its interactors are specifically enriched. Standard normalisation assumes overall protein content is equivalent between samples and would partially erode this real biological difference, so — unlike a whole-proteome comparison — we do not normalise here. Where normalisation is still desired for this kind of experiment, an alternative to standard whole-proteome normalisation is to define a set of 'invariant' proteins that are expected to be equally abundant across all samples (e.g. proteins with no plausible relationship to the bait) and normalise using only these.
 
@@ -90,7 +98,7 @@ plot_quant(tmt_qf_mq[['psms_filtered']], log2transform=TRUE, method='density') +
   xlab('PSM abundance (log2)')
 ```
 
-# Removing low quality PSMs
+## Removing low quality PSMs
 
 `filter_TMT_PSMs` still removes PSMs with no quantification values at all, but with `from_PD = FALSE` it skips the PD-specific `Quan.Info`/`PSM.Ambiguity` checks, and the interference/S:N/SPS-MM thresholds are left at their 'no filtering' defaults since MaxQuant's `evidence.txt` does not report these metrics in a directly comparable way. We also need to point it at the MaxQuant protein column, `Leading.razor.protein`.
 
@@ -104,7 +112,7 @@ tmt_qf_mq[['psms_filtered_interference']] <- filter_TMT_PSMs(
 colData(tmt_qf_mq[['psms_filtered_interference']]) <- colData(tmt_qf_mq)
 ```
 
-# Exploring missing values
+## Exploring missing values
 
 We check the missingness structure before deciding how to handle it, using `plot_missing_upset` and `condition_miss_score`/`condition_miss_index` (the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette explains these functions more fully).
 
@@ -119,7 +127,7 @@ condition_miss_index(miss_res_mq$summary)$index
 
 A meaningful fraction of PSMs here have missing values (`r miss_res_mq$global['n_features_informative']` out of `r miss_res_mq$global['n_features_total']`), consistent with this being an IP rather than a whole-proteome comparison: a protein absent from the control pulldown is expected to be missing in every `Control` replicate but present in every `IP` replicate. The condition missingness index is still modest, so this isn't yet a dominant pattern at the PSM level, but it's enough to make blanket removal of any PSM with a missing value an unattractive option here.
 
-# Summarising to protein-level abundances
+## Summarising to protein-level abundances
 
 Since missing values here are more likely to be genuinely informative — a protein absent from the control pulldown — than in a whole-proteome comparison, instead of removing every PSM with any missing value, we retain PSMs with a modest number of missing values and use `MsCoreUtils::robustSummary`, which handles missing values appropriately during aggregation (see the [Comparing protein summarisation approaches](summarisation_methods.html) vignette for a direct comparison with `sum`).
 
@@ -146,7 +154,62 @@ tmt_qf_mq <- QFeatures::aggregateFeatures(
 colData(tmt_qf_mq[['protein']]) <- colData(tmt_qf_mq)
 ```
 
-# Inspecting the number of PSMs and proteins through the processing steps
+## Requiring more than one PSM behind every value
+
+Having taken care to preserve the informative missing values, it is worth asking how many of them reached protein level.
+
+```{r}
+count_quantified <- function(se, group_col = 'Condition'){
+  groups <- colData(se)[[group_col]]
+  sapply(sort(unique(groups)), function(g){
+    rowSums(!is.na(assay(se)[, groups == g, drop = FALSE]))
+  })
+}
+
+n_quant_mq <- count_quantified(tmt_qf_mq[['protein']])
+
+c(protein_percent_missing = round(
+    100 * mean(is.na(assay(tmt_qf_mq[['protein']]))), 2),
+  proteins_absent_from_control = sum(n_quant_mq[, 'Control'] == 0))
+```
+
+Almost none, and none at all in the pattern the design predicts. `robustSummary` gives a protein a value in a sample whenever *any* of its PSMs was quantified there, so a protein loses a channel only when every one of its PSMs does.
+
+That is not a reassuring result, because it means a protein-level value can rest on a single PSM in one channel and several in another, and nothing in the matrix says which. The QC vignettes for both LFQ acquisition types apply the same correction: `get_protein_no_quant_mask()` finds the protein-by-sample cells built from fewer than `min_features` features, and `mask_protein_level_quant()` returns them to `NA`.
+
+```{r, warning=FALSE}
+retain_mask_mq <- get_protein_no_quant_mask(
+  tmt_qf_mq[['psms_filtered_forSummary']], min_features = 2,
+  master_protein_col = 'Leading.razor.protein')
+
+tmt_qf_mq[['protein']] <- mask_protein_level_quant(
+  tmt_qf_mq[['protein']], retain_mask_mq)
+```
+
+```{r}
+n_quant_masked <- count_quantified(tmt_qf_mq[['protein']])
+
+c(proteins_absent_from_control = sum(n_quant_masked[, 'Control'] == 0),
+  proteins_with_no_values_at_all = sum(rowSums(n_quant_masked) == 0))
+```
+
+The two numbers are the same, and that is the answer to the question this section asked. Masking empties `r sum(rowSums(n_quant_masked) == 0)` proteins entirely — each had a single PSM in every channel, so requiring two leaves nothing — and it does not produce one protein that is quantified in the IP and absent from the control.
+
+So the presence/absence pattern an enrichment experiment is supposed to generate is genuinely not in this dataset, rather than being hidden by summarisation. Within a plex all twelve channels are quantified from the same MS2 spectrum, so a protein pulled down in the IP and absent from the control does not go missing in the control channels — it registers there at whatever low reporter intensity co-isolation and the isolation window give it. TMT turns what would be an on/off result in separate runs into a compressed ratio.
+
+That is worth knowing in its own right, because it means the second consequence listed at the top of this article barely applies to a single-plex TMT pulldown, whatever it does to the label-free case in Part B.
+
+A protein with no quantification left in any sample is not data, so we drop those rather than carry them.
+
+```{r}
+tmt_qf_mq[['protein']] <- tmt_qf_mq[['protein']][
+  rowSums(!is.na(assay(tmt_qf_mq[['protein']]))) > 0, ]
+
+c(proteins = nrow(tmt_qf_mq[['protein']]),
+  percent_missing = round(100 * mean(is.na(assay(tmt_qf_mq[['protein']]))), 2))
+```
+
+## Inspecting the number of PSMs and proteins through the processing steps
 
 ```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, out.width='75%'}
 rename_cols_mq <- c('All PSMs' = 'psms_raw',
@@ -174,10 +237,247 @@ plot_samples_present(samples_present_mq_prot, rowvars_mq_prot, breaks=seq(2,12,2
 usethis::use_data(tmt_qf_mq, overwrite=TRUE)
 ```
 
+# Part B: an LFQ-DDA TurboID pulldown
+
+`lfq_dda_pd_turboid_PeptideGroups.txt` is Proteome Discoverer peptide-level output from a TurboID experiment in mouse cells: three biotin-treated samples against three untreated controls, subset to 500 proteins. Because each sample is a separate acquisition rather than a channel in a shared spectrum, the presence/absence pattern that Part A could not produce is the dominant feature of this dataset from the start.
+
+```{r}
+turboid_inf <- system.file(
+  "extdata", "lfq_dda_pd_turboid_PeptideGroups.txt", package = "biomasslmb")
+
+infdf <- read.delim(turboid_inf)
+
+abundance_cols_ix <- grep('^Abundance', colnames(infdf))
+colnames(infdf)[abundance_cols_ix]
+```
+
+The condition is encoded in the abundance column names, so the design is derived from them rather than read from a separate table.
+
+```{r}
+turboid_design <- data.frame(
+  quantCols = colnames(infdf)[abundance_cols_ix],
+  Condition = sub('.*Sample[.]', '', colnames(infdf)[abundance_cols_ix]))
+
+turboid_design$Replicate <- as.integer(ave(
+  turboid_design$Condition, turboid_design$Condition, FUN = seq_along))
+turboid_design$Sample <- paste(
+  turboid_design$Condition, turboid_design$Replicate, sep = '_')
+
+colnames(infdf)[abundance_cols_ix] <- turboid_design$Sample
+turboid_design$quantCols <- turboid_design$Sample
+
+knitr::kable(turboid_design)
+```
+
+```{r}
+lfq_qf_turboid <- readQFeatures(assayData = infdf,
+                                quantCols = abundance_cols_ix,
+                                colData = turboid_design,
+                                name = 'peptides_raw')
+
+colData(lfq_qf_turboid[['peptides_raw']]) <- colData(lfq_qf_turboid)
+```
+
+## Filtering
+
+The filtering is the LFQ-DDA sequence from the [LFQ-DDA QC vignette](LFQ_DDA_Peptide_QC_Summarisation.html), against the PD contaminants database.
+
+```{r, message=FALSE, warning=FALSE}
+contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb"))
+contaminant_accessions <- c(contaminant_accessions,
+                            sub('^Cont_', '', contaminant_accessions))
+
+lfq_qf_turboid[['peptides']] <- filter_features_pd_dda(
+  lfq_qf_turboid[['peptides_raw']],
+  contaminant_proteins = contaminant_accessions,
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = TRUE,
+  remove_no_quant = TRUE)
+
+lfq_qf_turboid[['peptides']] <- logTransform(
+  lfq_qf_turboid[['peptides']], base = 2)
+colData(lfq_qf_turboid[['peptides']]) <- colData(lfq_qf_turboid)
+```
+
+As in Part A, we do not median-normalise: the biotin samples are expected to contain a different set of proteins from the controls, which is the whole point of the experiment.
+
+```{r, warning=FALSE, fig.width=7, fig.height=5, out.width="75%"}
+plot_quant(lfq_qf_turboid[['peptides']], log2transform = FALSE, method = 'density') +
+  theme_biomasslmb() +
+  aes(colour = Condition, group = sample) +
+  xlab('Peptide abundance (log2)')
+```
+
+## Missingness is the signal here
+
+```{r}
+turboid_miss <- condition_miss_score(
+  lfq_qf_turboid, i = 'peptides', group_cols = 'Condition')
+
+condition_miss_index(turboid_miss$summary)$index
+```
+
+That index is an order of magnitude above the whole-proteome datasets in [handling missing values](handling_missing_values.html), and the reason is visible in how one-sided the pattern is.
+
+```{r}
+pep_quant <- assay(lfq_qf_turboid[['peptides']])
+pep_cond <- lfq_qf_turboid[['peptides']]$Condition
+
+c(percent_missing = round(100 * mean(is.na(pep_quant)), 1),
+  all_biotin_no_control = sum(
+    rowSums(!is.na(pep_quant[, pep_cond == 'biotin'])) == 3 &
+    rowSums(!is.na(pep_quant[, pep_cond == 'control'])) == 0),
+  all_control_no_biotin = sum(
+    rowSums(!is.na(pep_quant[, pep_cond == 'control'])) == 3 &
+    rowSums(!is.na(pep_quant[, pep_cond == 'biotin'])) == 0))
+```
+
+Missingness that arose from the limit of detection would produce these two counts at roughly the same size. They are not the same size, and the asymmetry is the enrichment: peptides appear in the biotin samples and vanish from the controls, not the other way round. Discarding features with missing values would remove that finding and leave the experiment looking like a weak version of itself.
+
+## Summarising to protein level
+
+```{r, message=FALSE, warning=FALSE}
+lfq_qf_turboid[['peptides_filtered']] <- filterNA(
+  lfq_qf_turboid[['peptides']], 4/6)
+
+lfq_qf_turboid[['peptides_for_summarisation']] <- filter_features_per_protein(
+  lfq_qf_turboid[['peptides_filtered']], min_features = 2)
+
+set.seed(42)
+lfq_qf_turboid <- aggregateFeatures(
+  lfq_qf_turboid, i = 'peptides_for_summarisation',
+  fcol = 'Master.Protein.Accessions', name = 'protein',
+  fun = MsCoreUtils::robustSummary, maxit = 10000)
+
+colData(lfq_qf_turboid[['protein']]) <- colData(lfq_qf_turboid)
+
+retain_mask_turboid <- get_protein_no_quant_mask(
+  lfq_qf_turboid[['peptides_for_summarisation']], min_features = 2)
+
+lfq_qf_turboid[['protein']] <- mask_protein_level_quant(
+  lfq_qf_turboid[['protein']], retain_mask_turboid)
+```
+
+The `4/6` threshold is what keeps the on/off peptides: a peptide seen in all three biotin samples and no control has three missing values, and a stricter threshold would discard exactly the features carrying the signal.
+
+## Which proteins can be tested?
+
+```{r}
+n_quant_turboid <- count_quantified(lfq_qf_turboid[['protein']])
+
+knitr::kable(table(control = n_quant_turboid[, 'control'],
+                   biotin = n_quant_turboid[, 'biotin']))
+```
+
+Read the first row. Most of the proteins in this experiment were quantified in two or three biotin samples and in none of the controls — the result the pulldown was run to produce.
+
+```{r}
+conventional <- rownames(n_quant_turboid)[
+  apply(n_quant_turboid, 1, min) >= 2]
+
+candidates <- rownames(n_quant_turboid)[n_quant_turboid[, 'biotin'] >= 2]
+
+c(proteins = nrow(n_quant_turboid),
+  conventional_rule = length(conventional),
+  enrichment_rule = length(candidates),
+  absent_from_control = sum(n_quant_turboid[, 'control'] == 0))
+```
+
+The rule used in the whole-proteome vignettes — at least two quantified values in *both* conditions — keeps `r length(conventional)` of the `r nrow(n_quant_turboid)` proteins. It is the right rule there and the wrong one here, because in an enrichment experiment "not quantified in the control" is the outcome of interest rather than a failure to measure.
+
+The rule that matches the design asks for enough measurements in the *enriched* condition to estimate the protein at all, and treats the control side as something to be modelled rather than required. That keeps `r length(candidates)` proteins.
+
+## Imputing only where absence is defensible
+
+Requiring two biotin values leaves proteins that `limma` still cannot fit, because a group with no values has no mean. `restrict_imputation()` fills those in from a low-abundance distribution, but only in the conditions and at the missingness levels you nominate — here, control samples where at most one replicate was quantified.
+
+```{r, message=FALSE, warning=FALSE}
+set.seed(42)
+
+lfq_qf_turboid <- QFeatures::impute(
+  lfq_qf_turboid, i = 'protein', name = 'protein_imputed', method = 'MinProb')
+
+use_imputed_df <- data.frame(Condition = 'control', n_finite = c(0, 1))
+
+lfq_qf_turboid <- restrict_imputation(
+  lfq_qf_turboid,
+  i_unimputed = 'protein',
+  i_imputed = 'protein_imputed',
+  i_restricted_imputed = 'protein_restricted',
+  use_imputed_df = use_imputed_df)
+```
+
+The assumption being made is explicit and checkable: a protein seen in the biotin samples and not the controls is being treated as present at a level below detection in the controls, not as unmeasured. That is defensible for a pulldown in a way it is not for a whole-proteome comparison, where the same missing value is more likely to be an ordinary detection failure. Nothing is imputed in the biotin samples, and nothing is imputed for a control with two or three quantified replicates.
+
+## One-sided testing
+
+```{r}
+quant_turboid <- assay(lfq_qf_turboid[['protein_restricted']])[candidates, ]
+
+condition <- factor(
+  lfq_qf_turboid[['protein_restricted']]$Condition,
+  levels = c('control', 'biotin'))
+
+fit_turboid <- eBayes(
+  lmFit(quant_turboid, model.matrix(~ condition)),
+  trend = TRUE, robust = TRUE)
+
+res_turboid <- topTable(fit_turboid, coef = 2, number = Inf, sort.by = 'none')
+```
+
+`limma` reports a two-sided p-value: the probability of a difference this large in *either* direction. A protein depleted relative to the control is not a candidate interactor, so half of that p-value is being spent on an outcome the experiment does not care about. Halving it for proteins enriched in the pulldown, and taking the complement for the rest, converts it to a one-sided test of enrichment; the adjustment for multiple testing then applies to those p-values.
+
+```{r}
+res_turboid$P.Value.OneSided <- ifelse(
+  res_turboid$logFC > 0,
+  res_turboid$P.Value / 2,
+  1 - res_turboid$P.Value / 2)
+
+res_turboid$adj.P.Val.OneSided <- p.adjust(
+  res_turboid$P.Value.OneSided, method = 'BH')
+
+c(two_sided_enriched = sum(res_turboid$adj.P.Val < 0.05 & res_turboid$logFC > 0),
+  one_sided_enriched = sum(res_turboid$adj.P.Val.OneSided < 0.05))
+```
+
+The gain is modest and it is not free: the one-sided test cannot report depletion at all, so it is only appropriate where depletion genuinely is uninteresting. In a pulldown it is. In a comparison between two treatments it is not, which is why the whole-proteome vignettes do not do this.
+
+## What the design-appropriate route recovered
+
+```{r}
+hits <- rownames(res_turboid)[res_turboid$adj.P.Val.OneSided < 0.05]
+
+c(candidate_interactors = length(hits),
+  absent_from_control = sum(n_quant_turboid[hits, 'control'] == 0),
+  untestable_under_conventional_rule = sum(!hits %in% conventional))
+```
+
+`r sum(!hits %in% conventional)` of the `r length(hits)` candidate interactors would never have been tested under the conventional testability rule. They are not marginal calls that the rule was right to be cautious about — they are the proteins with the cleanest presence/absence separation in the experiment, excluded for having too few measurements in the condition where the design predicts they should have none.
+
+Report the per-condition counts alongside the result, as in the whole-proteome vignettes, so that a reader can tell a protein quantified in three biotin samples and imputed in three controls from one measured in all six.
+
+```{r}
+head(data.frame(
+  Protein = hits,
+  logFC = round(res_turboid[hits, 'logFC'], 2),
+  adj.P.Val = signif(res_turboid[hits, 'adj.P.Val.OneSided'], 2),
+  n_biotin = n_quant_turboid[hits, 'biotin'],
+  n_control = n_quant_turboid[hits, 'control']) %>%
+  arrange(adj.P.Val), 8)
+```
+
+```{r, eval = FALSE}
+# Save file to package as data so it can be read back in in other vignettes
+usethis::use_data(lfq_qf_turboid, overwrite=TRUE)
+```
 
 # Where to go next
 
-`tmt_qf_mq` now holds protein-level abundances summarised without discarding the informative missing values, and its `colData` carries the `IP`/`Control` design. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette continues from here with the parts of an enrichment analysis that differ from a whole-proteome comparison: checking that the bait itself behaves as expected, choosing a testability filter that does not throw away control-absent proteins, and one-sided testing against the control.
+Part A leaves `tmt_qf_mq` holding protein-level abundances with the informative missing values preserved and every value backed by at least two PSMs. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette picks it up and works through the exploratory checks — sample correlation, PCA, inspecting a hit across the processing steps — that any design needs before testing, using the conventional two-sided treatment for comparison with the route above.
+
+For the enrichment-specific decisions, Part B is the worked example: a testability rule that keeps the control-absent proteins, imputation restricted to the condition where absence is defensible, and a one-sided test. [Handling missing values](handling_missing_values.html) covers `restrict_imputation()` and the alternatives to it in more depth, including what blanket imputation costs.
 
 ```{r}
 sessionInfo()

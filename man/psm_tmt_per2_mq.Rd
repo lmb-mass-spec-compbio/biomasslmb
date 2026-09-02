@@ -16,8 +16,7 @@ TMT18plex immunoprecipitation experiment comparing a bait pulldown
 (\code{IP}) with a control pulldown (\code{Control}), 6 replicates each, subsetted
 to ~600 randomly-selected proteins plus a sample of contaminant and
 non-unique-master-protein PSMs for use as the MaxQuant worked example in
-the \verb{TMT QC PSM-level quantification and summarisation to protein-level abundance}
-vignette. Sample columns are named to match the rownames of
+the \verb{Enrichment designs: IP, BioID and TurboID} vignette. Sample columns are named to match the rownames of
 \code{\link{tmt_per2_mq_design}}. The original condition labels and the
 \code{Raw.file} column (which identified the specific source project) have
 been anonymised to generic values, and PSMs identifying the bait

@@ -3,7 +3,7 @@
 \docType{data}
 \name{dia_qf}
 \alias{dia_qf}
-\title{DIA data}
+\title{LFQ-DIA data}
 \format{
 An object of class \code{QFeatures} of length 6.
 }
@@ -11,6 +11,10 @@ An object of class \code{QFeatures} of length 6.
 dia_qf
 }
 \description{
-Qfeature containing DIA data processed in the \verb{LFQ-DIA QC Precursor-level quantification and summarisation to protein-level abundance} vignette
+\code{QFeatures} object holding the LFQ-DIA plasma dataset
+(\code{monkeypox_plasma_proteomes.parquet}) processed through precursor QC,
+filtering and summarisation to protein level with \code{robustSummary}, as
+produced in the
+\verb{LFQ-DIA workflow: precursor QC and protein summarisation} vignette.
 }
 \keyword{datasets}

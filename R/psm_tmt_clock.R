@@ -4,8 +4,7 @@
 #' experiment comparing Control and Mutant samples (6 replicates each),
 #' subsetted to ~600 randomly-selected proteins plus a sample of contaminant
 #' and non-unique-master-protein PSMs for use in the
-#' `TMT QC PSM-level quantification and summarisation to protein-level abundance`
-#' vignette. Sample columns are named to match the rownames of
+#' `TMT workflow: PSM QC and protein summarisation` vignette. Sample columns are named to match the rownames of
 #' \code{\link{tmt_clock_design}}.
 #'
 #' @keywords datasets

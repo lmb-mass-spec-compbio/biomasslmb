@@ -17,9 +17,8 @@ channel. The design is a 3 x 3 factorial: three cell lines (a wild type and
 two knockouts) crossed with three drug treatment timepoints, three
 replicates each. Subsetted to ~300 randomly-selected proteins quantified in
 both plexes, plus a sample of contaminant and non-unique-master-protein
-PSMs, for use in Part C of the
-\verb{TMT QC PSM-level quantification and summarisation to protein-level abundance}
-vignette.
+PSMs, for use in the
+\verb{TMT workflow: multiple plexes and bridge correction} vignette.
 
 The \code{Plex} column identifies which plex each PSM came from, and the
 abundance columns are named by TMT tag, since the same tag denotes a

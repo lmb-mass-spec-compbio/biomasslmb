@@ -13,8 +13,7 @@ tmt_qf_mq
 \description{
 \code{QFeatures} object containing the MaxQuant TMT IP-vs-control
 data (\code{\link{psm_tmt_per2_mq}}) processed through PSM filtering and
-\code{robustSummary} summarisation to protein level, as produced in Part B of
-the \verb{TMT QC PSM-level quantification and summarisation to protein-level abundance}
-vignette.
+\code{robustSummary} summarisation to protein level, as produced in Part A of
+the \verb{Enrichment designs: IP, BioID and TurboID} vignette.
 }
 \keyword{datasets}

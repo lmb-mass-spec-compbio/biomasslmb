@@ -33,6 +33,7 @@
 #'
 #' dim(SummarizedExperiment::colData(tmt_qf[["psms_raw"]]))
 #' @export
+#' @importFrom SummarizedExperiment colData colData<-
 sync_coldata <- function(obj, i = names(obj)) {
 
   check_q(obj)

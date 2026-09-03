@@ -30,6 +30,11 @@
   accessions (e.g. Proteome Discoverer's `Master.Protein.Accessions`),
   collapsing back to one row per original ID.
 
+* `plot_missing_upset()` gains a `...` argument, passed onto
+  `naniar::gg_miss_upset()` and from there onto `UpSetR::upset()`. Arguments
+  given this way take precedence over the ones the function sets itself, so
+  `nintersects`, `sets` and `keep.order` are now defaults rather than fixed.
+
 * `Remotes:` temporarily points `uniprotREST` at
   `TomSmithCGAT/uniprotREST@check-complete-response` instead of
   `csdaw/uniprotREST`, to pick up the `check_complete` argument to

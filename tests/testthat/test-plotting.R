@@ -71,6 +71,17 @@ test_that("plot_missing_upset returns an upset plot", {
   expect_s3_class(p, "upset")
 })
 
+test_that("plot_missing_upset passes ... on, including over its own defaults", {
+  # nintersects, sets and keep.order are supplied inside the function, so
+  # passing them at all depends on ... taking precedence over those defaults
+  expect_s3_class(plot_missing_upset(qf, "psms", nintersects = 5), "upset")
+
+  na_cols <- colnames(data.frame(assay(psm)))[colSums(is.na(assay(psm))) > 0]
+  wanted <- paste0(sort(na_cols)[1:2], "_NA")
+  p <- plot_missing_upset(qf, "psms", sets = wanted)
+  expect_equal(p$Set_names, wanted)
+})
+
 test_that("plot_cor_samples runs without error and returns the sample correlation matrix", {
   # returns the corrplot() result (a list including a $corr matrix), not a
   # ggplot, despite the docs -- verify it runs cleanly and gives a sensible result.

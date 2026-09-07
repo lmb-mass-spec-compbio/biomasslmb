@@ -16,7 +16,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Tom Smith \email{tsmith@mrc-lmb.cam.ac.uk} (\href{https://orcid.org/0000-0002-0697-8777}{ORCID})
+\strong{Maintainer}: Tom Smith \email{tsmith@mrclmb.ac.uk} (\href{https://orcid.org/0000-0002-0697-8777}{ORCID})
 
 }
 \keyword{internal}

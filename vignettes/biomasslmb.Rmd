@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 # Please ask
 
-These vignettes are a guide, not a specification, and they describe the common cases. They are written to make the routine parts of an analysis straightforward and to make the decisions in them visible, so that you can tell which choices your result depends on. They cannot anticipate your experiment.
+These vignettes are a guide, not a specification, and they describe the common cases. They are written to make the routine parts of an analysis straightforward and to make the decisions in them visible, so that you can tell which choices your result depends on. They cannot anticipate every detail of your experiment.
 
 **If any part of your analysis is unclear, or your design is not one of the ones covered here, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than guessing.** That applies to reading these articles as much as to running the code — if a step does not make sense, or a result looks wrong, or you are unsure which route applies, an email is quicker than working it out alone and it is never an imposition. It is far easier to help while an analysis is in progress than to unpick a decision afterwards, and easier still before the samples are run.
 
@@ -111,20 +111,24 @@ c(peptides = nrow(qf[['peptides']]),
 plot_volcano(results) + theme_biomasslmb(base_size = 10)
 ```
 
-Every line above conceals a decision — which contaminant list, how much missingness to tolerate, whether to normalise at all, what makes a protein testable — and the rest of this article is about which of those decisions matter for your experiment. But the skeleton does not change.
+Every line above glosses over a decision — which contaminant list, how much missingness to tolerate, whether to normalise at all, what makes a protein testable — and the rest of this article is about which of those decisions matter for your experiment. But the skeleton is usually very similar.
+
+# The object you work in
+
+The `qf` object above is a `QFeatures` object, and every vignette here works in one. Each processing step adds a *new* assay rather than overwriting the previous one, and assay links record which features contributed to which. A finished object therefore holds the whole history of the analysis, from the raw features to the protein-level quantification, and you can always step back to ask where a protein-level value came from. [Working with QFeatures objects](qfeatures_objects.html) covers the object and the design table it needs, and is worth reading before your first analysis.
 
 # What the package assumes
 
 
 **You have search engine output, not raw spectra.** The starting point is a PSM, peptide or precursor level table from Proteome Discoverer, MaxQuant, Spectronaut or DIA-NN. Everything upstream of that — the search itself, FDR control at the spectrum level, the choice of sequence database — happens elsewhere.
 
-**Everything lives in a `QFeatures` object.** Each processing step adds a *new* assay rather than overwriting the previous one, and assay links record which features contributed to which. A finished object therefore holds the whole history of the analysis, from the raw features to the protein-level quantification, and you can always step back to ask where a protein-level value came from. This is why the vignettes accumulate assays with names like `psms_filtered_sn` and `peptides_for_summarisation` rather than reassigning one matrix. [Working with QFeatures objects](qfeatures_objects.html) covers the object and the design table it needs, and is worth reading before your first analysis.
-
 **The destination is protein-level quantification and statistical testing.** Peptide- and site-level analyses are possible and are covered separately, but the default path summarises to protein level before testing.
 
 # How to read the code in these vignettes
 
 To clarify which functionality is provided by which package, the vignettes write calls as `package::function`. For your own code, there is no need to specify the package unless you want to maintain this clarity.
+
+Because each step adds an assay rather than replacing one, the vignettes accumulate assays with names like `psms_filtered_sn` and `peptides_for_summarisation` rather than reassigning a single matrix.
 
 # Which material to refer to?
 

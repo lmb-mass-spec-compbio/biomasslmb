@@ -140,13 +140,14 @@ We first perform routine filtering to remove peptides that:
 
 -   Could originate from contaminants. See `?filter_features_pd_dda` for
     further details, including the removal of 'associated' contaminants.
--   Don't have a unique master protein
 -   Don't have any quantification values
+
+`unique_master = FALSE` keeps the peptides whose master protein is a group of several accessions, such as `Q16875; P16118` — `r sum(grepl(';', rowData(lfq_qf[['peptides_raw']])$Master.Protein.Accessions))` of the `r nrow(lfq_qf[['peptides_raw']])` peptides here, in `r length(unique(grep(';', rowData(lfq_qf[['peptides_raw']])$Master.Protein.Accessions, value = TRUE)))` distinct groups. Each group summarises to its own protein row later in this vignette, separate from the rows for its individual members; `unique_master = TRUE` drops those peptides instead. The `proteotypic` argument asks a different question — whether the peptide sequence occurs in only one protein at all — and is likewise not applied here. See [peptides are not proteins](gotcha_peptide_to_protein.html).
 
 ```{r}
 # Perform routine raw data filtering.
 # - Remove peptides from contaminant proteins
-# - Remove peptides where protein ID is empty or not unique
+# - Remove peptides with no master protein
 
 lfq_qf[['peptides_filtered']] <- filter_features_pd_dda(lfq_qf[['peptides_raw']],
                                                  contaminant_proteins=contaminant_accessions,

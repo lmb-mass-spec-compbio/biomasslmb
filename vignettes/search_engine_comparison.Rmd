@@ -83,7 +83,7 @@ mq_qf <- sync_coldata(mq_qf, 'peptides_raw')
 mq_qf[['peptides_raw']] <- zeroIsNA(mq_qf[['peptides_raw']])
 ```
 
-The rest is the pipeline from the LFQ-DDA vignette, with `filter_features_mq_dda()` in place of `filter_features_pd_dda()` and `Leading.razor.protein` in place of `Master.Protein.Accessions`. MaxQuant searches against its own contaminants FASTA, so the accessions come from `get_maxquant_cont_accessions()` rather than from the universal contaminants database PD was searched against.
+The rest is the pipeline from the LFQ-DDA vignette, with `filter_features_mq_dda()` in place of `filter_features_pd_dda()` and `Leading.razor.protein` in place of `Master.Protein.Accessions`. MaxQuant searches against its own contaminants FASTA, so the accessions come from `get_maxquant_cont_accessions()` rather than from the universal contaminants database PD was searched against. MaxQuant assigns every peptide a single leading razor protein, so there is no `unique_master` filter to apply; its counterpart is `proteotypic`, left off here to match the PD pipeline.
 
 ```{r, message=FALSE, warning=FALSE}
 contaminant_accessions <- get_maxquant_cont_accessions()
@@ -93,7 +93,6 @@ mq_qf[['peptides_filtered']] <- filter_features_mq_dda(
   contaminant_proteins = contaminant_accessions,
   filter_contaminant = TRUE,
   filter_associated_contaminant = TRUE,
-  unique_master = FALSE,
   remove_no_quant = TRUE)
 
 mq_qf <- sync_coldata(mq_qf, 'peptides_filtered')

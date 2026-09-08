@@ -96,14 +96,16 @@ print(head(contaminant_accessions))
 We first perform routine filtering to remove PSMs that:
 
 -   Could originate from contaminants. See `?filter_features_pd_dda` for further details, including the removal of 'associated' contaminants.
--   Don't have a unique master protein.
+-   Have more than one accession in the master protein column, meaning the search engine could not resolve which protein the PSM came from.
 
 The accession list, the `Cont_` prefix and PD's own `Contaminant` column are three separate defences, and they do not always agree with one another. [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) measures what each one catches and what is left behind when the database naming does not match what the filter expects.
+
+`unique_master` asks whether the search engine settled on a single protein identity. The separate `proteotypic` argument asks whether the peptide sequence occurs in only one protein at all — a feature can have one unambiguous master protein and still be shared with the other members of that protein group. See [peptides are not proteins](gotcha_peptide_to_protein.html).
 
 ```{r}
 # Perform routine raw data filtering.
 # - Remove PSMs from contaminant proteins
-# - Remove PSMs where protein ID is empty or not unique
+# - Remove PSMs with no master protein, or with more than one
 tmt_qf[['psms_filtered']] <- filter_features_pd_dda(tmt_qf[['psms_raw']],
                                              contaminant_proteins=contaminant_accessions,
                                              filter_contaminant=TRUE,

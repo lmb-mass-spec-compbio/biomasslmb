@@ -161,8 +161,10 @@ dia_qf <- sync_coldata(dia_qf, 'precursors')
 We first perform routine filtering to remove precursors that:
 
 -   Could originate from contaminants. See `?filter_features_diann` for further details, including the removal of contaminant-associated proteins.
--   Don't have a unique master protein
+-   Have more than one accession in `Protein.Group`, meaning DIA-NN could not resolve which protein the precursor came from.
 -   Don't have any quantification values
+
+`filter_features_diann()` applies all three by default, so the call below passes none of them. `unique_master` asks whether the search engine settled on a single protein identity. The separate `proteotypic` argument asks whether the peptide sequence occurs in only one protein at all — a feature can have one unambiguous master protein and still be shared with the other members of that protein group. See [peptides are not proteins](gotcha_peptide_to_protein.html).
 
 ```{r}
 dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(

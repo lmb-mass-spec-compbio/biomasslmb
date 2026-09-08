@@ -52,6 +52,8 @@ exp_design <- data.frame(quantCols = colnames(infdf)[intensity_cols_ix]) %>%
 knitr::kable(exp_design)
 ```
 
+`proteotypic = TRUE` keeps only the peptides MaxQuant flagged as matching a single protein, in its `Unique..Proteins.` column. MaxQuant assigns every peptide one leading razor protein rather than reporting a tie, so this is the only protein-inference filter `filter_features_mq_dda()` has to offer.
+
 ```{r, message=FALSE, warning=FALSE}
 qf <- readQFeatures(assayData = infdf, quantCols = intensity_cols_ix,
                     colData = exp_design, name = 'peptides_raw')

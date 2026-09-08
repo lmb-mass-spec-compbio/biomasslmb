@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-A TMTpro plex holds at most 18 samples, so any larger design has to be split over several plexes. Each plex is a separate MS run, which changes the analysis in one important way: the PSMs quantified in one plex are not the same PSMs as those quantified in another, so a protein's abundance in plex 1 and its abundance in plex 2 are built from different peptides and are not directly comparable. Merging the plexes without correcting for this confounds plex identity with biology.
+A standard TMTpro plex holds 18 samples, so any larger design has to be split over several plexes. Each plex is a separate MS run, which changes the analysis in one important way: the PSMs quantified in one plex are not the same PSMs as those quantified in another, so a protein's abundance in plex 1 and its abundance in plex 2 are built from different peptides and are not directly comparable. Merging the plexes without correcting for this confounds plex identity with biology.
 
 This is where TMT's missing values live. Within a plex, the samples are quantified from the same MS1 ion and the data are close to complete; *between* plexes, a protein can be quantified from an entirely different set of PSMs. The fix is not imputation but a bridge channel: a pooled sample, identical in every plex, that provides a per-protein reference point for putting the plexes on a common scale.
 

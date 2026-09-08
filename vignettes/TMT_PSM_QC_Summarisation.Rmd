@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-Quantitative proteomics using isobaric tagging such as Tandem Mass Tags (TMT) has a considerable benefit over Label-Free Quantification (LFQ) in that up to 35 samples can be quantified for each Peptide Spectrum Match (PSM). This has multiple benefits over analysing samples in separate runs (LFQ):
+Quantitative proteomics using isobaric tagging such as Tandem Mass Tags (TMT) has a considerable benefit over Label-Free Quantification (LFQ) in that many samples can be quantified for each Peptide Spectrum Match (PSM). The standard TMTpro reagent set provides 18 channels [@li2021tmtpro18]. Higher multiplexing is now commercially available, up to 35 channels, achieved by adding a set of deuterated reagents [@zuniga2024tmt35]. The trade-off is that deuterium substitution shifts retention time and degrades coelution between the deuterated and non-deuterated channels, so the two sub-plexes have to be designed and normalised separately using bridge channels. This has multiple benefits over analysing samples in separate runs (LFQ):
 
 1.  TMT reduces protein quantification variance since PSM-level quantification is derived from the same MS1 ion for all samples
 2.  LFQ suffers from much higher missing values when comparing across samples due to the limited number of ions that can be fragmented in each run and the associated issue of peptides being identified in only a subset of runs [@http://zotero.org/users/5634351/items/ME322P2A]. This is ameliorated to a significant degree by Data-Independent Acquisition (DIA) LFQ. However, DIA still involves quantifying each sample separately, so missing values are not entirely removed, and proteins in each sample may be quantified from different sets of peptides.

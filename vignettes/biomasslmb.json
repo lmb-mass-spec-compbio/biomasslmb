@@ -922,5 +922,133 @@
 				[ "2011" ]
 			]
 		}
+	},
+	{
+		"id": "li2021tmtpro18",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.1c00168",
+		"ISSN": "1535-3907",
+		"issue": "5",
+		"journalAbbreviation": "J Proteome Res",
+		"language": "eng",
+		"note": "PMID: 33900084",
+		"page": "2964-2972",
+		"source": "PubMed",
+		"title": "TMTpro-18plex: The Expanded and Complete Set of TMTpro Reagents for Sample Multiplexing",
+		"volume": "20",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Jiaming"
+			},
+			{
+				"family": "Cai",
+				"given": "Zhenying"
+			},
+			{
+				"family": "Bomgarden",
+				"given": "Ryan D."
+			},
+			{
+				"family": "Pike",
+				"given": "Ian"
+			},
+			{
+				"family": "Kuhn",
+				"given": "Karsten"
+			},
+			{
+				"family": "Rogers",
+				"given": "John C."
+			},
+			{
+				"family": "Roberts",
+				"given": "Thomas M."
+			},
+			{
+				"family": "Gygi",
+				"given": "Steven P."
+			},
+			{
+				"family": "Paulo",
+				"given": "Joao A."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2021", 4, 26 ]
+			]
+		}
+	},
+	{
+		"id": "zuniga2024tmt35",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.4c00668",
+		"ISSN": "1535-3907",
+		"issue": "11",
+		"journalAbbreviation": "J Proteome Res",
+		"language": "eng",
+		"note": "PMID: 39380184",
+		"page": "5153-5165",
+		"source": "PubMed",
+		"title": "Achieving a 35-Plex Tandem Mass Tag Reagent Set through Deuterium Incorporation",
+		"volume": "23",
+		"author": [
+			{
+				"family": "Zuniga",
+				"given": "Nathan R."
+			},
+			{
+				"family": "Frost",
+				"given": "Dustin C."
+			},
+			{
+				"family": "Kuhn",
+				"given": "Karsten"
+			},
+			{
+				"family": "Shin",
+				"given": "Myungsun"
+			},
+			{
+				"family": "Whitehouse",
+				"given": "Rebecca L."
+			},
+			{
+				"family": "Wei",
+				"given": "Ting-Yu"
+			},
+			{
+				"family": "He",
+				"given": "Yuchen"
+			},
+			{
+				"family": "Dawson",
+				"given": "Shane L."
+			},
+			{
+				"family": "Pike",
+				"given": "Ian"
+			},
+			{
+				"family": "Bomgarden",
+				"given": "Ryan D."
+			},
+			{
+				"family": "Gygi",
+				"given": "Steven P."
+			},
+			{
+				"family": "Paulo",
+				"given": "Joao A."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2024", 10, 9 ]
+			]
+		}
 	}
 ]

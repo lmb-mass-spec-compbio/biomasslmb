@@ -74,15 +74,14 @@ MaxQuant has its own contaminants FASTA convention (`CON__` prefixed accessions)
 contaminant_proteins <- get_maxquant_cont_accessions()
 ```
 
-We filter contaminants and non-unique master proteins in the same way as for PD, using `filter_features_mq_dda` in place of `filter_features_pd_dda`.
+We filter contaminants in the same way as for PD, using `filter_features_mq_dda` in place of `filter_features_pd_dda`. MaxQuant gives every PSM a single razor protein rather than reporting a tie, so there is no `unique_master` filter to apply here; the equivalent information is the per-peptide `Unique..Proteins.` flag, which this PSM-level export does not carry. See [peptides are not proteins](gotcha_peptide_to_protein.html).
 
 ```{r}
 tmt_qf_mq[['psms_filtered']] <- filter_features_mq_dda(
   tmt_qf_mq[['psms_raw']],
   contaminant_proteins = contaminant_proteins,
   filter_contaminant = TRUE,
-  filter_associated_contaminant = TRUE,
-  unique_master = TRUE)
+  filter_associated_contaminant = TRUE)
 
 tmt_qf_mq <- sync_coldata(tmt_qf_mq, 'psms_filtered')
 ```

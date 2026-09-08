@@ -39,6 +39,19 @@ test_that("filter_features_pd_dda applies all filtering steps together", {
   expect_true(all(rowSums(is.finite(SummarizedExperiment::assay(out))) > 0))
 })
 
+test_that("filter_features_pd_dda proteotypic keeps only Number.of.Proteins == 1", {
+  out <- suppressMessages(filter_features_pd_dda(
+    psm,
+    filter_contaminant = FALSE,
+    unique_master = FALSE,
+    proteotypic = TRUE,
+    remove_no_quant = FALSE
+  ))
+
+  expect_true(all(SummarizedExperiment::rowData(out)[["Number.of.Proteins"]] == 1))
+  expect_lt(nrow(out), nrow(psm))
+})
+
 test_that("filter_features_pd_dda errors without contaminant_proteins when filter_contaminant=TRUE", {
   expect_error(
     suppressMessages(filter_features_pd_dda(psm, filter_contaminant = TRUE)),
@@ -93,6 +106,19 @@ test_that("filter_features_diann filters on Protein.Group and adds Number.of.Pro
   expect_true(all(rowSums(is.finite(SummarizedExperiment::assay(out))) > 0))
 })
 
+test_that("filter_features_diann proteotypic keeps only Proteotypic == 1", {
+  out <- suppressMessages(filter_features_diann(
+    peptides,
+    filter_contaminant = FALSE,
+    unique_master = FALSE,
+    proteotypic = TRUE,
+    remove_no_quant = FALSE
+  ))
+
+  expect_true(all(SummarizedExperiment::rowData(out)[["Proteotypic"]] == 1))
+  expect_lt(nrow(out), nrow(peptides))
+})
+
 test_that("filter_features_diann errors without contaminant_proteins when filter_contaminant=TRUE", {
   expect_error(
     suppressMessages(filter_features_diann(peptides, filter_contaminant = TRUE)),
@@ -125,6 +151,14 @@ test_that("filter_features_sn removes non-unique, missing-master and no-quant fe
   expect_setequal(SummarizedExperiment::rowData(out)$PG.ProteinAccessions, c("P1", "P4"))
 })
 
+test_that("filter_features_sn errors if the proteotypic column is absent", {
+  se <- make_sn_se()
+  expect_error(
+    suppressMessages(filter_features_sn(se, filter_contaminant = FALSE, proteotypic = TRUE)),
+    "PEP.IsProteotypic column, which is not present"
+  )
+})
+
 test_that("filter_features_sn errors without contaminant_proteins when filter_contaminant=TRUE", {
   se <- make_sn_se()
   expect_error(
@@ -152,13 +186,34 @@ make_mq_se <- function() {
   SummarizedExperiment::SummarizedExperiment(assays = list(counts = assay_mat), rowData = row_data)
 }
 
-test_that("filter_features_mq_dda removes decoys, contaminants and non-unique/no-quant features", {
+test_that("filter_features_mq_dda removes decoys, contaminants and no-quant features", {
   se <- make_mq_se()
   out <- suppressMessages(filter_features_mq_dda(se, contaminant_proteins = character(0),
                                                   filter_associated_contaminant = FALSE))
 
-  # Reverse == "+" (P3) and CON__ contaminant (P4) and Unique..Proteins.=="no" (P5) all removed
+  # Reverse == "+" (P3) and CON__ contaminant (P4) removed; P5 has no quant in s2
+  # but is retained since it is quantified in s1
+  expect_setequal(SummarizedExperiment::rowData(out)$Leading.razor.protein, c("P1", "P2", "P5"))
+})
+
+test_that("filter_features_mq_dda proteotypic keeps only Unique..Proteins. == yes", {
+  se <- make_mq_se()
+  out <- suppressMessages(filter_features_mq_dda(se, contaminant_proteins = character(0),
+                                                  filter_associated_contaminant = FALSE,
+                                                  proteotypic = TRUE))
+
+  # P5 additionally removed since Unique..Proteins. == "no"
   expect_setequal(SummarizedExperiment::rowData(out)$Leading.razor.protein, c("P1", "P2"))
+})
+
+test_that("filter_features_mq_dda errors if unique_master is requested", {
+  se <- make_mq_se()
+  expect_error(
+    suppressMessages(filter_features_mq_dda(se, contaminant_proteins = character(0),
+                                            filter_associated_contaminant = FALSE,
+                                            unique_master = TRUE)),
+    "not available for MaxQuant output"
+  )
 })
 
 test_that("remove_contaminant_mq identifies CON__ prefixed proteins as contaminants", {

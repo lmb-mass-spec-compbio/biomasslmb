@@ -8,6 +8,7 @@ filter_features_sn(
   obj,
   master_protein_col = "PG.ProteinAccessions",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   remove_no_quant = TRUE,
@@ -21,8 +22,11 @@ Use \code{\link[QFeatures]{readQFeatures}} to read in .txt file}
 \item{master_protein_col}{\code{string}. Name of column containing master
 proteins.}
 
-\item{unique_master}{\code{logical}. Filter out features without a unique
-master protein.}
+\item{unique_master}{\code{logical}. Filter out features where the master protein
+column does not resolve to a single protein accession.}
+
+\item{proteotypic}{\code{logical}. Filter out features whose peptide sequence is
+found in more than one protein.}
 
 \item{filter_contaminant}{\code{logical}. Filter out features which match a contaminant
 protein.}
@@ -41,7 +45,9 @@ This function filters the precursor .txt file from
 Spectronaut, based on various criteria:
 \enumerate{
 \item Remove features without a master protein (PG.ProteinAccessions column)
-\item Remove features without a unique master protein
+\item Remove features without a unique master protein, i.e. where
+PG.ProteinAccessions holds more than one accession
+\item Remove features which are not proteotypic (i.e. PEP.IsProteotypic is True)
 \item Remove features matching a contaminant protein
 \item Remove features without quantification values
 }

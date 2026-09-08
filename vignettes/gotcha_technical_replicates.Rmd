@@ -62,7 +62,7 @@ qf[['peptides']] <- filter_features_mq_dda(
   qf[['peptides_raw']],
   contaminant_proteins = get_maxquant_cont_accessions(),
   filter_contaminant = TRUE, filter_associated_contaminant = TRUE,
-  unique_master = TRUE, remove_no_quant = TRUE)
+  proteotypic = TRUE, remove_no_quant = TRUE)
 
 qf[['peptides']] <- normalize(logTransform(qf[['peptides']], base = 2),
                               method = 'diff.median')

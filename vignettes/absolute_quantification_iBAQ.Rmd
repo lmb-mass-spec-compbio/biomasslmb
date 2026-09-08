@@ -73,7 +73,7 @@ qf <- sync_coldata(qf, 'peptides_raw')
 
 # Filtering
 
-The filtering is the usual LFQ-DDA sequence with one deliberate difference: `unique_master = TRUE`. A peptide shared between two proteins would otherwise contribute its full intensity to whichever one the search engine assigned it to, inflating that protein's total by signal that did not come from it. For relative quantification that error is roughly constant across samples and largely cancels; for an absolute estimate it does not. See [peptides are not proteins](gotcha_peptide_to_protein.html) for how often this arises.
+The filtering is the usual LFQ-DDA sequence with one deliberate difference: `unique_master = TRUE` and `proteotypic = TRUE`, which together keep only the peptides that were resolved to a single protein group and whose sequence occurs in just one protein. A peptide shared between two proteins would otherwise contribute its full intensity to whichever one the search engine assigned it to, inflating that protein's total by signal that did not come from it. For relative quantification that error is roughly constant across samples and largely cancels; for an absolute estimate it does not. See [peptides are not proteins](gotcha_peptide_to_protein.html) for how often this arises.
 
 ```{r, message=FALSE, warning=FALSE}
 contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
@@ -87,6 +87,7 @@ qf[['peptides']] <- filter_features_pd_dda(
   filter_contaminant = TRUE,
   filter_associated_contaminant = TRUE,
   unique_master = TRUE,
+  proteotypic = TRUE,
   remove_no_quant = TRUE)
 
 qf[['peptides_filtered']] <- filterNA(qf[['peptides']], 4/6)

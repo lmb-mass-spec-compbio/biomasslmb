@@ -1,5 +1,26 @@
 # biomasslmb (development version)
 
+* **The `filter_features_*()` functions now take two separate arguments where
+  they previously took one.** `unique_master` asks whether the search engine
+  resolved the feature to a single protein accession; `proteotypic` asks
+  whether the peptide sequence occurs in only one protein. These are different
+  questions, and `unique_master` had come to mean whichever of them the format
+  happened to expose: `Number.of.Protein.Groups` for Proteome Discoverer, the
+  accession count for DIA-NN and Spectronaut, but `Unique..Proteins.` — a
+  proteotypic test — for MaxQuant.
+
+  `filter_features_pd_dda()`, `filter_features_diann()` and
+  `filter_features_sn()` are unchanged for existing calls, and gain
+  `proteotypic` (default `FALSE`), which tests `Number.of.Proteins`,
+  `Proteotypic` and `PEP.IsProteotypic` respectively.
+
+  **`filter_features_mq_dda()` changes behaviour.** MaxQuant assigns every
+  feature a single razor protein and so never reports a tie between protein
+  groups; there is nothing for `unique_master` to filter, and it now raises an
+  error rather than silently applying a proteotypic filter. Replace
+  `unique_master = TRUE` with `proteotypic = TRUE` to keep the previous
+  behaviour, which it reproduces exactly.
+
 * New `sync_coldata()` copies the object-level `colData` onto named assays,
   matching on sample name. It replaces the
   `colData(obj[[i]]) <- colData(obj)` idiom, which appeared 32 times across

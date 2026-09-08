@@ -9,6 +9,7 @@ filter_features_pd_dda(
   master_protein_col = "Master.Protein.Accessions",
   protein_col = "Protein.Accessions",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   crap_proteins = NULL,
@@ -27,8 +28,11 @@ proteins.}
 \item{protein_col}{\code{string}. Name of column containing all protein
 matches.}
 
-\item{unique_master}{\code{logical}. Filter out features without a unique
-master protein.}
+\item{unique_master}{\code{logical}. Filter out features where the master protein
+column does not resolve to a single protein accession.}
+
+\item{proteotypic}{\code{logical}. Filter out features whose peptide sequence is
+found in more than one protein.}
 
 \item{filter_contaminant}{\code{logical}. Filter out features which match a contaminant
 protein.}
@@ -54,6 +58,7 @@ Proteome Discoverer for DDA, based on various criteria:
 \item Remove features without a master protein
 \item Remove features without a unique master protein  (i.e.
 Number.of.Protein.Groups == 1)
+\item Remove features which are not proteotypic (i.e. Number.of.Proteins == 1)
 \item Remove features matching a contaminant protein
 \item Remove features matching any protein associated with
 a contaminant protein (see below)
@@ -61,6 +66,14 @@ a contaminant protein (see below)
 }
 }
 \details{
+\code{unique_master} and \code{proteotypic} are different filters.
+\code{unique_master} asks whether Proteome Discoverer resolved the feature to a
+single protein accession, so it removes features which are ambiguous between
+protein groups. \code{proteotypic} asks whether the peptide sequence occurs in
+only one protein in the database, so it also removes features whose protein
+group holds several indistinguishable proteins, even where a master was
+assigned. See \code{vignette("gotcha_peptide_to_protein")}.
+
 \strong{Associated contaminant proteins} are proteins which have at least
 one feature shared with a contaminant protein. It has been observed that the contaminant
 fasta files often do not contain all possible contaminant proteins e.g. some features

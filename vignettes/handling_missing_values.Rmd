@@ -410,11 +410,69 @@ data.frame(
   labs(x = 'Protein abundance (log2)', y = 'Standard error')
 ```
 
+## Testing with the DPC weights
+
+`dpcQuant()` produces the estimates; `dpcDE()` is what carries their standard errors into the linear model. It takes the same design matrix `lmFit()` would, and returns a fit that `eBayes()` and `topTable()` handle like any other.
+
+```{r, message=FALSE, warning=FALSE}
+limpa_group <- factor(make.names(dia_qf$group),
+                      levels = make.names(c('control', 'Covid19', 'MPXV')))
+
+limpa_design <- model.matrix(~limpa_group)
+
+limpa_fit <- dpcDE(y_protein, limpa_design, plot = FALSE) %>%
+  eBayes()
+
+res_limpa <- topTable(limpa_fit, coef = 'limpa_groupMPXV', number = Inf)
+
+c(tested = nrow(res_limpa), significant = sum(res_limpa$adj.P.Val < 0.05))
+```
+
+Two things separate this from the three options above. The model is fitted to all `r ncol(y_protein$E)` samples rather than the MPXV-and-control subset, so these counts are not a like-for-like comparison with that table. And every protein is tested — `r nrow(res_limpa)` here, against the `r length(testable)` with enough genuine measurements to enter Option 1.
+
+That second point is worth checking rather than assuming. Of the `r sum(res_limpa$adj.P.Val < 0.05)` significant proteins, `r sum(!rownames(res_limpa)[res_limpa$adj.P.Val < 0.05] %in% testable)` lies outside the testable set. The protein assay here is only `r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)`% missing, so there were few untestable proteins for the method to recover. The gain grows with sparsity, and so does the importance of the assumption in the next section.
+
 ## When limpa is the wrong tool
 
 The DPC assumes missingness is driven by detectability, which is driven by abundance. In an enrichment experiment that assumption is false: a protein is absent from the control pulldown because it is not there, not because it was too faint to detect. Fitting a DPC to such data produces a curve that describes something real about abundance and detection while missing the reason most of the values are missing.
 
 The diagnostic is the one from earlier in this article. A high condition missingness index, or a large `tjur_condition_fraction`, means a substantial part of the missingness is explained by experimental group rather than by abundance, and the DPC is not modelling it.
+
+`lfq_qf_turboid` is a TurboID proximity-labelling experiment, biotin against control with three replicates each, and it is the design the DPC is not built for. Scoring both datasets at the same stage makes the contrast explicit:
+
+```{r, message=FALSE}
+turbo_global <- global_condition_miss_score(
+  lfq_qf_turboid, i = 'peptides_for_summarisation', group_cols = 'Condition')
+
+dia_summ_global <- global_condition_miss_score(
+  dia_qf, i = 'peptides_for_summarisation', group_cols = 'group')
+
+data.frame(
+  data = c('dia_qf (whole proteome)', 'lfq_qf_turboid (TurboID)'),
+  missing = c(mean(is.na(assay(dia_qf[['peptides_for_summarisation']]))),
+              mean(is.na(assay(lfq_qf_turboid[['peptides_for_summarisation']])))),
+  abundance_only = c(dia_summ_global$tjur_intensity_only,
+                     turbo_global$tjur_intensity_only),
+  condition_share = c(dia_summ_global$tjur_condition_fraction,
+                      turbo_global$tjur_condition_fraction)) %>%
+  knitr::kable(digits = 3)
+```
+
+Abundance on its own explains very little in either. What separates them is how much of the explainable missingness belongs to condition: `r round(dia_summ_global$tjur_condition_fraction, 2)` for the whole-proteome data against `r round(turbo_global$tjur_condition_fraction, 2)` for the pulldown.
+
+The DPC fits anyway.
+
+```{r, fig.height=4, fig.width=5, out.width='60%'}
+se_turbo <- lfq_qf_turboid[['peptides_for_summarisation']]
+
+y_turbo <- new('EList', list(E = assay(se_turbo), genes = rowData(se_turbo)))
+
+dpc_turbo <- dpc(y_turbo)
+
+plotDPC(dpc_turbo)
+```
+
+Nothing errors, which is the trap. The fitted slope is `r sprintf('%.2f', dpc_turbo$dpc['beta1'])`, against `r sprintf('%.2f', dpc_fit$dpc['beta1'])` for the DIA data: detection barely rises with abundance, because abundance is not what governs detection here. A protein is absent from the control pulldown because it was never in it. Fitting this curve attributes that absence to faintness, and returns estimates — with standard errors, carrying the authority those imply — for a mechanism that is not the one generating the missing values.
 
 ## missBayes
 

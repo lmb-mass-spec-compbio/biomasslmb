@@ -45,10 +45,12 @@ dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
 
 ## Sample correlation
 
-A pairwise correlation heatmap is a quick way to check that replicates agree with each other more than they agree with samples from the other condition. `plot_cor_samples` computes the Spearman correlation between samples for a given assay and plots it as a heatmap.
+A pairwise correlation heatmap is a quick way to check that replicates agree with each other more than they agree with samples from the other condition. `plot_cor_samples` computes the Spearman correlation between samples for a given assay and plots it as a heatmap. Somewhat confusingly, we provide the `is.corr=FALSE` argument below despite the fact that the input is a correlation matrix: `plot_cor_samples` passes the input to `corrplot::corrplot`, which automatically sets the legend limits to -1 to 1 for correlations, which we don't want here. We pass `order='hclust'` to cluster the samples by correlation, which is often more informative than the original order.
 
 ```{r, fig.height=5, fig.width=5}
-plot_cor_samples(dia_prot, 'protein')
+plot_cor_samples(dia_prot, 'protein', is.corr=FALSE, order = 'hclust')
+
+
 ```
 
 ## Principal component analysis
@@ -191,7 +193,8 @@ knitr::kable(data.frame(colData(tmt_qf_mq)))
 ## Sample correlation
 
 ```{r, fig.height=5, fig.width=5}
-plot_cor_samples(tmt_qf_mq, 'protein')
+plot_cor_samples(tmt_qf_mq, 'protein', is.corr=FALSE, order = 'hclust')
+
 ```
 
 ## Principal component analysis

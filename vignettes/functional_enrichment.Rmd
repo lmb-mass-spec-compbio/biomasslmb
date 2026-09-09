@@ -23,6 +23,8 @@ That last clause is where most of the difficulty lies. Enrichment is a compariso
 
 Here we work through over-representation analysis (ORA) with `goseq`, using the whole-proteome comparison from the [testing vignette](exploration_and_statistical_testing.html): blood plasma from MPXV-infected individuals against healthy controls [@Wang2022]. The expected answer is known — infection should mount an acute-phase response — which makes it possible to judge whether the analysis is behaving.
 
+ORA is one of two standard approaches, and the choice between them is worth making deliberately rather than by default. Gene set enrichment analysis (GSEA) takes a ranking of every protein tested instead of a list of those that passed a threshold, so it is not sensitive to where that threshold sits — a difference that decides the outcome on this data, as [what the foreground threshold costs](#what-the-foreground-threshold-costs) shows below. [ORA or GSEA?](ORA_vs_GSEA.html) runs both on this same comparison and sets out where they agree and where they do not.
+
 # Load required packages
 
 ```{r, message=FALSE}
@@ -250,6 +252,8 @@ ora_up_treat %>%
 The ranking is unchanged — `acute-phase response` is still the most over-represented term, on 4 of its 16 background proteins — but with `r sum(sig_up_treat)` foreground proteins instead of `r sum(sig_up)`, nothing survives multiple-testing correction across `r nrow(ora_up_treat)` terms. The biology did not change; the power did.
 
 This is the general shape of the problem, and it cuts both ways: a permissive threshold gives power but admits noise into the foreground, and a strict one gives a foreground you trust and no power to use it. Report the threshold you used, and treat a result that appears or disappears when you move it as a weak result either way.
+
+This is also the case for running GSEA alongside ORA rather than choosing once and for all. Ranking every tested protein removes the dependence on the cut-off entirely, at the price of a dependence on the ranking statistic instead. [ORA or GSEA?](ORA_vs_GSEA.html) runs both on this data and compares what each finds.
 
 # Summary
 

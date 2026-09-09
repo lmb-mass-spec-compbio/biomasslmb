@@ -200,12 +200,14 @@ The correction does not tighten them. It very slightly widens them, and the inte
 The reason is visible in how little of the variation the denominator can explain in the first place:
 
 ```{r}
-c(correlation = round(cor(summed[ribo], log2(n_peptides[ribo])), 3),
+c(fewest_peptides = min(n_peptides[ribo]),
+  most_peptides = max(n_peptides[ribo]),
+  correlation = round(cor(summed[ribo], log2(n_peptides[ribo])), 3),
   variance_explained_percent = round(
     100 * cor(summed[ribo], log2(n_peptides[ribo]))^2, 1))
 ```
 
-Within a set of proteins at equal molar abundance, the number of observable peptides accounts for essentially none of the spread in summed intensity. There is almost nothing there for iBAQ to remove. What is left over is the variation iBAQ does not address: how readily each peptide ionises, how well it chromatographs, whether it was selected for fragmentation.
+These are not proteins of a similar size. The denominator ranges over roughly `r round(max(n_peptides[ribo]) / min(n_peptides[ribo]))`-fold across the set, so iBAQ is applying a large and very unequal adjustment to proteins that are present in equal numbers. It still explains essentially none of the spread in summed intensity. The problem is not that there was too little length variation for the correction to act on; it is that within this set length is not what the signal tracks. What is left over is the variation iBAQ does not address: how readily each peptide ionises, how well it chromatographs, whether it was selected for fragmentation.
 
 ```{r, fig.height=4, fig.width=6, fig.fullwidth=TRUE, fig.cap="iBAQ across all proteins, with the ribosomal proteins marked. They occupy a narrow band of the full range, but a wide one in absolute terms."}
 data.frame(ibaq = ibaq[finite],

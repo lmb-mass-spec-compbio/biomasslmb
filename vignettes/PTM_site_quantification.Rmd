@@ -76,7 +76,7 @@ contaminant_accessions <- c(contaminant_accessions,
 
 The two fractions are read into separate `QFeatures` objects. They cannot share one, because they hold different features: modified peptides in one, all peptides in the other. Keeping them apart also keeps it obvious which assay is which when they are combined at the end.
 
-The filtering applied here is the same for both, and is the usual PSM-level processing: drop contaminants and PSMs without a unique master protein, then drop PSMs with high co-isolation, low signal:noise, or a search engine rank below 1.
+The filtering applied here is the same for both, and follows the PSM-level processing in the [TMT PSM QC and summarisation](TMT_PSM_QC_Summarisation.html) vignette: drop contaminants and PSMs without a unique master protein, then drop PSMs with high co-isolation, low signal:noise, or a search engine rank below 1.
 
 ```{r, message=FALSE, warning=FALSE}
 read_and_filter <- function(infdf) {

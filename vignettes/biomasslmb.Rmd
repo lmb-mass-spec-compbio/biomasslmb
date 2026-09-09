@@ -111,7 +111,7 @@ c(peptides = nrow(qf[['peptides']]),
 plot_volcano(results) + theme_biomasslmb(base_size = 10)
 ```
 
-Every line above glosses over a decision — which contaminant list, how much missingness to tolerate, whether to normalise at all, what makes a protein testable — and the rest of this article is about which of those decisions matter for your experiment. But the skeleton is usually very similar.
+Every line above glosses over a decision — which contaminant list, how much missingness to tolerate, whether to normalise at all, what makes a protein testable — and the rest of this article is about which of those decisions matter for your experiment. But the skeleton is the one every vignette here follows.
 
 # The object you work in
 
@@ -158,13 +158,13 @@ Both axes concern comparing the same protein between samples, which is what the 
 
 # The stages, in order
 
-Analyses typically follow the same sequence regardless of which combination above applies.
+These vignettes follow the same sequence regardless of which combination above applies.
 
 **1. Protein annotation.** Retrieve UniProt annotations for the accessions in your data before anything else, and cache them, so that every later step can use gene names, protein descriptions and GO terms. `get_uniprot_details()` retrieves the annotations, `collapse_uniprot_details_multi_accession()` handles protein groups with several accessions, and `get_go_terms(expand_terms = TRUE)` retrieves GO terms with ancestor terms included. Retired accessions that no longer resolve are recovered with `get_uniparc_fallback()`. See [protein annotation](protein_annotation.html).
 
 **2. QC, filtering and summarisation.** Remove contaminants and low-confidence identifications, log-transform, normalise, and summarise features to protein-level abundance. This is the acquisition-specific stage — use the vignette from the table above.
 
-**3. Exploration and statistical testing.** Check that the experiment worked before testing it: look at sample correlations and `plot_pca()`, and at the protein(s) the experiment turns on — a bait, a knockout, a treatment target — with `plot_protein_assays()`, which shows a protein across the processing steps so that a result can be traced back to the features behind it. Then apply a testability filter and test. The conventional filter requires at least two genuinely quantified replicates in at least one condition, and at least two values in both conditions of whichever assay is actually fitted — one rule when nothing is imputed, two when something is. An enrichment design needs a different rule, covered in [enrichment designs](interactome_designs.html). See [data exploration and statistical testing](exploration_and_statistical_testing.html).
+**3. Exploration and statistical testing.** Check that the experiment worked before testing it: look at sample correlations and `plot_pca()`, and at the protein(s) the experiment turns on — a bait, a knockout, a treatment target — with `plot_protein_assays()`, which shows a protein across the processing steps so that a result can be traced back to the features behind it. Then apply a testability filter and test. The filter these vignettes use requires at least two genuinely quantified replicates in at least one condition, and at least two values in both conditions of whichever assay is actually fitted — one rule when nothing is imputed, two when something is. An enrichment design needs a different rule, covered in [enrichment designs](interactome_designs.html). See [data exploration and statistical testing](exploration_and_statistical_testing.html).
 
 **4. Functional enrichment.** Test whether the differentially abundant proteins are enriched for particular GO terms, against the proteins that were tested rather than against the proteome. `get_enriched_go()` runs the test, correcting for the tendency of abundant proteins to be called significant more often via a goseq probability weighting function; `estimate_overrep()` adds an effect size, `remove_redundant_go()` collapses the parent and child terms that otherwise dominate the output, and `plot_go()` displays it. See [functional enrichment](functional_enrichment.html), and [ORA or GSEA?](ORA_vs_GSEA.html) for the threshold-free alternative.
 
@@ -182,9 +182,9 @@ The obvious reading is that you pick a summarisation method, then decide what to
 
 Because a `QFeatures` object holds parallel assays, these are not mutually exclusive: you can summarise with `robustSummary` and with limpa into the same object and compare the outcomes.
 
-## The conventional starting point depends on acquisition type
+## The recommended starting point depends on acquisition type
 
-Missingness differs by acquisition type, and since summarisation choices are largely a response to missingness, so do the conventions:
+Missingness differs by acquisition type, and since summarisation choices are largely a response to missingness, so does the recommendation:
 
 | | Summarisation | Missing values | Testing |
 |---|---|---|---|
@@ -196,7 +196,7 @@ Within a TMT plex, all samples are quantified in the same MS run, so after signa
 
 LFQ quantifies each sample in a separate run, so missing values are pervasive and are related to abundance. `robustSummary` and limpa's detection probability curve are both responses to that problem. Applying them to within-plex TMT data addresses a problem that is not there. The [summarisation methods](summarisation_methods.html) vignette compares `sum` and `robustSummary` directly, on the same data.
 
-Three things should make you depart from the conventional path:
+Three things should make you depart from the recommended route:
 
 1. **Severity of missingness.** Diagnose it rather than assuming: `global_condition_miss_score()` separates missingness explained by abundance from missingness explained by condition, `condition_miss_score()` does the same per feature, and `plot_missing_upset()` and `plot_missing_SN()` show its structure. [Handling missing values](handling_missing_values.html) works through the diagnosis and every option that follows from it.
 2. **Experimental design.** In an enrichment experiment, absence from the control is usually real rather than a detection failure. Discarding those features removes your strongest candidates outright; imputing them keeps the candidates but restates a presence/absence result as a fold change against an invented background, so its magnitude is set by the imputation parameters rather than by the data.

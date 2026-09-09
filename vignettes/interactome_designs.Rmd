@@ -399,18 +399,18 @@ knitr::kable(table(control = n_quant_turboid[, 'control'],
 Read the first row. Most of the proteins in this experiment were quantified in two or three biotin samples and in none of the controls — the result the pulldown was run to produce.
 
 ```{r}
-conventional <- rownames(n_quant_turboid)[
+whole_proteome <- rownames(n_quant_turboid)[
   apply(n_quant_turboid, 1, min) >= 2]
 
 candidates <- rownames(n_quant_turboid)[n_quant_turboid[, 'biotin'] >= 2]
 
 c(proteins = nrow(n_quant_turboid),
-  conventional_rule = length(conventional),
+  whole_proteome_rule = length(whole_proteome),
   enrichment_rule = length(candidates),
   absent_from_control = sum(n_quant_turboid[, 'control'] == 0))
 ```
 
-The rule used in the whole-proteome vignettes — at least two quantified values in *both* conditions — keeps `r length(conventional)` of the `r nrow(n_quant_turboid)` proteins. It is the right rule there and the wrong one here, because in an enrichment experiment "not quantified in the control" is the outcome of interest rather than a failure to measure.
+The rule used in the whole-proteome vignettes — at least two quantified values in *both* conditions — keeps `r length(whole_proteome)` of the `r nrow(n_quant_turboid)` proteins. It is the right rule there and the wrong one here, because in an enrichment experiment "not quantified in the control" is the outcome of interest rather than a failure to measure.
 
 The rule that matches the design asks for enough measurements in the *enriched* condition to estimate the protein at all, and treats the control side as something to be modelled rather than required. That keeps `r length(candidates)` proteins.
 
@@ -479,10 +479,10 @@ hits <- rownames(res_turboid)[res_turboid$adj.P.Val.OneSided < 0.05]
 
 c(candidate_interactors = length(hits),
   absent_from_control = sum(n_quant_turboid[hits, 'control'] == 0),
-  untestable_under_conventional_rule = sum(!hits %in% conventional))
+  untestable_under_whole_proteome_rule = sum(!hits %in% whole_proteome))
 ```
 
-`r sum(!hits %in% conventional)` of the `r length(hits)` candidate interactors would never have been tested under the conventional testability rule. They are not marginal calls that the rule was right to be cautious about — they are the proteins with the cleanest presence/absence separation in the experiment, excluded for having too few measurements in the condition where the design predicts they should have none.
+`r sum(!hits %in% whole_proteome)` of the `r length(hits)` candidate interactors would never have been tested under the whole-proteome testability rule. They are not marginal calls that the rule was right to be cautious about — they are the proteins with the cleanest presence/absence separation in the experiment, excluded for having too few measurements in the condition where the design predicts they should have none.
 
 Report the per-condition counts alongside the result, as in the whole-proteome vignettes, so that a reader can tell a protein quantified in three biotin samples and imputed in three controls from one measured in all six.
 
@@ -503,7 +503,7 @@ usethis::use_data(lfq_qf_turboid, overwrite=TRUE)
 
 # Where to go next
 
-Part A leaves `tmt_qf_mq` holding protein-level abundances with the informative missing values preserved and every value backed by at least two PSMs. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette picks it up and works through the exploratory checks — sample correlation, PCA, inspecting a hit across the processing steps — that any design needs before testing, using the conventional two-sided treatment for comparison with the route above.
+Part A leaves `tmt_qf_mq` holding protein-level abundances with the informative missing values preserved and every value backed by at least two PSMs. The [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette picks it up and works through the exploratory checks — sample correlation, PCA, inspecting a hit across the processing steps — that any design needs before testing, using the two-sided treatment for comparison with the route above.
 
 For the enrichment-specific decisions, Part B is the worked example: a testability rule that keeps the control-absent proteins, imputation restricted to the condition where absence is defensible, and a one-sided test. [Handling missing values](handling_missing_values.html) covers `restrict_imputation()` and the alternatives to it in more depth, including what blanket imputation costs.
 

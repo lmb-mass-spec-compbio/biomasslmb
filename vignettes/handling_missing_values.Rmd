@@ -239,7 +239,7 @@ These are covered in context, with thresholds, in the acquisition-specific QC vi
 
 The choice between summing features and `MsCoreUtils::robustSummary` is usually presented as a choice of estimator. It is at least as much a choice about missing values.
 
-Summing requires every feature to be present in every sample, or the sum is comparing different sets of peptides between samples. `robustSummary` fits a model that tolerates missing features, so it can use incomplete peptides without that bias. Which you want follows from the acquisition type: within a TMT plex, features are near-complete after S:N filtering, so summing is well defined and conventional; in LFQ, requiring complete features discards most of the data, so `robustSummary` is the conventional choice.
+Summing requires every feature to be present in every sample, or the sum is comparing different sets of peptides between samples. `robustSummary` fits a model that tolerates missing features, so it can use incomplete peptides without that bias. Which you want follows from the acquisition type: within a TMT plex, features are near-complete after S:N filtering, so summing is well defined and is what these vignettes use; in LFQ, requiring complete features discards most of the data, so `robustSummary` is the better choice.
 
 The [summarisation methods](summarisation_methods.html) vignette compares the two directly on the same data, including what happens when each is used where the other belongs.
 

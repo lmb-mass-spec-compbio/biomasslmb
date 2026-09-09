@@ -19,9 +19,15 @@ knitr::opts_chunk$set(
 
 A post-translational modification (PTM) experiment asks a different question from a whole-proteome one. The quantity of interest is not how much of a protein there is, but how much of it carries a modification at a particular residue. Everything below follows from that difference.
 
-Because modified peptides are a small fraction of the peptides in a digest, they have to be enriched before they can be quantified with any depth. The usual design labels every sample once, pools the labelled material, and then splits the pool: one part is enriched for the modification, the other is left alone. The two parts are acquired as separate runs, giving two datasets over the same samples — an **enriched** one that reports modified peptides, and a **total** one that reports protein abundance.
+Because modified peptides are a small fraction of the peptides in a digest, they have to be enriched before they can be quantified with any depth. A common design is to TMT label every sample once, pool the labelled material, and then split the pool: one part is enriched for the modification, the other is left alone. The two parts are acquired as separate runs, giving two datasets over the same samples — an **enriched** one that reports modified peptides, and a **total** one that reports protein abundance.
 
-That pairing drives three things this vignette covers and the whole-proteome vignettes do not:
+The alternative is to enrich each sample separately and quantify label-free, and the reason not to is that the enrichment is the most variable step in the workflow. Recovery from an immobilised metal affinity or titanium dioxide column depends on binding capacity, wash stringency and elution, and none of those repeat exactly between preparations. Enriching separately imprints that variability on the samples individually, where nothing in the data distinguishes it from biology. Labelling first and pooling moves the enrichment downstream of the point at which the samples become one tube, so a single enrichment is applied to all of them and its idiosyncrasies land on every channel alike.
+
+Two further things follow from pooling. Modified peptides sit low in the dynamic range and are identified less reproducibly than unmodified ones, so a label-free DDA experiment loses many sites to missing values in a subset of samples; within a plex, a site identified once is quantified in every channel from the same spectrum. And the total fraction is split from the pool after labelling, which is what later makes it usable as a normalisation reference: it is the same labelled material, so it carries the same loading differences as the enriched fraction.
+
+The costs are the usual isobaric ones. The plex sets a ceiling on how many samples can share an enrichment, and a design that exceeds it needs bridge channels and the treatment in [multi-plex TMT](TMT_multiplex.html). Co-isolation compresses fold changes, which SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2] and the filtering below limit, but cannot completely resolve. Label-free is a reasonable choice where the enrichment can be tightly controlled, and DIA acquisition answers the missing value argument, but neither recovers the shared enrichment.
+
+With TMT-label, pool then enrich experiment design, there are three important considerations which we cover here:
 
 - **Which residue is modified matters**, so the search engine's localisation confidence has to be assessed and the site placed within the protein, not just within the peptide.
 - **The enriched fraction cannot be normalised against itself.** A treatment that changes phosphorylation globally is the signal, and median-centring the enriched data would remove it. The total fraction supplies the reference instead.
@@ -37,7 +43,6 @@ Everything up to the localisation step is the routine PSM processing covered in 
 library(QFeatures)
 library(biomasslmb)
 library(ggplot2)
-library(tidyr)
 library(dplyr)
 library(limma)
 ```
@@ -238,27 +243,6 @@ phospho[['site']] <- center_normalise_to_ref(
 
 `center_normalise_to_ref()` with the default `center_to_zero = FALSE` subtracts each median only after the medians have themselves been centred on their mean, so it applies the *relative* differences between samples and leaves the overall level of the data alone. That is why the same reference can be applied to two assays on quite different scales.
 
-It is worth seeing how far the two possible references disagree, since if they agreed exactly the choice would not matter.
-
-```{r, fig.height=3.5, fig.width=6, fig.fullwidth=TRUE, fig.cap="Per-sample median abundance in each fraction, centred on its own mean"}
-phospho_medians <- get_medians(phospho[['site_raw']])
-
-data.frame(
-  Sample = names(total_medians),
-  Total = total_medians - mean(total_medians),
-  Enriched = phospho_medians - mean(phospho_medians)) %>%
-  pivot_longer(c(Total, Enriched), names_to = 'Fraction',
-               values_to = 'Median') %>%
-  ggplot(aes(Median, Sample, colour = Fraction)) +
-  geom_point() +
-  geom_vline(xintercept = 0, linetype = 2, colour = 'grey50') +
-  scale_colour_manual(values = get_cat_palette(2)) +
-  theme_biomasslmb(base_size = 9, aspect_square = FALSE) +
-  labs(x = 'Centred median abundance (log2)', y = '')
-```
-
-The two references differ by up to `r round(max(abs((total_medians - mean(total_medians)) - (phospho_medians - mean(phospho_medians)))), 2)` on the log2 scale here. Some of that difference is genuine biology and some is the enrichment having worked slightly better in some channels than others, and nothing in the data distinguishes them — which is the reason to take the reference from the fraction where the assumption behind it holds.
-
 ```{r, warning=FALSE, fig.show='hold', out.width="50%", fig.height=4, fig.width=5, fig.cap="Site-level abundance distributions, before and after normalisation"}
 plot_quant(phospho[['site_raw']], log2transform = FALSE, method = 'density') +
   theme_biomasslmb(base_size = 9) +
@@ -309,14 +293,13 @@ protein_res <- test_treatment(assay(total[['protein']]))
 occupancy_res <- test_treatment(occupancy)
 
 data.frame(
-  level = c('Site abundance', 'Protein abundance', 'Occupancy'),
-  tested = c(nrow(site_res), nrow(protein_res), nrow(occupancy_res)),
+  level = c('Site abundance', 'Occupancy'),
+  tested = c(nrow(site_res), nrow(occupancy_res)),
   significant = c(sum(site_res$adj.P.Val < 0.05),
-                  sum(protein_res$adj.P.Val < 0.05),
                   sum(occupancy_res$adj.P.Val < 0.05)))
 ```
 
-The two site-level answers mostly agree, which is expected: the treatment changes hardly any protein abundances, so for most sites there is nothing for the correction to remove.
+Those are the two answers you might report. The protein-level test is not a third one — it is a different question over a different set of features — but it is what tells you how far to trust the agreement between these two. Only `r sum(protein_res$adj.P.Val < 0.05)` of the `r nrow(protein_res)` proteins quantified in the total fraction changes detectably with treatment, so for most sites there is nothing for the correction to remove, and the two site-level answers mostly agree.
 
 ```{r}
 comparison <- data.frame(
@@ -362,7 +345,7 @@ ggplot(comparison, aes(site_logFC, occupancy_logFC)) +
        y = 'Occupancy (log2 fold change)')
 ```
 
-A site called at one level and not the other is not a contradiction; the two are answering different questions. A site that moves only in the abundance test, while its protein moves by a similar amount, is a protein-level change showing through — the modified fraction is constant and more of the protein is present. A site that moves only in the occupancy test is one where protein-level variation was adding noise, and removing it made a modest change detectable.
+A site called at one level and not the other is not a contradiction; the two are answering different questions. A site that moves only in the abundance test, while its protein moves by a similar amount, is a protein-level change showing through — the modified fraction is constant and more of the protein is present. A site that moves only in the occupancy test is one where protein-level variation was adding noise, and removing it made a modest change detectable. With so few protein-level changes in this subset, the first of those cases appears only once here; where a treatment moves protein abundances more widely, it is correspondingly commoner.
 
 Which of the two to report depends on the question. Occupancy is the right answer for "did signalling through this site change", and it is what most phosphoproteomics is asking. Site abundance is the right answer for "how much of this modified form is present", which is the relevant quantity when the modified form is itself the effector. Reporting both, as above, costs nothing and makes the distinction visible; reporting site abundance alone and describing it as a change in phosphorylation is the mistake this section exists to prevent.
 

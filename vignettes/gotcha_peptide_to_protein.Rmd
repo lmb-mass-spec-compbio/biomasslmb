@@ -169,9 +169,9 @@ n_many <- sum(sh$n_masters > 1)
 n_disagree <- sum(!sh$razor_is_a_master)
 ```
 
-Of the `r nrow(sh)` shared peptides, `r n_one` were resolved by PD to a single master protein, and MaxQuant's razor protein is that same protein in every one of them: there is no peptide here where the two engines each committed to an identity and committed to different ones. The remaining `r n_many` are peptides PD assigned to more than one protein group, and in `r n_many - n_disagree` of those the razor protein is one of the group masters PD listed. Read as strings, those `r n_many - n_disagree` peptides look like disagreements and would put agreement among shared peptides below half. They are not disagreements. They are one engine reporting a choice the other declined to make.
+Of the `r nrow(sh)` shared peptides, `r n_one` were resolved by PD to a single master protein, and MaxQuant's razor protein is that same protein in every one of them: there is no peptide here where the two engines each committed to an identity and committed to different ones. The remaining `r n_many` are peptides PD assigned to more than one protein group, and in `r n_many - n_disagree` of those the razor protein is one of the group masters PD listed. Read as strings, those `r n_many - n_disagree` peptides look like disagreements but they are not. They are one engine reporting a choice the other declined to make.
 
-That leaves `r n_disagree`.
+That leaves `r n_disagree` peptides where the protein assignment truely differs.
 
 ```{r}
 assignments %>%

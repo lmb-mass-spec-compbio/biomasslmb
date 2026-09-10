@@ -1050,5 +1050,61 @@
 				[ "2024", 10, 9 ]
 			]
 		}
+	},
+	{
+		"id": "li2023dpc",
+		"type": "article-journal",
+		"title": "Neither random nor censored: estimating intensity-dependent probabilities for missing values in label-free proteomics",
+		"container-title": "Bioinformatics",
+		"volume": "39",
+		"issue": "5",
+		"page": "btad200",
+		"DOI": "10.1093/bioinformatics/btad200",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengbo"
+			},
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2023
+				]
+			]
+		}
+	},
+	{
+		"id": "li2025limpa",
+		"type": "article-journal",
+		"title": "Quantification and differential analysis of mass spectrometry proteomics data with probabilistic recovery of information from missing values",
+		"container-title": "bioRxiv",
+		"page": "2025.04.28.651125",
+		"DOI": "10.1101/2025.04.28.651125",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengbo"
+			},
+			{
+				"family": "Cobbold",
+				"given": "Simon A."
+			},
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2025
+				]
+			]
+		}
 	}
 ]

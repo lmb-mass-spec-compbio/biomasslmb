@@ -332,7 +332,13 @@ The third route does not impute at all. It carries the missingness into the mode
 
 ## limpa
 
-`limpa` fits a detection probability curve (DPC) relating the chance of detecting a peptide to its abundance, uses it to produce protein-level estimates *with standard errors*, and carries those standard errors into the linear model. It replaces summarisation, imputation and the model fit together.
+`limpa` replaces summarisation, imputation and the model fit together [@li2025limpa]. Three parts of how it works decide what its output can carry, and they are worth setting out before running it.
+
+**The detection probability curve.** limpa assumes that a precursor whose true log2-intensity is `y` is detected with probability `plogis(b0 + b1 * y)` [@li2023dpc]. The slope `b1` says how strongly detection depends on abundance: zero would be missing completely at random, and a very large slope would be hard censoring at a threshold. Slopes of 0.7–0.9 are typical of DIA data searched with match-between-runs. The curve is a function of the intensities that were *not* measured, so it is estimated from the observed ones by an exponential tilting argument. That makes it hard to estimate, and makes the slope too low when precursors vary strongly between samples.
+
+**Quantification is a model fit, not a summary.** For each protein, limpa fits an additive model across its precursors and samples, `mu = gamma[i] + delta[j]`, and reports the sample effects `gamma` as the protein estimate. What it minimises has three parts: squared residuals for the precursor values that were observed, the log probability of non-detection for the ones that were not, and a prior. A missing value is never filled in — it enters as the statement *this was not detected*, weighted by the DPC.
+
+**A prior holds a protein's samples together.** The third part penalises how far each sample's estimate strays from that protein's own mean across samples, on a scale limpa calls `prior.logFC`. It is a single number for the whole dataset: the 90th percentile of between-sample variance across all precursors. It is what allows limpa to return a value for a sample in which nothing was detected, and it is the part to keep in view.
 
 ```{r, message=FALSE, warning=FALSE}
 library(limpa)
@@ -349,7 +355,7 @@ dpc_fit <- dpc(y_peptide)
 plotDPC(dpc_fit)
 ```
 
-The fitted curve is the assumption made visible: detection probability rising with abundance. Check it before trusting anything downstream — if the points do not follow the curve, the model does not describe your data.
+The fitted curve is the assumption made visible: detection probability rising with abundance, with a slope of `r sprintf('%.2f', dpc_fit$dpc['beta1'])` here. Read the slope rather than the visual fit — the curve is estimated from quantities it is not a function of, so the scatter around it is expected and a mediocre-looking fit is not on its own a problem. A shallow slope means detection says little about abundance, so less can be recovered from the missing values and the analysis becomes more conservative.
 
 ```{r, message=FALSE, warning=FALSE}
 y_protein <- dpcQuant(y_peptide, protein.id = 'Protein.Group', dpc = dpc_fit)
@@ -394,35 +400,15 @@ Two things separate this from the three options above. The model is fitted to al
 
 That second point is worth checking rather than assuming. Of the `r sum(res_limpa$adj.P.Val < 0.05)` significant proteins, `r sum(!rownames(res_limpa)[res_limpa$adj.P.Val < 0.05] %in% testable)` lies outside the testable set. The protein assay here is only `r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)`% missing, so there were few untestable proteins for the method to recover. The gain grows with sparsity, and so does the importance of the assumption in the next section.
 
-## When limpa is the wrong tool
+## Where the estimate comes from when nothing was detected
 
-The DPC assumes missingness is driven by detectability, which is driven by abundance. In an enrichment experiment that assumption is false: a protein is absent from the control pulldown because it is not there, not because it was too faint to detect. Fitting a DPC to such data produces a curve that describes something real about abundance and detection while missing the reason most of the values are missing.
+limpa returns a value for every protein in every sample, including samples in which not one of that protein's precursors was detected. Knowing what sets that value is the difference between reading limpa's output well and over-reading it.
 
-The diagnostic is the one from earlier in this article. A high condition missingness index, or a large `tjur_condition_fraction`, means a substantial part of the missingness is explained by experimental group rather than by abundance, and the DPC is not modelling it.
+Two forces decide it, and they are not symmetric. The missing-value term rewards a lower estimate, because a lower true intensity makes non-detection more probable — but only up to a point. Once the estimate has dropped far enough down the DPC that non-detection is nearly certain, moving it lower buys almost nothing and the term flattens out. The prior pulls the other way and never flattens: it is a quadratic penalty on distance from the protein's mean across samples. The estimate settles where a force that has stopped growing meets one that has not.
 
-`lfq_qf_turboid` is a TurboID proximity-labelling experiment, biotin against control with three replicates each, and it is the design the DPC is not built for. Scoring both datasets at the same stage makes the contrast explicit:
+So how far the estimate falls is set by how much evidence of absence there is — how many precursors went undetected — and by how far up the curve the samples that did detect it sat. Neither is a statement about biology. This matters most in enrichment designs, where the proteins of interest are exactly the ones absent from the control.
 
-```{r, message=FALSE}
-turbo_global <- global_condition_miss_score(
-  lfq_qf_turboid, i = 'peptides_for_summarisation', group_cols = 'Condition')
-
-dia_summ_global <- global_condition_miss_score(
-  dia_qf, i = 'peptides_for_summarisation', group_cols = 'group')
-
-data.frame(
-  data = c('dia_qf (whole proteome)', 'lfq_qf_turboid (TurboID)'),
-  missing = c(mean(is.na(assay(dia_qf[['peptides_for_summarisation']]))),
-              mean(is.na(assay(lfq_qf_turboid[['peptides_for_summarisation']])))),
-  abundance_only = c(dia_summ_global$tjur_intensity_only,
-                     turbo_global$tjur_intensity_only),
-  condition_share = c(dia_summ_global$tjur_condition_fraction,
-                      turbo_global$tjur_condition_fraction)) %>%
-  knitr::kable(digits = 3)
-```
-
-Abundance on its own explains very little in either. What separates them is how much of the explainable missingness belongs to condition: `r round(dia_summ_global$tjur_condition_fraction, 2)` for the whole-proteome data against `r round(turbo_global$tjur_condition_fraction, 2)` for the pulldown.
-
-The DPC fits anyway.
+`lfq_qf_turboid` is a TurboID proximity-labelling experiment, biotin against control with three replicates each, and it shows the effect plainly.
 
 ```{r, fig.height=4, fig.width=5, out.width='60%'}
 se_turbo <- lfq_qf_turboid[['peptides_for_summarisation']]
@@ -434,7 +420,61 @@ dpc_turbo <- dpc(y_turbo)
 plotDPC(dpc_turbo)
 ```
 
-Nothing errors, which is the trap. The fitted slope is `r sprintf('%.2f', dpc_turbo$dpc['beta1'])`, against `r sprintf('%.2f', dpc_fit$dpc['beta1'])` for the DIA data: detection barely rises with abundance, because abundance is not what governs detection here. A protein is absent from the control pulldown because it was never in it. Fitting this curve attributes that absence to faintness, and returns estimates — with standard errors, carrying the authority those imply — for a mechanism that is not the one generating the missing values.
+The slope is `r sprintf('%.2f', dpc_turbo$dpc['beta1'])` against `r sprintf('%.2f', dpc_fit$dpc['beta1'])` for the DIA data. Part of that gap is the design rather than the missingness: the slope is under-estimated when precursors vary strongly between samples, and an enrichment experiment makes them do exactly that. Either way the consequence is the same — a shallow slope means the missing values carry little information, so the prior carries more of the estimate.
+
+```{r, message=FALSE, warning=FALSE}
+y_turbo_prot <- dpcQuant(y_turbo, protein.id = 'Master.Protein.Accessions',
+                         dpc = dpc_turbo, verbose = FALSE)
+
+turbo_bait <- lfq_qf_turboid$Condition == 'biotin'
+
+n_obs <- y_turbo_prot$other$n.observations
+
+bait_only <- rowSums(n_obs[, turbo_bait] > 0) == sum(turbo_bait) &
+  rowSums(n_obs[, !turbo_bait]) == 0
+
+turbo_lfc <- rowMeans(y_turbo_prot$E[, turbo_bait]) -
+  rowMeans(y_turbo_prot$E[, !turbo_bait])
+
+c(proteins = nrow(y_turbo_prot),
+  bait_only = sum(bait_only),
+  median_logFC = round(median(turbo_lfc[bait_only]), 2),
+  prior_logFC = round(y_turbo_prot$prior.logFC, 2))
+```
+
+Every one of those `r sum(bait_only)` proteins is equally absent from the control: three replicates, no detected precursor in any of them. They are assigned a median log2 fold change of `r round(median(turbo_lfc[bait_only]), 2)`, and `r round(100 * mean(turbo_lfc[bait_only] < y_turbo_prot$prior.logFC))`% of them fall inside `prior.logFC`. What separates one from another is not how absent it is, because they are equally absent:
+
+```{r}
+data.frame(precursors = y_turbo_prot$genes$NPeptides[bait_only],
+           logFC = turbo_lfc[bait_only]) %>%
+  group_by(precursors) %>%
+  summarise(proteins = n(), median_logFC = median(logFC)) %>%
+  knitr::kable(digits = 2)
+```
+
+```{r}
+c(logFC_vs_precursors = cor(turbo_lfc[bait_only],
+                            y_turbo_prot$genes$NPeptides[bait_only],
+                            method = 'spearman'),
+  logFC_vs_bait_abundance = cor(turbo_lfc[bait_only],
+                                rowMeans(y_turbo_prot$E[, turbo_bait])[bait_only],
+                                method = 'spearman')) %>%
+  round(2)
+```
+
+The estimated fold change tracks how many precursors the protein had and how bright it was on the side where it *was* detected. Both describe how well the protein was measured where it was present, not how absent it is where it was not. A protein seen in three biotin replicates on two faint precursors and never in a control gets a small fold change, because there was never enough evidence to push its control estimate away from the prior.
+
+None of this is an argument against using limpa here — its authors apply the same machinery to IP-MS data, and limpa records the uncertainty honestly rather than hiding it:
+
+```{r}
+c(unobserved_control = median(
+    y_turbo_prot$other$standard.error[bait_only, !turbo_bait]),
+  observed_biotin = median(
+    y_turbo_prot$other$standard.error[bait_only, turbo_bait])) %>%
+  round(2)
+```
+
+The estimates that rest on nothing come with standard errors several times larger, `dpcDE()` tracks which those are through `n.observations`, and the test weights them accordingly. The argument is against reading the fold change as a magnitude. In a design where absence is the signal, report `n.observations` beside any result, and expect the proteins with fewest precursors — often the most interesting ones — to be the least likely to reach significance.
 
 ## missBayes
 
@@ -469,13 +509,13 @@ data.frame(
     'On/off proteins are untested, and they are often the biggest effects',
     'A rule to choose and justify; imputed values still invented',
     'Confident-looking results built from invented values',
-    'Assumes missingness is abundance-driven; wrong for enrichment designs; its matrix is complete because values were estimated',
+    'Estimates for undetected samples rest partly on a global prior, compressing fold changes where evidence is thin; its matrix is complete because values were estimated',
     'Slow; fits proteins with no data in a group; returns no quantification matrix'),
   `Use when` = c(
     'Missingness is mild, or you need every result defensible',
     'Missingness is condition-structured and on/off proteins matter',
     'Rarely; check what it changed before reporting it',
-    'LFQ, whole-proteome, missingness abundance-driven',
+    'LFQ; read n.observations beside any result from an enrichment design',
     'Missingness matters and downstream analysis accepts a limma-style fit'),
   check.names = FALSE) %>%
   knitr::kable()

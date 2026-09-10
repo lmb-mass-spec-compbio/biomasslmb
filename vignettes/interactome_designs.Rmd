@@ -344,7 +344,7 @@ That index is an order of magnitude above the whole-proteome datasets in [handli
 plot_missing_upset(lfq_qf_turboid, i = 'peptides')
 ```
 
-The sample names sort the sets into their two conditions, which makes the structure easy to read. The five largest combinations all include the three controls; they differ only in how many biotin samples are missing as well. Combinations made up of biotin samples alone sit at the far end of the plot, covering a handful of peptides between them. The two extremes are worth counting directly.
+The sample names sort the sets into their two conditions, which makes the structure easy to read. The five largest combinations all include the three controls; they differ only in how many biotin samples are missing as well. 
 
 ```{r}
 pep_quant <- assay(lfq_qf_turboid[['peptides']])
@@ -359,7 +359,7 @@ c(percent_missing = round(100 * mean(is.na(pep_quant)), 1),
     rowSums(!is.na(pep_quant[, pep_cond == 'biotin'])) == 0))
 ```
 
-Missingness that arose from the limit of detection would produce these two counts at roughly the same size. They are not the same size, and the asymmetry is the enrichment: peptides appear in the biotin samples and vanish from the controls, not the other way round. Discarding features with missing values would remove that finding and leave the experiment looking like a weak version of itself.
+They are not the same size, and the asymmetry is the enrichment: peptides appear in the biotin samples and vanish from the controls, not the other way round. Discarding features with missing values would remove that finding and leave the experiment looking like a weak version of itself.
 
 ## Summarising to protein level
 

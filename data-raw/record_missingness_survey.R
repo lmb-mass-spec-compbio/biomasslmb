@@ -21,6 +21,8 @@
 #   features: exp, mean_log_intensity (min-max scaled within experiment),
 #     perc_missing (fraction of samples with no value for that feature)
 #   experiments: exp, ms_type, sample_type, organism,
+#     total_perc_missing (fraction of the whole matrix missing, computed over
+#       all features before subsampling),
 #     tjur_r2_intensity_only (how well abundance alone predicts missingness),
 #     condition_miss_index (coverage-penalised), condition_miss_weighted_mean
 
@@ -41,6 +43,11 @@ features <- features_all %>%
   dplyr::ungroup() %>%
   as.data.frame()
 
+total_missing <- features_all %>%
+  dplyr::filter(is.finite(perc_missing)) %>%
+  dplyr::group_by(exp) %>%
+  dplyr::summarise(total_perc_missing = mean(perc_missing), .groups = 'drop')
+
 experiments <- attrs %>%
   dplyr::transmute(
     exp,
@@ -50,7 +57,8 @@ experiments <- attrs %>%
     tjur_r2_intensity_only,
     condition_miss_index = mnar_i_cp,
     condition_miss_weighted_mean = mnar_i_no_cp
-  )
+  ) %>%
+  merge(total_missing, by = 'exp')
 
 missingness_survey <- list(
   features = features,

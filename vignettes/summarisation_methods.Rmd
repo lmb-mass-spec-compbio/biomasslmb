@@ -205,6 +205,81 @@ The PSM with the lowest (most negative) correlation is in the same broad abundan
 
 The median is less sensitive to outliers than the mean, but ignores much of the quantitative data since it's only affected by the 'middle' PSMs. In the most extreme instances, median just simplifies the PSM level abundances down to a single representative 'middle' PSM.
 
+## Why the median is the least stable summarisation
+
+In the profiles above, the `median` line moves around more than the other two. This is a general property rather than a feature of these particular proteins, and we can measure it. Because `median` and `sum` are both computed here from the same PSMs (`psms_filtered_forSum`), any difference between them is down to the estimator alone.
+
+The proteins in this dataset genuinely differ between `Control` and `Mutant`, so the spread of a profile across all twelve tags mixes real signal with noise. What is noise, and only noise, is how much an estimate moves between replicates of the *same* condition.
+
+```{r}
+psm_counts <- table(
+  rowData(tmt_qf[['psms_filtered_forSum']])$Master.Protein.Accessions)
+
+condition <- colData(tmt_qf)$Condition
+
+replicate_sd <- function(x) {
+  sqrt(mean(tapply(seq_along(condition), condition, function(i) var(x[i]))))
+}
+
+methods <- c(Sum = 'protein', Robust = 'protein_robust', Median = 'protein_median')
+
+shared <- Reduce(intersect, lapply(methods, function(a) rownames(tmt_qf[[a]])))
+shared <- shared[Reduce(`&`, lapply(methods, function(a)
+  complete.cases(assay(tmt_qf[[a]])[shared, ])))]
+
+stability <- data.frame(
+  sapply(methods, function(a) apply(assay(tmt_qf[[a]])[shared, ], 1, replicate_sd)),
+  n_psm = as.integer(psm_counts[shared]))
+```
+
+```{r}
+stability %>%
+  mutate(psms = cut(n_psm, c(1, 2, 3, 5, 9, Inf),
+                    labels = c('2', '3', '4-5', '6-9', '10 or more'))) %>%
+  group_by(psms) %>%
+  summarise(proteins = n(),
+            across(c(Sum, Robust, Median), ~ round(median(.x), 3)))
+```
+
+Two things stand out. With exactly 2 PSMs all three methods are equally stable, and `sum` and `median` are in fact identical: the median of two values is their mean, which is the sum divided by two, and dividing by a constant is an offset on the log scale that a profile cannot see. From 3 PSMs upwards `median` is the noisiest, typically by around `r round(100 * (median(with(stability[stability$n_psm >= 3, ], Median / Sum)) - 1))`%, and the gap widens as PSMs accumulate: `sum` and `robustSummary` become steadily more precise, while `median` improves very little.
+
+That is the explanation in full. **`sum` and `robustSummary` combine every PSM; `median` reports one of them.** Averaging several measurements of the same quantity cancels part of the error in each, so the more PSMs a protein has, the better those two estimates get. Taking the middle value does not average anything, so the protein estimate carries a single PSM's worth of noise however many PSMs were available. Even when everything is well behaved this costs about a fifth more variability — the standard penalty for using a median in place of a mean.
+
+The bigger cost is that rank position says nothing about how well a PSM was measured, so `median` has no protection against landing on a badly measured one, and when it does the protein inherits that PSM's noise in full. For `r sum(with(stability[stability$n_psm >= 3, ], Median / Sum) > 2)` of the `r sum(stability$n_psm >= 3)` proteins with 3 or more PSMs, `median` is more than twice as noisy as `sum`. `sum` avoids this without doing anything clever, because weighting PSMs by their absolute intensity is close to weighting them by their precision:
+
+```{r}
+psm_quant <- log2(assay(tmt_qf[['psms_filtered_forSum']]))
+
+data.frame(intensity = rowMeans(psm_quant),
+           noise = apply(psm_quant, 1, replicate_sd)) %>%
+  mutate(quartile = cut(intensity, quantile(intensity), include.lowest = TRUE,
+                        labels = paste0('Q', 1:4))) %>%
+  group_by(quartile) %>%
+  summarise(psms = n(), noise = round(median(noise), 3))
+```
+
+The most intense PSMs are the most reproducibly quantified, so `sum` leans on them automatically. `median` weights by rank instead, which is uninformative about quality.
+
+A smaller contribution is that the PSM occupying the middle need not be the same one in every tag. Since the PSMs of a single protein sit at different absolute intensities, every switch moves the estimate to a different baseline:
+
+```{r}
+poi_odd <- proteins_of_interest[
+  as.integer(psm_counts[proteins_of_interest]) %% 2 == 1][1]
+
+poi_psms <- log2(assay(tmt_qf[['psms_filtered_forSum']])[
+  rowData(tmt_qf[['psms_filtered_forSum']])$Master.Protein.Accessions == poi_odd, ])
+
+middle_psm <- apply(poi_psms, 2, function(x) rownames(poi_psms)[order(x)[(length(x) + 1) / 2]])
+
+round(sort(rowMeans(poi_psms)[unique(middle_psm)]), 2)
+```
+
+`r poi_odd` has `r nrow(poi_psms)` PSMs, and `r length(unique(middle_psm))` different ones take a turn in the middle across the twelve tags, at mean intensities spanning a `r round(2^diff(range(rowMeans(poi_psms)[unique(middle_psm)])), 1)`-fold range. Each handover puts a step into the profile that is not an abundance change, which is why these profiles look jagged rather than merely noisy.
+
+`robustSummary` avoids all of this while keeping its resistance to outliers, because it does not summarise each sample separately. It fits one linear model across the whole PSM-by-sample matrix, with a term for every PSM and a term for every sample, by iteratively reweighted least squares, and returns the sample terms. Discordant observations are down-weighted rather than discarded, so every PSM informs every sample's estimate; and each PSM's own intensity is absorbed into its own term, so it cannot leak into the between-sample profile. Resistance to outliers comes from the weights rather than from ignoring all but the middle value, which is why it matches `sum` for stability in the table above while remaining, as we saw with the disagreeing PSM earlier, far less sensitive to any one PSM.
+
+This is why `median` is included here for interpretation rather than recommended: it shows what happens when a summarisation discards quantitative information, and the cost begins as soon as a protein has more than two PSMs.
+
 # Part 2: How the methods handle missing values
 
 For Part 2, we switch to `tmt_qf_mq`, the MaxQuant IP dataset from the [enrichment designs](interactome_designs.html) vignette. Unlike `tmt_qf`, missing values here are common and potentially informative (a protein absent from the control pulldown is genuinely missing, not just undetected by chance), so this is a better dataset for comparing how `sum` and `robustSummary` cope with missingness.

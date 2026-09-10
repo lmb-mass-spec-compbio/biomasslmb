@@ -151,6 +151,13 @@ against.
 A draft that is far outside the first column in more than one or two rows is
 usually in the old register rather than being unusual on purpose.
 
+Two rows depend on what kind of article it is rather than on register, and
+comparing against the aggregate will mislead. Second-person and bold density
+are high in the reference and cautionary articles, which address the reader
+directly and report findings, and low in the workflow articles, which walk
+through one route: `you` runs at 9-13 per 1000 words in the first group and
+0.7-2.9 in the second. Compare a draft against articles of its own kind.
+
 ## Files still in the old register
 
 Four vignettes were carried over from `main` and have only partly converged.

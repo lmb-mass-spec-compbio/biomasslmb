@@ -17,9 +17,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Acquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Acquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. Here, we will focus on just LFQ-DIA.
+Label-Free Quantification (LFQ) is the simplest form of quantitative proteomics, in which different samples are quantified in separate MS runs. Quantification is either performed by Data-Dependent Acquisition (DDA), where the Mass Spectrometer triggers fragmentation of ions within a given m/z range with the aim being to focus attention of individual peptides separately, or Data-Independent Acquisition (DIA), where a much wider m/z range is used and a mix of peptides are co-fragmented and quantified simultaneously by deconvoluting the resultant complex spectra. This article covers LFQ-DIA; DDA is a different enough problem to have its own, in [LFQ-DDA peptide QC](LFQ_DDA_Peptide_QC_Summarisation.html).
 
-DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN), which reports results at multiple levels. Here, we will use the data from the precursor level (a specific peptide sequence, with modifications, at a specific charge state). Since DIA co-fragments many precursors at once, DIA-NN infers identifications either from a project-specific spectral library or via a library predicted in-silico from the sequence database, then rescores them, optionally using match-between-runs (MBR) to borrow confidence across runs. As with DDA, we still need to filter to confident identifications, remove contaminants, handle missing values, and summarise to protein-level abundance before any statistical analysis.
+DIA data is commonly searched with [DIA-NN](https://github.com/vdemichev/DiaNN), which reports results at multiple levels. This article starts from the precursor level — a specific peptide sequence, with modifications, at a specific charge state — because it is the level at which the QC decisions below can still be made. Since DIA co-fragments many precursors at once, DIA-NN infers identifications either from a project-specific spectral library or from a library predicted in-silico from the sequence database, then rescores them, optionally using match-between-runs (MBR) to borrow confidence across runs. None of that removes the need to filter to confident identifications, remove contaminants, handle missing values and summarise to protein-level abundance before any statistical analysis.
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between groups, with no enrichment step and a single acquisition batch. That is the common case, and the choices made below are the conventional ones for it. An enrichment experiment — an IP, BioID or TurboID pulldown — needs different reasoning about normalisation and about missing values, and is covered in [enrichment designs](interactome_designs.html).
 
@@ -43,7 +43,7 @@ library(readxl)
 
 # Defining the contaminant proteins
 
-We need to remove contaminant proteins. This search was performed against a version of the Hao lab's '0602 Universal Contaminants' database [@Frankenfield2022] with the Fetal Bovine Serum-derived entries removed (not relevant for a human plasma sample). We use the standard '0602 Universal Contaminants' database bundled with `biomasslmb` below; the FBS-specific entries it additionally contains are simply never observed in this dataset, so filtering behaves identically either way.
+Contaminant proteins have to be removed. This search was performed against a version of the Hao lab's '0602 Universal Contaminants' database [@Frankenfield2022] with the Fetal Bovine Serum-derived entries removed, since they are not relevant to a human plasma sample. The standard database bundled with `biomasslmb` is used below instead — the FBS-specific entries it additionally contains are never observed in this dataset, so filtering behaves identically either way.
 
 ```{r}
 contaminant_fasta_inf <- system.file(
@@ -57,15 +57,15 @@ contaminant_accessions <- biomasslmb::get_contaminant_fasta_accessions(contamina
 print(head(contaminant_accessions))
 ```
 
-DIA-NN was run with this contaminants database included directly in the search FASTA, so contaminant entries are named with a `Cont_` prefix that is carried straight through into the `Protein.Ids` and `Protein.Group` columns of the DIA-NN output. `filter_features_diann` uses this prefix automatically, in addition to the `contaminant_accessions` we've just extracted.
+DIA-NN was run with this contaminants database included directly in the search FASTA, so contaminant entries are named with a `Cont_` prefix that is carried straight through into the `Protein.Ids` and `Protein.Group` columns of the DIA-NN output. `filter_features_diann` uses this prefix automatically, in addition to the `contaminant_accessions` extracted above.
 
 The prefix and the accession list are separate defences, and a search database whose contaminant entries were never renamed provides neither. [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) measures what each one catches and what is left behind when they do not match.
 
 # Read in input data
 
-We start by reading in quantitative proteomics data into a `QFeatures` object, which is the standard Bioconductor object for holding quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
+The data go into a `QFeatures` object, the standard Bioconductor container for quantitative proteomics data. See [here](https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html) for documentation about the `QFeatures` object.
 
-Unlike PD's peptide-level export, DIA-NN's `report.parquet` is a **long-format** table: each row is a single precursor-sample combination, rather than one row per precursor across all samples. We read it in with `arrow::read_parquet`.
+Unlike PD's peptide-level export, DIA-NN's `report.parquet` is a **long-format** table: each row is a single precursor-sample combination, rather than one row per precursor across all samples. `arrow::read_parquet` reads it.
 
 ```{r}
 diann_report_inf <- system.file(
@@ -91,7 +91,7 @@ sample_metadata <- readxl::read_excel(metadata_inf)
 print(sample_metadata)
 ```
 
-The `Run` column in the DIA-NN output inherits the full raw file path, pasting together the `.wiff2` folder and `.wiff.scan` file names. We clean this up so it matches the `sample_id` field in our metadata, then add the concise `runCol` label from the metadata, which we'll use throughout as the sample identifier.
+The `Run` column in the DIA-NN output inherits the full raw file path, pasting together the `.wiff2` folder and `.wiff.scan` file names. Stripping that back to match the `sample_id` field in the metadata allows the concise `runCol` label to be merged in, which serves as the sample identifier from here on.
 
 ```{r}
 diann_df[, "Run"] %>% unique() %>% head(2)
@@ -103,7 +103,7 @@ diann_df <- diann_df %>%
 diann_df[, "Run"] %>% unique() %>% head(2)
 ```
 
-Now we can read the data into a `QFeatures` object, using `readQFeaturesFromDIANN` from `QFeatures`. This creates one `SummarizedExperiment` per run, since the per-run quality metrics in `rowData` (e.g. `Q.Value`, `FWHM`) are run-specific and would be lost if all runs were combined immediately. We filter on these metrics below before joining the runs into a single combined set.
+`readQFeaturesFromDIANN` reads the long-format table in, creating one `SummarizedExperiment` per run. The split matters: the per-run quality metrics in `rowData` (`Q.Value`, `FWHM` and the rest) are run-specific, and combining the runs immediately would discard them before they can be filtered on. They are used below, and the runs joined afterwards.
 
 ```{r}
 dia_qf <- readQFeaturesFromDIANN(
@@ -117,7 +117,7 @@ dia_qf <- readQFeaturesFromDIANN(
 dia_qf
 ```
 
-It's helpful to assess the retention time (RT) distribution for the precursors and its relationship with the chromatographic peak width (FWHM, the Full-Width at Half Maximum) --- narrow, symmetrical peaks are preferred, and we don't expect FWHM to increase systematically with RT.
+The retention time (RT) distribution and its relationship with chromatographic peak width (FWHM, the Full-Width at Half Maximum) are worth assessing before anything is filtered, because a chromatography problem is cheaper to find now than after summarisation. Narrow, symmetrical peaks are what a good separation looks like, and FWHM rising systematically with RT would indicate the later part of the gradient is resolving poorly.
 
 ```{r, warning=FALSE, fig.show='hold', fig.width=5, fig.height=4}
 rbindRowData(dia_qf, i = names(dia_qf)) %>%
@@ -130,7 +130,7 @@ rbindRowData(dia_qf, i = names(dia_qf)) %>%
 
 # Filter precursors
 
-DIA-NN assigns a Q-value to each precursor and protein group identification, representing the local false discovery rate (FDR) at that score threshold. Since this data was processed with match-between-runs enabled, we filter on both the run-level and library-level Q-values (`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value` respectively) at a standard 1% FDR threshold. We don't pass an `i` argument to `filterFeatures`, so the filter is applied to every per-run set simultaneously.
+DIA-NN assigns a Q-value to each precursor and protein group identification, representing the local false discovery rate (FDR) at that score threshold. This data was processed with match-between-runs enabled, which is why both the run-level and library-level Q-values are filtered (`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value` respectively), at a standard 1% FDR threshold. Filtering only the run-level pair would accept identifications that MBR transferred on weak library-level evidence. Passing no `i` argument to `filterFeatures` applies the filter to every per-run set at once.
 
 ```{r}
 dia_qf <- dia_qf %>%
@@ -140,7 +140,7 @@ dia_qf <- dia_qf %>%
   filterFeatures(~ Lib.PG.Q.Value <= 0.01)
 ```
 
-Next, we combine the per-run sets into a single `"precursors"` set with `joinAssays`, aligning features by `Precursor.Id`. A precursor not detected in a given run becomes `NA` for that sample. Only `rowData` columns that are both shared across runs and have consistent values are retained in the combined set; run-specific quality metrics we've already filtered on (e.g. `Q.Value`, `RT`) are dropped, since they're no longer needed.
+The per-run sets are then combined into a single `"precursors"` set with `joinAssays`, aligning features by `Precursor.Id`. A precursor not detected in a given run becomes `NA` for that sample. Only `rowData` columns that are shared across runs and have consistent values survive the join; the run-specific quality metrics already filtered on (`Q.Value`, `RT`) are dropped, having served their purpose.
 
 ```{r}
 dia_qf <- joinAssays(
@@ -158,7 +158,7 @@ dia_qf <- removeAssay(dia_qf, i = which(names(dia_qf) != "precursors"))
 dia_qf <- sync_coldata(dia_qf, 'precursors')
 ```
 
-We first perform routine filtering to remove precursors that:
+Routine filtering removes precursors that:
 
 -   Could originate from contaminants. See `?filter_features_diann` for further details, including the removal of contaminant-associated proteins.
 -   Have more than one accession in `Protein.Group`, meaning DIA-NN could not resolve which protein the precursor came from.
@@ -175,14 +175,14 @@ dia_qf[['peptides_filtered']] <- biomasslmb::filter_features_diann(
 dia_qf <- sync_coldata(dia_qf, 'peptides_filtered')
 ```
 
-For the summarisation, we need our quantification values to be on a log-scale, so we log-transform below
+Summarisation needs the quantification values on a log scale, so they are transformed here.
 
 ```{r}
 dia_qf[['peptides_filtered']] <- QFeatures::logTransform(
   dia_qf[['peptides_filtered']], base = 2)
 ```
 
-Next, we plot the precursor intensities, coloured by `group`.
+The precursor intensity distributions, coloured by `group`:
 
 ```{r, warning=FALSE, fig.show='hold', fig.width=7, fig.height=5, out.width="75%"}
 biomasslmb::plot_quant(dia_qf[['peptides_filtered']], log2transform = FALSE, method = 'density') +
@@ -193,7 +193,7 @@ biomasslmb::plot_quant(dia_qf[['peptides_filtered']], log2transform = FALSE, met
 
 ## Normalise
 
-This is a whole-plasma-proteome comparison between clinical groups, where we don't expect a systematic difference in overall protein content between groups. Standard normalisation is therefore appropriate here, and we apply median normalisation with `QFeatures::normalize`.
+This is a whole-plasma-proteome comparison between clinical groups, in which overall protein content is not expected to differ systematically between groups, so any offset between the distributions above is technical. `diff.median` normalisation with `QFeatures::normalize` shifts each sample to a common median and removes it. The assumption is worth stating, because an [enrichment design](interactome_designs.html) breaks it — there the conditions are expected to differ in composition, and normalising to a common median erodes the signal being measured.
 
 ```{r}
 dia_qf <- QFeatures::normalize(
@@ -211,11 +211,6 @@ biomasslmb::plot_quant(dia_qf[['peptides_filtered_norm']], log2transform = FALSE
 
 ## Summarising to protein-level abundances
 
-For the summarisation to protein, we will use `robustSummary`. We do not need to remove
-peptides with any missing values. However, we still don't want to retain
-peptides with too many missing values, since these will not be very
-informative in estimating the protein-level quantification.
-
 Summarisation takes the protein group assignment at face value: every precursor contributes to exactly one protein group. That assignment is an inference rather than a measurement, and for proteins whose peptides are largely shared with their homologues it is not a reliable one. [Peptides are not proteins](gotcha_peptide_to_protein.html) covers how the assignment is made and how to tell which of your proteins it can support.
 
 Before deciding how to handle missing values, it's worth checking how much missingness there is,
@@ -229,13 +224,13 @@ miss_res <- condition_miss_score(dia_qf, i = 'peptides_filtered_norm', group_col
 condition_miss_index(miss_res$summary)$index
 ```
 
-With `r miss_res$global['n_features_informative']` out of `r miss_res$global['n_features_total']` precursors having any missing values, this data has the substantial missingness typical of DIA-NN precursor-level output, but the condition missingness index is close to zero: unlike a pulldown/enrichment experiment, missingness here is not strongly explained by clinical group. `plot_missing_upset` shows the most common patterns.
+**Missingness is substantial but unstructured by group.** `r miss_res$global['n_features_informative']` of `r miss_res$global['n_features_total']` precursors have at least one missing value, which is typical of DIA-NN precursor-level output, and yet the condition missingness index is close to zero. That combination is what distinguishes this from a pulldown, where missingness is explained by condition by construction and discarding it would discard the finding. `plot_missing_upset` shows the most common patterns.
 
 ```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
 plot_missing_upset(dia_qf, i = 'peptides_filtered_norm')
 ```
 
-Since DIA-NN typically has too many missing values to exclude peptides with any missing values, the `MsCoreUtils::robustSummary` method should be preferred for summarisation to protein-level abundance. With `robustSummary`, we do not need to remove all peptides with missing values since the summarisation algorithm deals with them appropriately [@http://zotero.org/users/5634351/items/FZN3QTTZ]. However, we still don't want to retain peptides with too many missing values, since these will not be very informative in estimating the protein-level quantification. Here, we will retain peptides observed in at least 25% of the 31 samples (`pNA` of at most 0.75), matching the threshold applied to this dataset in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course.
+At this level of missingness, requiring complete precursors would discard most of the data, which rules out summing and makes `MsCoreUtils::robustSummary` the appropriate estimator: it summarises accurately without complete features [@http://zotero.org/users/5634351/items/FZN3QTTZ]. Precursors missing from almost every sample still contribute little beyond noise, so a threshold is applied first — retaining those observed in at least 25% of the 31 samples (`pNA` of at most 0.75), matching the threshold applied to this dataset in the [Proteomics Data Analysis Using R](https://github.com/bioinformatics-core-shared-training/Proteomics_stats_R) course. Set it tighter and more of the plasma proteome falls below the two-precursor rule imposed next; set it looser and protein estimates rest on precursors seen a handful of times.
 
 ```{r}
 dia_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
@@ -246,7 +241,7 @@ biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
                            "Removing peptides with > 75% missing values")
 ```
 
-Next, we remove peptides for proteins with fewer than 2 peptides. This is routine practice and worth being explicit about, because it is doing more than tidying.
+Precursors belonging to proteins with fewer than 2 precursors are removed next. This is routine practice and worth being explicit about, because it is doing more than tidying.
 
 A protein quantified from a single precursor has no internal replication: there is no second measurement to disagree with the first, so nothing about it can be checked. Any error in that one precursor — a misassigned peptide, interference, a bad integration — passes straight through to the protein-level value with nothing to average it out. Its missingness pattern is also the missingness pattern of one precursor rather than of the protein, which matters for everything downstream that reasons about missing values.
 
@@ -262,7 +257,7 @@ biomasslmb:::message_parse(rowData(dia_qf[['peptides_for_summarisation']]),
                            "Removing 'one-hit' wonders")
 ```
 
-Now we can summarise with `robustSummary`
+Summarising with `robustSummary`:
 
 ```{r, warning=FALSE}
 set.seed(42)
@@ -277,14 +272,7 @@ dia_qf <- aggregateFeatures(dia_qf,
 dia_qf <- sync_coldata(dia_qf, 'protein')
 ```
 
-Prior to summarisation, we removed peptides from proteins with fewer than 2
-peptides. However, since we left in peptides with missing values, it's
-possible for some protein-level abundances to be derived from just a
-single peptide. We can use `get_protein_no_quant_mask` from
-`biomasslmb` to identify where the protein abundances will be derived
-from fewer than `n` features (peptides). We can then give this mask to
-`mask_protein_level_quant` to replace these quantification values with
-NA.
+The two-precursor filter above was applied per protein, not per sample, and precursors with missing values were deliberately kept — so in any given sample a protein can still end up summarised from a single precursor. Nothing in the output marks these values as weaker than the rest. `get_protein_no_quant_mask()` finds where a protein abundance rests on fewer than `n` precursors, and `mask_protein_level_quant()` replaces those values with `NA`.
 
 ```{r, warning=FALSE, fig.show='hold', out.width="50%", fig.width=8, fig.height=4}
 protein_retain_mask <- biomasslmb::get_protein_no_quant_mask(
@@ -297,7 +285,7 @@ dia_qf[['protein']] <- biomasslmb::mask_protein_level_quant(
 
 ## Re-inspecting missing values at protein-level
 
-Now that we have protein-level abundances, we would like to re-inspect the missing values. Overall, we have `r round(nNA(dia_qf[['protein']])$nNA$pNA*100, 3)` % missing values, with at most `r round(max(nNA(dia_qf[['protein']])$nNAcols$pNA)*100, 3)` % missing values in any given sample.
+Masking changes the missingness picture, so it is worth re-reading at protein level. `r round(nNA(dia_qf[['protein']])$nNA$pNA*100, 3)`% of protein values are missing overall, and at most `r round(max(nNA(dia_qf[['protein']])$nNAcols$pNA)*100, 3)`% in any one sample — far less than at precursor level, because a protein only loses a sample when every one of its precursors does.
 
 ```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
 plot_missing_upset(dia_qf, i = 'protein')
@@ -305,9 +293,9 @@ plot_missing_upset(dia_qf, i = 'protein')
 
 ## Inspecting the number of peptides and proteins through the processing steps
 
-Now that we have performed all the filtering steps and summarisation to protein-level abundances, it's helpful to visualise how many peptides/proteins were retained at each level of the processing. We can use the `biomasslmb::get_samples_present` and `biomasslmb::plot_samples_present` functions for this. First though, we need to decide which 'experiments' we want to plot and define a named character vector since the QFeatures names are not sufficiently clear by themselves
+Each filtering step above removed something, and the totals are easier to judge together than one message at a time. `get_samples_present()` and `plot_samples_present()` show how many precursors and proteins survived each stage, and in how many samples. Both take a named character vector selecting the assays to plot, since the `QFeatures` names are not self-explanatory.
 
-Below, we inspect the experiment names.
+The assay names to choose from:
 
 ```{r}
 names(dia_qf)
@@ -315,7 +303,7 @@ names(dia_qf)
 
 ### Samples per peptide
 
-We'll start by inspecting the number of peptides in each experiment. We therefore define a named character vector of all the peptide-level experiments. We set the row variable to be `Precursor.Id` so that we count the number of unique precursors.
+Precursors first. The row variable is `Precursor.Id`, so that the count is of unique precursors rather than of rows.
 
 ```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each precursor at each level of processing", out.width='75%'}
 rename_cols <- c('All precursors' = 'precursors',
@@ -331,7 +319,7 @@ plot_samples_present(samples_present, rowvars, breaks = seq(5, 30, 5)) + ylab('P
 
 ### Samples per Protein
 
-Next, we'll use the same functions to inspect the number of proteins at each level of processing. We need to supply an updated named character vector to include the `protein` experiment and set the row variable to be just `Protein.Group`.
+Then proteins, from the same functions: the named vector gains the `protein` assay, and the row variable becomes `Protein.Group` alone.
 
 ```{r, fig.height=7, fig.width=7, fig.fullwidth=TRUE, fig.cap="Samples quantified for each protein at each level of processing", out.width='75%'}
 rename_cols_prot <- c(rename_cols, 'Protein' = 'protein')
@@ -342,7 +330,7 @@ samples_present <- get_samples_present(dia_qf, rowvars_prot, rename_cols_prot)
 plot_samples_present(samples_present, rowvars_prot, breaks = seq(5, 30, 5))
 ```
 
-From these two plots, we can see that the filtering to remove precursors with more than 75% missing values and to require \>1 precursor per protein removed relatively few precursors, but many proteins. Whether this is appropriate will depend on your data in hand.
+**The missingness and two-precursor filters are cheap in precursors and expensive in proteins.** Few precursors go, because most belong to proteins that have several; many more proteins go, because a protein resting on one sparsely-observed precursor loses its only evidence. Those are the proteins whose quantification would have been least reliable, so the trade is usually worth making — but in plasma it falls hardest on the low-abundance fraction, which is often exactly where the interesting biology is.
 
 ```{r, eval = FALSE}
 # Save file to package as data so it can be read back in in other vignettes
@@ -375,14 +363,14 @@ The correspondence with the DIA-NN fields used above is direct:
 | Precursor confidence | `Q.Value` | `EG.Qvalue` |
 | Protein group confidence | `PG.Q.Value` | `PG.Qvalue` |
 
-Spectronaut has no single precursor identifier column, so we build one, since `readQFeatures` needs a value that is unique within a run.
+Spectronaut has no single precursor identifier column, so one has to be built: `readQFeatures` needs a value that is unique within a run.
 
 ```{r}
 spectronaut_df$Precursor.Id <- paste(
   spectronaut_df$EG.ModifiedSequence, spectronaut_df$FG.Charge, sep = '.')
 ```
 
-The sample metadata is constructed the same way as before. Here the run names already encode the design, so we derive the columns from them rather than reading a separate file.
+The sample metadata is constructed the same way as before. Here the run names already encode the design, so the columns are derived from them rather than from a separate file.
 
 ```{r}
 spectronaut_design <- data.frame(runCol = sort(unique(spectronaut_df$R.FileName)))

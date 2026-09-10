@@ -1106,5 +1106,42 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "li2026missbayes",
+		"type": "article-journal",
+		"title": "Empirical-Bayes and Bayesian hierarchical modelling for missingness and differential expression in proteomics",
+		"container-title": "bioRxiv",
+		"page": "2026.01.15.699650",
+		"DOI": "10.64898/2026.01.15.699650",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengchun"
+			},
+			{
+				"family": "Mallikarjun",
+				"given": "Venkatesh"
+			},
+			{
+				"family": "Frey",
+				"given": "Andrew"
+			},
+			{
+				"family": "Ogundimu",
+				"given": "Emmanuel"
+			},
+			{
+				"family": "Trost",
+				"given": "Matthias"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2026
+				]
+			]
+		}
 	}
 ]

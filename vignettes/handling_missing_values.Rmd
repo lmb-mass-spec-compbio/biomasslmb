@@ -478,9 +478,31 @@ The estimates that rest on nothing come with standard errors several times large
 
 ## missBayes
 
-`missBayes` takes unimputed protein-level values and models the missingness explicitly as part of the test, under either a censored or a logistic missingness model. Two features distinguish it: it returns a posterior rather than a p-value, so the evidence for a protein can be read directly; and it fits *every* protein, so a result can concern a protein that `limma` would never have tested.
+`missBayes` also refuses to impute, but it differs from limpa in what it fits and in what it hands back [@li2026missbayes]. It takes a protein-level log2 intensity matrix, fits each protein separately by MCMC, and returns a posterior distribution for the log2 fold change rather than an estimate and a p-value.
 
-That second point cuts both ways, and the counts to report alongside are the same ones the testing vignette keeps:
+**Three levels, fitted one protein at a time.** Within a group, a protein's log2 intensities are normal around a group mean; the group means are normal around that protein's own mean; and the protein means are normal around a global mean. The within-group variance is not read off a fitted curve but drawn from an inverse-gamma distribution whose parameters depend on where the protein sits on the intensity scale, so the mean–variance trend enters as a spread of plausible variances rather than a single value. Every hyperparameter in that chain is estimated from the dataset first and then held fixed, which is the empirical Bayes step in the name. The model compares two groups at a time, so a contrast is always a pairwise comparison.
+
+**Missingness enters by one of two mechanisms.** Under the censored model, each protein has its own detection cutoff `cp`, taken as the lowest intensity observed for that protein anywhere in the dataset, and a missing value contributes the statement *this value lies below `cp`*. Under the logistic model, detection probability is `plogis(g0 + g1 * y)` — the same shape as limpa's DPC, though estimated differently, by treating the deficit of low-intensity observations relative to a mirrored high-intensity bin as the missing count and regressing on that. The `threshold` argument routes each protein to one mechanism by its missing proportion, and its default of `0` sends every protein to the censored model.
+
+**The answer is a probability about direction, not a ratio.** The posterior for the difference in group means is summarised against a region of practical equivalence: a band around zero, `c(-0.2, 0.2)` by default, holding fold changes too small to be worth calling. `pLtROPE`, `pInROPE` and `pGtROPE` are the posterior mass below, inside and above that band, and they sum to 100. `HDI_Low` and `HDI_High` bound the 95% highest density interval, `Median` gives its centre, and a protein is declared changed when the relevant tail probability passes a cutoff — 95% in the manuscript, where `1 - pGtROPE` is read as a local false discovery rate.
+
+`missBayes` is not a dependency of this package and needs a working JAGS installation, so the chunks below are shown rather than run.
+
+```{r, eval=FALSE}
+library(missBayes)
+
+turbo_group <- factor(lfq_qf_turboid$Condition,
+                      levels = c('control', 'biotin'))
+
+turbo_contrast <- makeContrasts('biotin - control',
+                                levels = levels(turbo_group))
+
+res_missbayes <- BayesMissingModel(assay(lfq_qf_turboid[['protein']]),
+                                   turbo_group, turbo_contrast,
+                                   mcmcDiag = TRUE)[['biotin - control']]
+```
+
+Because it fits every protein, a result can concern a protein that `limma` would never have tested, and the counts to report alongside are the same ones the testing vignette keeps:
 
 ```{r, eval=FALSE}
 n_observed <- sapply(levels(group), function(g){
@@ -488,7 +510,31 @@ n_observed <- sapply(levels(group), function(g){
 })
 ```
 
-A call on a protein with zero observations in one group is entirely model-inferred. It may still be right, but it is a different kind of claim from one resting on measurements, and the results table should say which is which.
+A call on a protein with zero observations in one group is entirely model-inferred. It may still be right, but it is a different kind of claim from one resting on measurements, and the results table should say which is which. `mcmcDiag = TRUE` adds a second check that has no analogue in the other routes: `max_rhat`, `ESS` and a `Convergence` label per protein, so a fit that failed to mix says so rather than returning a number that looks like every other number.
+
+## Why missBayes suits a sparse enrichment design
+
+The previous section left limpa's TurboID analysis in an awkward place: `r sum(bait_only)` proteins detected in all three biotin replicates and in no control, all equally absent, separated in the results only by how well they happened to be measured on the side where they were present. That is the case missBayes is built for, and the reason is structural.
+
+**The question is about direction, and direction is what missBayes reports.** For a protein with no control measurements there is no magnitude to recover: nothing in the data distinguishes a control abundance one log2 unit below the bait from one ten units below. What the data do say is that it is lower. limpa's route ends in a moderated *t* statistic, a fold change divided by a standard error, so it needs a magnitude — and for exactly these proteins the numerator is shrunk toward `prior.logFC` while the denominator is inflated by the missingness, squeezing the ratio from both ends. missBayes never forms that ratio. It asks what share of the posterior lies beyond the ROPE, and a posterior can be very wide and still sit almost entirely on one side of a band around zero.
+
+**The evidence of absence is anchored per protein rather than pooled.** Under the censored model a missing control value is not pulled toward anything; it is held below `cp`, the faintest intensity that protein reached in the bait samples. That bound is a statement about this protein, taken from its own data. limpa's counterweight is `prior.logFC`, one number for the whole dataset — `r round(y_turbo_prot$prior.logFC, 2)` here — estimated as a high quantile of between-sample variance. In a whole-cell experiment, where few proteins change, that quantile describes technical variation. In an enrichment experiment, where most of the matrix is genuinely enriched, it is inflated by the signal it is meant to be a null for.
+
+Running the code above and comparing against the limpa fit from the previous section, on the `r sum(bait_only)` proteins both quantify:
+
+| Precursors | Proteins | limpa, `adj.P.Val` < 0.05 | missBayes, `pGtROPE` > 95 |
+|---|---|---|---|
+| 2 | 18 | 2 | 10 |
+| 3 | 10 | 6 | 9 |
+| 4 or more | 20 | 20 | 20 |
+
+The two agree completely once a protein has four or more precursors. Every one of the proteins limpa leaves unresolved has two or three, which is the regime the sparsest and often most interesting hits fall into. The estimated magnitudes separate in the same place: limpa's median fold change across those precursor bins spans 6.64 log2 units, from 1.01 at two precursors to 7.66 at thirty-seven, while missBayes's posterior median spans 1.02, from 1.80 to 2.81. Neither is measuring the control abundance, because neither can; the difference is that limpa's point estimate absorbs the variation in measurement quality, and missBayes's leaves it in the interval instead.
+
+That interval is genuinely wide — a median 95% HDI of 5.24 log2 units across those proteins. missBayes is not recovering a magnitude either. It is declining to report one, and reporting the direction it can support instead, which is why the manuscript scores this case with a false sign rate and reports zero for it.
+
+Two things are worth checking before trusting the pattern. The model does still discriminate: of the proteins quantified in both conditions here, its posterior median tracks the observed fold change with a Spearman correlation of 0.99, and nothing in the experiment is declared down, which is what a bait-versus-control design should produce. And the convergence labels come back `Moderate` rather than `Strong` at default settings on six samples, so a final analysis should raise `n.iter` and read `max_rhat` before quoting anything.
+
+The limits are real. missBayes fits every protein, including ones with no data in either group; it compares two groups at a time; it returns no quantification matrix; and MCMC per protein scales linearly, so a ninety-protein interactome finishing in seconds says little about a whole-proteome matrix. The published benchmark for proteins missing from one condition is a five-replicate spike-in, and the manuscript contains no affinity-enrichment evaluation at all. The mechanism above is the argument; the numbers are one experiment.
 
 # What each choice costs
 
@@ -504,19 +550,19 @@ data.frame(
     'Recovers on/off proteins without inventing the rest',
     'Every protein is testable',
     'Uncertainty from missingness stays in the model',
-    'Missingness modelled explicitly; posterior per protein'),
+    'Direction decided by posterior probability, so a wide estimate can still be a confident call'),
   `What it costs` = c(
     'On/off proteins are untested, and they are often the biggest effects',
     'A rule to choose and justify; imputed values still invented',
     'Confident-looking results built from invented values',
     'Estimates for undetected samples rest partly on a global prior, compressing fold changes where evidence is thin; its matrix is complete because values were estimated',
-    'Slow; fits proteins with no data in a group; returns no quantification matrix'),
+    'MCMC per protein; two groups at a time; no quantification matrix; magnitudes stay uncertain where the data are absent'),
   `Use when` = c(
     'Missingness is mild, or you need every result defensible',
     'Missingness is condition-structured and on/off proteins matter',
     'Rarely; check what it changed before reporting it',
     'LFQ; read n.observations beside any result from an enrichment design',
-    'Missingness matters and downstream analysis accepts a limma-style fit'),
+    'Sparse data where the question is whether a protein is enriched, not by how much'),
   check.names = FALSE) %>%
   knitr::kable()
 ```

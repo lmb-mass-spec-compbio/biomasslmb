@@ -30,6 +30,10 @@ library(biomasslmb)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+
+tmt_qf <- biomasslmb::tmt_qf
+tmt_qf_mq <- biomasslmb::tmt_qf_mq
+lfq_qf <- biomasslmb::lfq_qf
 ```
 
 # Part 1: How the methods weight individual PSMs

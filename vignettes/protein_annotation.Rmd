@@ -34,6 +34,8 @@ The queries below are shown as you would run them, but the results displayed wer
 library(QFeatures)
 library(biomasslmb)
 library(dplyr)
+
+lfq_qf <- biomasslmb::lfq_qf
 ```
 
 # Collecting the accessions to annotate

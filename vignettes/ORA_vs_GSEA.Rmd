@@ -35,6 +35,8 @@ library(dplyr)
 library(limma)
 library(goseq)
 library(fgsea)
+
+dia_qf <- biomasslmb::dia_qf
 ```
 
 # Shared input

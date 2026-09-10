@@ -24,6 +24,9 @@ It is worth twenty minutes before starting an analysis of your own. Nothing here
 ```{r, message=FALSE, warning=FALSE}
 library(QFeatures)
 library(biomasslmb)
+
+tmt_qf <- biomasslmb::tmt_qf
+lfq_qf <- biomasslmb::lfq_qf
 ```
 
 # The idea: assays accumulate

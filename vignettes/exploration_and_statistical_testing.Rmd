@@ -28,6 +28,9 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 library(limma)
+
+dia_qf <- biomasslmb::dia_qf
+tmt_qf_mq <- biomasslmb::tmt_qf_mq
 ```
 
 # Part A: LFQ-DIA whole-proteome comparison

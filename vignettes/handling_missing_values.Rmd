@@ -30,6 +30,10 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(limma)
+
+dia_qf <- biomasslmb::dia_qf
+tmt_qf <- biomasslmb::tmt_qf
+lfq_qf_turboid <- biomasslmb::lfq_qf_turboid
 ```
 
 # Where missing values come from
@@ -430,6 +434,9 @@ turbo_bait <- lfq_qf_turboid$Condition == 'biotin'
 
 n_obs <- y_turbo_prot$other$n.observations
 
+turbo_precursors <- as.integer(
+  table(y_turbo$genes$Master.Protein.Accessions)[rownames(y_turbo_prot)])
+
 bait_only <- rowSums(n_obs[, turbo_bait] > 0) == sum(turbo_bait) &
   rowSums(n_obs[, !turbo_bait]) == 0
 
@@ -445,7 +452,7 @@ c(proteins = nrow(y_turbo_prot),
 Every one of those `r sum(bait_only)` proteins is equally absent from the control: three replicates, no detected precursor in any of them. They are assigned a median log2 fold change of `r round(median(turbo_lfc[bait_only]), 2)`, and `r round(100 * mean(turbo_lfc[bait_only] < y_turbo_prot$prior.logFC))`% of them fall inside `prior.logFC`. What separates one from another is not how absent it is, because they are equally absent:
 
 ```{r}
-data.frame(precursors = y_turbo_prot$genes$NPeptides[bait_only],
+data.frame(precursors = turbo_precursors[bait_only],
            logFC = turbo_lfc[bait_only]) %>%
   group_by(precursors) %>%
   summarise(proteins = n(), median_logFC = median(logFC)) %>%
@@ -454,7 +461,7 @@ data.frame(precursors = y_turbo_prot$genes$NPeptides[bait_only],
 
 ```{r}
 c(logFC_vs_precursors = cor(turbo_lfc[bait_only],
-                            y_turbo_prot$genes$NPeptides[bait_only],
+                            turbo_precursors[bait_only],
                             method = 'spearman'),
   logFC_vs_bait_abundance = cor(turbo_lfc[bait_only],
                                 rowMeans(y_turbo_prot$E[, turbo_bait])[bait_only],

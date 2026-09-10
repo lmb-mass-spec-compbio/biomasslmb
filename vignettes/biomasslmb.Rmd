@@ -233,6 +233,10 @@ The package ships processed `QFeatures` objects for each acquisition type, each 
 ```{r, message=FALSE}
 library(QFeatures)
 library(biomasslmb)
+
+tmt_qf <- biomasslmb::tmt_qf
+lfq_qf <- biomasslmb::lfq_qf
+dia_qf <- biomasslmb::dia_qf
 ```
 
 The assay names record the processing each one has been through:

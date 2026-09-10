@@ -30,12 +30,11 @@ vignette for your acquisition type works through a complete analysis. All of the
 available via the 'articles' tab 
 [here](https://lmb-mass-spec-compbio.github.io/biomasslmb).
 
-Much of the initial code is a re-working of 
+The initial code was a re-working of 
 [`camprotR`](https://github.com/CambridgeCentreForProteomics/camprotR) 
-which was co-developed by Charlotte Dawson (https://github.com/csdaw) and myself 
-(https://github.com/tomsmithCGAT) and was designed to work with 
+which was co-developed by Charlotte Dawson (https://github.com/csdaw) and was designed to work with 
 [`MSnbase`](https://bioconductor.org/packages/release/bioc/html/MSnbase.html). 
-Hence I've reworked the code here as a separate package to work with `QFeatures` 
-to simplify issues with backward compatibility. Thank you to Charlotte for any of 
+Rather than updating `camprotR` to handle `QFeatures` whilst maintaining backwards
+compatibility, I reworked the code here instead. Thank you to Charlotte for any of 
 the code lifted from `camprotR` for which I had no part in writing!
 

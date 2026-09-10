@@ -348,6 +348,125 @@ The same six runs were also processed with MaxQuant, and [comparing processing p
 usethis::use_data(lfq_qf, overwrite=TRUE)
 ```
 
+# Reading MaxQuant output {#reading-maxquant-output}
+
+Everything above the `peptides_filtered` assay is Proteome Discoverer specific: the
+file, the column names and the contaminant convention. Everything below it is not.
+This section covers the difference, using MaxQuant output from the same six runs.
+
+MaxQuant's `peptides.txt` is the counterpart of PD's peptide groups export, holding
+the same quantities under different names.
+
+| Quantity | Proteome Discoverer | MaxQuant |
+|---|---|---|
+| Protein assignment | `Master.Protein.Accessions` | `Leading.razor.protein` |
+| Quantification | `Abundance.<file ID>` | `Intensity.<experiment>` |
+| Contaminant flag | `Contaminant` | `Potential.contaminant` |
+| Decoy flag | removed before export | `Reverse` |
+| Shared-peptide flag | `Number.of.Protein.Groups` | `Unique..Groups.` and `Unique..Proteins.` |
+| Accession separator | `"; "` | `";"` |
+
+```{r}
+mq_inf <- system.file("extdata", "lfq_dda_mq_peptides.txt.gz",
+                      package = "biomasslmb")
+
+mq_df <- read.delim(gzfile(mq_inf))
+
+mq_intensity_ix <- grep('^Intensity\\.', colnames(mq_df))
+
+colnames(mq_df)[mq_intensity_ix]
+```
+
+The intensity columns are named for MaxQuant's 'experiment' labels rather than for
+the samples, so as with the PD export the first job is to attach the design.
+
+```{r}
+mq_design <- data.frame(
+  Condition = rep(c('WT', 'Mutant'), each = 3),
+  Replicate = rep(1:3, times = 2))
+
+mq_design$Sample <- paste(mq_design$Condition, mq_design$Replicate, sep = '_')
+mq_design$quantCols <- mq_design$Sample
+
+colnames(mq_df)[mq_intensity_ix] <- mq_design$Sample
+
+knitr::kable(mq_design)
+```
+
+One difference has to be dealt with before anything else. MaxQuant writes an
+intensity of exactly zero where it has no measurement, whereas PD leaves the cell
+empty. Mass spectrometry cannot assert that a peptide was absent, only that it was
+not detected, so those zeros have to become `NA` — left as they are, they are
+treated as real measurements at the bottom of the scale and pull every subsequent
+summary down towards it.
+
+```{r, message=FALSE, warning=FALSE}
+mq_qf <- readQFeatures(assayData = mq_df, quantCols = mq_intensity_ix,
+                       colData = mq_design, name = 'peptides_raw')
+
+mq_qf <- sync_coldata(mq_qf, 'peptides_raw')
+
+mq_qf[['peptides_raw']] <- zeroIsNA(mq_qf[['peptides_raw']])
+```
+
+The filtering call then changes in three ways. `filter_features_mq_dda()` replaces
+`filter_features_pd_dda()`. The contaminant accessions come from
+`get_maxquant_cont_accessions()` rather than from a search FASTA, because MaxQuant
+searches against its own contaminants database with `CON__` prefixed accessions.
+And there is no `unique_master` argument, because MaxQuant nominates a single
+leading razor protein for every peptide instead of reporting a tie — its nearest
+counterpart is `proteotypic`, which keeps only peptides matching exactly one
+protein. That is the stricter filter of the two and it is left off here, to match
+what the PD pipeline above does. See
+[peptides are not proteins](gotcha_peptide_to_protein.html) for what the two
+questions actually differ on.
+
+```{r, message=FALSE, warning=FALSE}
+mq_qf[['peptides_filtered']] <- filter_features_mq_dda(
+  mq_qf[['peptides_raw']],
+  contaminant_proteins = get_maxquant_cont_accessions(),
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  remove_no_quant = TRUE)
+
+mq_qf <- sync_coldata(mq_qf, 'peptides_filtered')
+
+nrow(mq_qf[['peptides_filtered']])
+```
+
+From here the vignette applies unchanged, with `Leading.razor.protein` in place of
+`Master.Protein.Accessions` wherever it appears as a `master_protein_col` or an
+`fcol`. The rank filter is the one step with no MaxQuant equivalent, and is simply
+omitted: `peptides.txt` reports one row per peptide rather than one per spectrum
+match, and the confidence filtering has already been applied through MaxQuant's own
+posterior error probabilities.
+
+[Comparing processing pipelines](processing_pipeline_comparison.html) takes both
+exports of these runs through to a tested protein list, and measures how much of
+the answer depends on which of the two produced it.
+
+# Where to go next
+
+- [Data exploration and statistical testing](exploration_and_statistical_testing.html)
+  picks up from the protein-level abundances produced here: checking the experiment
+  worked, deciding which proteins can be tested, and testing them.
+- [Handling missing values](handling_missing_values.html) covers the `filterNA`
+  threshold applied above in full, and what the alternatives to discarding cost.
+- [Choosing a summarisation method](summarisation_methods.html) compares
+  `robustSummary` against summing on this same dataset.
+- If this was an enrichment experiment rather than a whole-proteome comparison,
+  [enrichment designs](interactome_designs.html) covers the normalisation and
+  missing-value reasoning that changes.
+
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

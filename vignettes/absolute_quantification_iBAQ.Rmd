@@ -244,6 +244,15 @@ A related point, because the two are often conflated. iBAQ is an intensity divid
 - **Check it before trusting it.** Cytosolic ribosomal proteins are equimolar and cost nothing to use as an internal standard. Here they spread over roughly three-fold, and the correction does not narrow them.
 - Treat iBAQ as an order-of-magnitude statement about a sample, not a ratio between two proteins, and not a copy number.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

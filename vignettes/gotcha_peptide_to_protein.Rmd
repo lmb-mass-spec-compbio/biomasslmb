@@ -200,6 +200,15 @@ Everything above assumes the search database is a reference proteome: one entry 
 
 The QC vignettes for each acquisition type show where this filtering belongs in a pipeline: [TMT](TMT_PSM_QC_Summarisation.html), [LFQ-DDA](LFQ_DDA_Peptide_QC_Summarisation.html) and [LFQ-DIA](LFQ_DIA_Precursor_QC_Summarisation.html).
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

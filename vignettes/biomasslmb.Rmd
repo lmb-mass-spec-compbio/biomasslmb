@@ -131,6 +131,39 @@ Every line above glosses over a decision — which contaminant list, how much mi
 
 The `qf` object above is a `QFeatures` object, and every vignette here works in one. Each processing step adds a *new* assay rather than overwriting the previous one, and assay links record which features contributed to which. A finished object therefore holds the whole history of the analysis, from the raw features to the protein-level quantification, and you can always step back to ask where a protein-level value came from. [Working with QFeatures objects](qfeatures_objects.html) covers the object and the design table it needs, and is worth reading before your first analysis.
 
+# Example data
+
+The package ships processed `QFeatures` objects for each acquisition type, each produced by the corresponding vignette, so you can experiment with a realistic object without running the QC first.
+
+```{r, message=FALSE}
+library(QFeatures)
+library(biomasslmb)
+
+tmt_qf <- biomasslmb::tmt_qf
+lfq_qf <- biomasslmb::lfq_qf
+dia_qf <- biomasslmb::dia_qf
+```
+
+The assay names record the processing each one has been through:
+
+```{r}
+lapply(list(tmt_qf = tmt_qf, lfq_qf = lfq_qf, dia_qf = dia_qf), names)
+```
+
+A `QFeatures` object also carries the experimental design in its `colData`, which is what the exploration and testing functions use:
+
+```{r}
+tmt_qf
+```
+
+To start from raw search engine output instead, the corresponding input files are in `extdata`:
+
+```{r}
+dir(system.file("extdata", package = "biomasslmb"))
+```
+
+`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq`, `psm_tmt_2plex` and their design tables provide PSM-level starting points with accompanying experimental designs. `psm_tmt_2plex` spans two TMT plexes, each with a pooled bridge channel.
+
 # What the package assumes
 
 
@@ -156,7 +189,7 @@ Which vignette you need depends on two independent things: how the data were acq
 | LFQ-DDA | Peptide groups (PD or MaxQuant) | [LFQ-DDA peptide QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html) |
 | LFQ-DIA | Precursors (DIA-NN or Spectronaut) | [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) |
 
-Each of those works through one straightforward experiment end to end. A TMT design too large for a single plex needs the extra step covered in [multi-plex TMT](TMT_multiplex.html).
+Each of those works through one straightforward experiment end to end, on Proteome Discoverer or DIA-NN output. The other search engines reach the same point by a different reading step, covered at the end of the relevant vignette: [MaxQuant for TMT](TMT_PSM_QC_Summarisation.html#reading-maxquant-output), [MaxQuant for LFQ-DDA](LFQ_DDA_Peptide_QC_Summarisation.html#reading-maxquant-output) and [Spectronaut for LFQ-DIA](LFQ_DIA_Precursor_QC_Summarisation.html#reading-spectronaut-output). A TMT design too large for a single plex needs the extra step covered in [multi-plex TMT](TMT_multiplex.html).
 
 **Experimental design** determines how the resulting quantification should be normalised and tested. A whole-proteome comparison, an enrichment experiment (IP, BioID, TurboID) and a PTM experiment ask different things of the same protein-level matrix:
 
@@ -226,38 +259,6 @@ The normalisations used in these vignettes all work the same way: they take some
 
 Not every normalisation is of this form. Quantile normalisation, for instance, nominates no set at all: it replaces each sample's ranked abundances with the average across samples at that rank, so every sample ends up with an identical distribution. The assumption is correspondingly stronger — that the true distribution of abundances is the same in every sample, and any difference in its shape is technical — and where that fails it fails as quietly as `diff.median` does.
 
-# Example data
-
-The package ships processed `QFeatures` objects for each acquisition type, each produced by the corresponding vignette, so you can experiment with a realistic object without running the QC first.
-
-```{r, message=FALSE}
-library(QFeatures)
-library(biomasslmb)
-
-tmt_qf <- biomasslmb::tmt_qf
-lfq_qf <- biomasslmb::lfq_qf
-dia_qf <- biomasslmb::dia_qf
-```
-
-The assay names record the processing each one has been through:
-
-```{r}
-lapply(list(tmt_qf = tmt_qf, lfq_qf = lfq_qf, dia_qf = dia_qf), names)
-```
-
-A `QFeatures` object also carries the experimental design in its `colData`, which is what the exploration and testing functions use:
-
-```{r}
-tmt_qf
-```
-
-To start from raw search engine output instead, the corresponding input files are in `extdata`:
-
-```{r}
-dir(system.file("extdata", package = "biomasslmb"))
-```
-
-`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq`, `psm_tmt_2plex` and their design tables provide PSM-level starting points with accompanying experimental designs. `psm_tmt_2plex` spans two TMT plexes, each with a pooled bridge channel.
 
 # Where to go next
 

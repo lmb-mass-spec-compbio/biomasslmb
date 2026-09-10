@@ -235,6 +235,15 @@ As for the FDR filtering itself: in most Proteome Discoverer exports the protein
 - Protein-level FDR is a separate control from PSM-level FDR and lives in a separate file. `filter_by_protein_fdr()` applies it, and usually removes nothing on that count — which is not a reason to omit it.
 - That function also silently drops every peptide whose master protein has no row in the protein table, including all peptides with a multi-protein master. Run it **after** `unique_master = TRUE` so the two effects are not confused.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

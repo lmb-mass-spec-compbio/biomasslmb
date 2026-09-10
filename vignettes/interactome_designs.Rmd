@@ -507,6 +507,15 @@ Part A leaves `tmt_qf_mq` holding protein-level abundances with the informative 
 
 For the enrichment-specific decisions, Part B is the worked example: a testability rule that keeps the control-absent proteins, imputation restricted to the condition where absence is defensible, and a one-sided test. [Handling missing values](handling_missing_values.html) covers `restrict_imputation()` and the alternatives to it in more depth, including what blanket imputation costs.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

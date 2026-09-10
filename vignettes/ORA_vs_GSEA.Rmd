@@ -269,6 +269,15 @@ gsea %>%
 -   [Functional enrichment](functional_enrichment.html) covers the ORA workflow properly, including what the foreground threshold costs.
 -   [Data exploration and statistical testing](exploration_and_statistical_testing.html) covers where the ranking statistic comes from.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

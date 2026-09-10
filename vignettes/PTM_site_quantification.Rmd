@@ -361,6 +361,15 @@ A PTM experiment adds three steps to the whole-proteome workflow, and each of th
 
 Two of the steps in this vignette are shared with any TMT experiment and are covered in more detail elsewhere: PSM filtering and summarisation in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html), and testing in [Data exploration and statistical testing](exploration_and_statistical_testing.html). If the design spans more than one plex, both fractions need bringing onto a common scale before any of the above, which [multi-plex TMT](TMT_multiplex.html) covers — the bridge correction is applied to the enriched and total assays separately, using each one's own bridge channels.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

@@ -418,6 +418,31 @@ c(precursors = nrow(sn_qf[['precursors']]),
 
 At the equivalent stage the DIA-NN dataset above is `r round(100*mean(is.na(assay(dia_qf[['precursors']]))), 1)`% missing against this one's `r round(100*mean(is.na(assay(sn_qf[['precursors']]))), 1)`%, though with `r ncol(dia_qf[['precursors']])` samples rather than `r ncol(sn_qf[['precursors']])`, so the two are not strictly comparable. The point is only that they are the same order of magnitude: pervasive precursor-level missingness is a property of label-free acquisition rather than of the search engine, and the reasoning in [handling missing values](handling_missing_values.html) applies to both.
 
+# Where to go next
+
+- [Data exploration and statistical testing](exploration_and_statistical_testing.html)
+  picks up from the protein-level abundances produced here, and works through this
+  same dataset: checking the experiment worked, deciding which proteins can be
+  tested, and testing them.
+- [Handling missing values](handling_missing_values.html) covers the `filterNA`
+  threshold applied above in full. DIA carries enough missingness for that choice
+  to matter, and for the missingness-aware alternatives to testing to be worth
+  considering.
+- [Choosing a summarisation method](summarisation_methods.html) explains why
+  `robustSummary` rather than summing, and measures the difference.
+- If this was an enrichment experiment rather than a whole-proteome comparison,
+  [enrichment designs](interactome_designs.html) covers the normalisation and
+  missing-value reasoning that changes.
+
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

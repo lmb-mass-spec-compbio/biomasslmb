@@ -294,6 +294,15 @@ Note also that the disagreement counted here is only over the `r nrow(comparison
 
 The same reasoning applies to the DIA pipelines. The [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) vignette covers reading both DIA-NN and Spectronaut output, and a comparison between them would be built exactly as above: process both through the same steps, then compare the protein-level results.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

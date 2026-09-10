@@ -178,6 +178,89 @@ Averaging wins on both counts, and by a wide margin. It tests more proteins, bec
 
 Note also how much the two single-acquisition analyses differ from each other. Neither is wrong; they are two draws from the same technical noise, and the gap between them is a fair warning about how much a result can move on measurement noise alone when the number of biological replicates is small.
 
+# Modelling the pairing instead
+
+Averaging is not the only correct treatment. `limma` will take all twelve columns
+as they are, provided it is told which of them belong together:
+`duplicateCorrelation()` estimates a single consensus correlation between
+observations that share a block, and `lmFit()` then uses it to discount the fact
+that two acquisitions of one digest are not independent measurements.
+
+Which proteins can be tested has to be decided on biological samples rather than
+on columns, so that is worked out first.
+
+```{r}
+group <- factor(sample_data$Condition, levels = c('Control', 'IP'))
+
+n_bio <- sapply(levels(group), function(l) {
+  cols <- which(group == l)
+  apply(protein[, cols, drop = FALSE], 1, function(x) {
+    length(unique(biological_sample[cols][!is.na(x)]))
+  })
+})
+
+testable_bio <- apply(n_bio, 1, min) >= 2
+
+# the same rule applied to columns rather than to biological samples
+testable_acq <- apply(sapply(levels(group), function(l) {
+  rowSums(!is.na(protein[, group == l, drop = FALSE]))
+}), 1, min) >= 2
+
+c(by_biological_sample = sum(testable_bio), by_acquisition = sum(testable_acq))
+
+design <- model.matrix(~ group)
+
+corfit <- duplicateCorrelation(protein[testable_bio, ], design,
+                               block = biological_sample)
+
+round(corfit$consensus.correlation, 3)
+```
+
+That correlation is the pairing made explicit, and it is the number the whole
+approach turns on: it says how much of a protein's value is shared between two
+acquisitions of the same digest. A value near zero would mean the repeat
+acquisitions carry independent information and could be treated as separate
+samples; a value near one would mean the second acquisition adds nothing at all.
+
+```{r}
+fit <- eBayes(lmFit(protein[testable_bio, ], design,
+                    block = biological_sample,
+                    correlation = corfit$consensus.correlation))
+
+blocked <- topTable(fit, coef = 2, number = Inf)
+
+rbind(
+  averaged = test_condition(averaged, sub(' .*', '', colnames(averaged))),
+  blocked = c(tested = sum(testable_bio),
+              significant = sum(blocked$adj.P.Val < 0.05)),
+  twelve_samples = test_condition(protein, sample_data$Condition))
+```
+
+**Blocking lands where averaging lands, not where the naive analysis lands.** On
+the same set of proteins it finds one more than averaging and less than half what
+treating the acquisitions as independent samples produced. That is the result to
+take from this section: the two defensible routes agree with each other, and the
+gap between them and the twelve-sample analysis is the pseudo-replication rather
+than a difference of method.
+
+Which to use is mostly a matter of what else the design contains. Averaging is
+simpler, needs no extra assumption, and leaves an ordinary matrix that any
+downstream tool will accept. Blocking keeps the individual acquisitions visible,
+which matters when the repeats are unbalanced — three injections of one sample
+and one of another — since averaging silently gives the better-measured sample
+the same weight as the other. It also assumes one correlation describes every
+block, which is a real assumption and is worth checking against the per-pair
+spreads calculated earlier when block sizes differ.
+
+The testability rule deserves the attention it was given above. Counting
+quantified acquisitions instead of quantified biological samples would have
+admitted `r sum(testable_acq) - sum(testable_bio)`
+further proteins here, each one passing on two values in a condition that both
+came from the same digest. The block structure discounts them correctly in the
+variance, but no amount of correct discounting turns one biological sample into
+two, and a fold change resting on one is not something to report as though it
+rested on three.
+
 # What technical replicates are for
 
 None of this makes them a waste of instrument time. They are the only thing in an experiment that separates measurement variability from biological variability, which makes them useful for questions the biological replicates cannot answer:
@@ -193,7 +276,18 @@ The rule is simply that they belong in quality control, not in the degrees of fr
 - A technical replicate measures the instrument; a biological replicate measures the biology. Here two acquisitions of one digest disagreed about half as much as two biological samples.
 - **Testing technical replicates as though they were biological replicates roughly doubled the number of significant proteins here.** The extra hits come from a halved standard error and a variance estimate pulled towards technical noise, not from any additional information.
 - Average technical replicates to one value per biological sample before testing. Do not pick one and discard the rest: averaging tested more proteins and found more of them than either single acquisition.
+- Blocking on biological sample with `duplicateCorrelation()` is the alternative to averaging and agreed with it closely here. It suits unbalanced repeats, at the cost of assuming one correlation describes every block.
+- Decide what is testable from the number of quantified biological samples, not the number of quantified columns, whichever route is taken.
 - Use them for quality control — spotting unreliable measurements, bad runs, and whether the instrument or the biology is the limiting source of variation.
+
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
 
 ```{r}
 sessionInfo()

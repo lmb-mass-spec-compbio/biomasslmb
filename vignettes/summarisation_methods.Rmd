@@ -594,6 +594,15 @@ These are properties of the estimators rather than of any one quantification tec
 
 **Which one to use follows from how much missingness there is, not from a preference.** Where missingness is very low, as in Part 1, `sum` is the better choice: tolerating missing features buys nothing when there are almost none, and complete data is simpler to reason about downstream. Where missing values are common — informative, as in the Part 2 IP dataset, or merely pervasive, as in the Part 3 LFQ-DDA dataset — `robustSummary` is the better choice, because it recovers proteins `sum` would discard and uses more of the lower-level quantification that was actually measured. Measuring the missingness before choosing is the point; [handling missing values](handling_missing_values.html) covers how.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

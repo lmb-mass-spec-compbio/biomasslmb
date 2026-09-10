@@ -241,6 +241,15 @@ Features present in one assay and not another become `NA`, which for multi-plex 
 
 With the vocabulary in hand, [getting started](biomasslmb.html) explains which analysis vignette applies to your experiment, and the vignette for your acquisition type works through one from search engine output to protein-level quantification.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

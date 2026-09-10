@@ -262,6 +262,15 @@ If you are still designing the experiment, include a bridge channel: it makes th
 
 The bridge-normalised protein-level abundances are ready for the exploration and testing described in the [data exploration and statistical testing](exploration_and_statistical_testing.html) vignette. Include `Plex` among the variables you inspect there: bridge correction should have removed the plex effect, and a PCA still separating on plex means it did not.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

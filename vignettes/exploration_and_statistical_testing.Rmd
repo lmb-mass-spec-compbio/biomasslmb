@@ -395,6 +395,15 @@ Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecip
 -   [Choosing a summarisation method](summarisation_methods.html) covers how the protein-level values tested here were arrived at, and what a different choice would have changed.
 -   [Enrichment designs](interactome_designs.html) covers the QC and normalisation decisions behind the Part B dataset, and works a label-free pulldown through the testing choices an enrichment design calls for: a testability rule that keeps the control-absent proteins, imputation restricted to the condition where absence is defensible, and a one-sided test.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

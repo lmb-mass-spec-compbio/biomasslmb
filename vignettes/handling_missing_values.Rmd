@@ -605,6 +605,15 @@ That completeness is the thing to be careful about rather than the thing to be r
 -   [Enrichment designs](interactome_designs.html) covers the case where missingness is the signal, and where most of this article's defaults are wrong.
 -   [Multi-plex TMT](TMT_multiplex.html) covers TMT's actual missing value problem, which is between plexes.
 
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.
+
 ```{r}
 sessionInfo()
 ```

@@ -269,3 +269,12 @@ saveRDS(go_res_all, 'go_res_all.rds')
 # Where to go next
 
 With annotations in hand, the acquisition-specific QC and summarisation vignette for your data is the next step — see [Getting started](biomasslmb.html) for which one applies. The GO mapping produced here is the input to functional enrichment testing, performed after differential abundance testing in [data exploration and statistical testing](exploration_and_statistical_testing.html).
+
+# Getting help
+
+If your experiment does not fit what this article assumes, or a result looks
+wrong, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than
+guessing — it is far easier to help while an analysis is in progress than to
+unpick a decision afterwards, and easier still before the samples are run.
+[Getting started](biomasslmb.html) sets out which article applies to which
+experiment.

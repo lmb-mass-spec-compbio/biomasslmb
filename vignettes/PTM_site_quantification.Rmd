@@ -351,13 +351,116 @@ Which of the two to report depends on the question. Occupancy is the right answe
 
 Note also that occupancy is only available for sites whose protein was quantified in the total fraction, so restricting to it discards sites — and, as noted above, not a random subset of them.
 
+# Testing both levels in one model
+
+Subtracting the protein from the site and testing the result treats the protein
+estimate as if it were exact. It is not — it is a measurement with its own
+uncertainty, made on the same sample — and the subtraction throws that
+uncertainty away before `limma` ever sees it.
+
+The alternative is to give `limma` both measurements and let it do the
+subtraction as part of the model. Stack the protein and site abundances into
+one matrix, one row per site, with a `type` factor saying which kind of
+measurement each column holds.
+
+```{r}
+site_mat <- assay(phospho[['site']])[has_protein, ]
+protein_mat <- assay(total[['protein']])[site_protein[has_protein], ]
+
+joint <- cbind(protein_mat, site_mat)
+colnames(joint) <- paste(rep(c('protein', 'site'), each = ncol(site_mat)),
+                         colnames(site_mat), sep = '.')
+
+joint_sample <- rep(colnames(site_mat), 2)
+joint_type <- factor(rep(c('protein', 'site'), each = ncol(site_mat)),
+                     levels = c('protein', 'site'))
+joint_condition <- factor(rep(phospho[['site']]$Condition, 2),
+                          levels = c('Control', 'Treated'))
+joint_timepoint <- factor(rep(phospho[['site']]$Timepoint, 2))
+
+dim(joint)
+```
+
+Every term that can act differently on the two measurement types is then
+interacted with `type`. The treatment effect on the protein is
+`conditionTreated`; the extra effect on the site, over and above the protein's,
+is `conditionTreated:typesite`. That interaction is the quantity occupancy was
+constructed to isolate.
+
+```{r}
+joint_design <- model.matrix(~ joint_timepoint + joint_condition * joint_type +
+                               joint_timepoint:joint_type)
+
+colnames(joint_design)
+```
+
+The same sample supplies one protein column and one site column, so those two
+are not independent observations. `duplicateCorrelation` estimates a single
+consensus correlation within blocks, and `lmFit` uses it to weight the fit.
+[Technical replicates](gotcha_technical_replicates.html) covers the same
+machinery applied to repeated acquisitions of one sample.
+
+```{r}
+corfit <- duplicateCorrelation(joint, joint_design, block = joint_sample)
+
+round(corfit$consensus.correlation, 3)
+```
+
+```{r}
+joint_fit <- eBayes(lmFit(joint, joint_design, block = joint_sample,
+                          correlation = corfit$consensus.correlation))
+
+joint_res <- topTable(joint_fit, coef = 'joint_conditionTreated:joint_typesite',
+                      number = Inf, sort.by = 'none')
+
+table(joint = joint_res$adj.P.Val < 0.05,
+      occupancy = occupancy_res$adj.P.Val < 0.05)
+```
+
+**The two routes estimate the same fold changes and disagree only on the
+uncertainty.** The interaction coefficient and the occupancy fold change are
+the same number to machine precision, which they have to be — both are the
+difference between the site's response and the protein's.
+
+```{r}
+max(abs(joint_res$logFC - occupancy_res$logFC))
+```
+
+What differs is the standard error each is divided by, and that is enough to
+move a few sites across the threshold in both directions. The gain is modest
+here because the pairing is weak in this dataset — a consensus correlation of
+`r round(corfit$consensus.correlation, 3)` — but it is the block term that
+delivers it, and dropping it gives back most of the difference.
+
+```{r}
+unblocked <- eBayes(lmFit(joint, joint_design))
+
+c(blocked = sum(joint_res$adj.P.Val < 0.05),
+  unblocked = sum(topTable(unblocked, coef = 'joint_conditionTreated:joint_typesite',
+                           number = Inf)$adj.P.Val < 0.05),
+  occupancy = sum(occupancy_res$adj.P.Val < 0.05))
+```
+
+The reason to reach for this rather than the subtraction is not the handful of
+sites it moves. It is that the model can express designs the subtraction
+cannot. A term interacted with `type` is a term allowed to act differently on
+protein and site, so a covariate that affects protein abundance and site
+occupancy in different ways can be adjusted for as such, and a design with more
+than two groups yields one interaction coefficient per group from a single fit
+rather than a subtraction repeated per contrast.
+
+The cost is the assumption `duplicateCorrelation` makes: one correlation
+describes every block. Where some samples pair their two fractions much more
+tightly than others — different enrichment batches, say — that single number
+describes none of them well.
+
 # Summary
 
 A PTM experiment adds three steps to the whole-proteome workflow, and each of them is a place to get the answer wrong:
 
 - **Localisation.** The search engine's site assignment is a probabilistic claim, scored separately from the peptide identification. `parse_PTM_scores_pd()` reads the scores and discards peptides whose sites cannot be placed confidently. Positions then have to be converted from peptide coordinates to protein coordinates with `add_ptm_positions()`, dropping the peptides that occur at more than one position in their protein.
 - **Normalisation.** The enriched fraction's own median is not a valid reference, because a global change in modification is signal rather than a loading artefact. `get_medians()` on the total fraction and `center_normalise_to_ref()` on the enriched one keeps the loading correction and leaves the biology.
-- **Occupancy.** A change in site abundance is a change in modification only once the protein's own change has been divided out.
+- **Occupancy.** A change in site abundance is a change in modification only once the protein's own change has been divided out. Dividing it out by subtraction and testing the result is the direct route; fitting protein and site abundances jointly, with a `type` interaction and `duplicateCorrelation` on the sample, reaches the same fold changes with an uncertainty that accounts for the pairing, and extends to designs the subtraction cannot express.
 
 Two of the steps in this vignette are shared with any TMT experiment and are covered in more detail elsewhere: PSM filtering and summarisation in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html), and testing in [Data exploration and statistical testing](exploration_and_statistical_testing.html). If the design spans more than one plex, both fractions need bringing onto a common scale before any of the above, which [multi-plex TMT](TMT_multiplex.html) covers — the bridge correction is applied to the enriched and total assays separately, using each one's own bridge channels.
 

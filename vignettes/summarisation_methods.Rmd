@@ -579,7 +579,7 @@ both_proteins_lfq <- intersect(sum_proteins_lfq, robust_proteins_lfq)
 cors_lfq <- sapply(both_proteins_lfq, function(p) {
   cor(assay(lfq_qf[['protein_lfq_sum']])[p, ], assay(lfq_qf[['protein_lfq_robust']])[p, ])
 })
-sort(cors_lfq)
+summary(cors_lfq)
 ```
 
 Where both methods do manage to quantify a protein here, most agree well, but a meaningful minority do not: `r sum(cors_lfq < 0.9)` of the `r length(cors_lfq)` jointly-quantified proteins correlate below 0.9, and the lowest is `r round(min(cors_lfq), 2)`. That is the Part 1 effect - the methods weight the underlying features differently - showing up alongside the Part 2 effect rather than instead of it, and it is more visible here than in the TMT data because LFQ peptide intensities for one protein span a wider range.

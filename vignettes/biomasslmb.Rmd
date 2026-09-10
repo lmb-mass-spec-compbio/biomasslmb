@@ -25,6 +25,20 @@ These vignettes are a guide, not a specification, and they describe the common c
 
 **If any part of your analysis is unclear, or your design is not one of the ones covered here, please get in touch with Tom Smith (tsmith@mrclmb.ac.uk) rather than guessing.** That applies to reading these articles as much as to running the code — if a step does not make sense, or a result looks wrong, or you are unsure which route applies, an email is quicker than working it out alone and it is never an imposition. It is far easier to help while an analysis is in progress than to unpick a decision afterwards, and easier still before the samples are run.
 
+# How these vignettes are organised
+
+The articles fall into five groups, which are the headings in the sidebar. Knowing which group an article belongs to tells you what to expect from it.
+
+**Start here** is this article and [working with QFeatures objects](qfeatures_objects.html), which covers the object every analysis is built in and the design table it needs.
+
+**Core workflow** is the sequence almost every experiment goes through: annotation, then the QC and summarisation vignette for your acquisition type, then testing, then functional enrichment. Each of these presents one route, worked end to end on real data, and states the choice it is making at each step rather than listing the alternatives.
+
+**Specialised designs** covers experiments that need something different from the same protein-level matrix — enrichment experiments, PTM experiments, and comparing abundances between different proteins rather than between samples. Read the core workflow article for your acquisition type first; these pick up where it leaves off.
+
+**Choosing between options** is for when a decision in the core workflow matters enough to your experiment that a default is not good enough. These articles compare two or more ways of doing the same thing on the same data, and report what each one costs. They are reference material rather than a route to follow: read one when you reach the decision it covers, or when a result depends on it.
+
+**Cautionary tales** are short articles about steps that look the same whether or not they are working. Each takes one such step, shows what a result looks like when the step has gone wrong, and gives the check that would have caught it. They are worth reading before you trust a result rather than after.
+
 # The shape of an analysis
 
 Before the detail, here is a complete analysis: a label-free whole-proteome comparison between a wild type cell line and a point mutant, three replicates each, from the search engine's peptide table to a list of differentially abundant proteins. Every step is explained properly elsewhere; the point of showing it in one piece is that the whole thing is about forty lines, and the vignettes that follow are expansions of these steps rather than additions to them.

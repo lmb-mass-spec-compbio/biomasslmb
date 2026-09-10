@@ -1,7 +1,7 @@
 # Records inst/extdata/missingness_survey.rds, the cross-dataset summary of
 # missingness against abundance displayed by vignettes/handling_missing_values.Rmd.
 #
-# The source is a survey of 56 real experiments processed by the facility,
+# The source is a survey of 63 real experiments processed by the facility,
 # assembled in the Proteomics_workshop_data_exploration repository. Each
 # experiment contributes one feature-level abundance and one missingness value
 # per feature, plus three dataset-level scores. Only the summary is recorded

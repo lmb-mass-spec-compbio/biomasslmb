@@ -36,7 +36,7 @@ library(limma)
 
 Missing value severity is set by how the data were acquired. How much of that missingness is structured by experimental condition is a separate question with a separate answer, and the two are easy to run together.
 
-A survey of 56 experiments processed by the facility separates them. Each point is one experiment: the fraction of its matrix that is missing, against how well experimental condition predicts which values those are.
+A survey of 63 experiments processed by the facility separates them. Each point is one experiment: the fraction of its matrix that is missing, against how well experimental condition predicts which values those are.
 
 ```{r}
 missingness_survey <- readRDS(system.file(

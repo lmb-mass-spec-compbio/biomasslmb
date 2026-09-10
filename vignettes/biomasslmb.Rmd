@@ -263,10 +263,9 @@ The testing stage itself is covered in two places, because an enrichment design 
 
 If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, [handling missing values](handling_missing_values.html) sets out the options at each stage and what each one costs, and [comparing processing pipelines](processing_pipeline_comparison.html) asks how much of a result depends on the software that produced it.
 
-Four articles cover steps that look the same whether or not they are working, which is what makes them worth reading before you trust a result rather than after:
+Three articles cover steps that look the same whether or not they are working, which is what makes them worth reading before you trust a result rather than after:
 
 - [Peptides are not proteins](gotcha_peptide_to_protein.html) — the inference step between what the instrument measured and what the output file reports, and which proteins it is unreliable for.
-- [Batch effects](gotcha_batch_effects.html) — how much of the variance in a multi-plex TMT experiment is the plex rather than the biology, and what an uncorrected analysis costs you. Whether that cost is false positives or lost power depends on how the conditions are distributed across plexes.
 - [Contaminants and protein FDR](gotcha_contaminants_and_FDR.html) — three overlapping defences against contaminants, which of them is actually doing the work, and what `filter_by_protein_fdr()` removes besides low-confidence proteins.
 - [Technical replicates are not biological replicates](gotcha_technical_replicates.html) — what happens to a result when repeat acquisitions of one sample are tested as though they were independent samples.
 

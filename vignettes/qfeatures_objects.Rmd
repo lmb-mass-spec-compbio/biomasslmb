@@ -216,7 +216,7 @@ tmt_qf[['peptides_norm']] <- normalize(tmt_qf[['peptides']], method = 'diff.medi
 qf <- joinAssays(qf, i = c('protein_1', 'protein_2'), name = 'protein_joined')
 ```
 
-Features present in one assay and not another become `NA`, which for multi-plex TMT is a meaningful category rather than a nuisance — see [batch effects](gotcha_batch_effects.html).
+Features present in one assay and not another become `NA`, which for multi-plex TMT is a meaningful category rather than a nuisance — see [multi-plex TMT](TMT_multiplex.html).
 
 # A summary of the vocabulary
 

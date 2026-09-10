@@ -24,7 +24,7 @@ Quantitative proteomics using isobaric tagging such as Tandem Mass Tags (TMT) ha
 
 Because TMT quantifies from the same MS1 ion for all samples, this standardises the features quantified in each sample, which simplifies the comparison between samples and increases quantification accuracy of summarised features such as proteins.
 
-However, TMT does suffer from ratio compression, which should be avoided by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
+However, TMT does suffer from ratio compression, caused by co-isolation of contaminating precursor ions that get fragmented alongside the target peptide and inflate the reporter ion signal. This should be avoided by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between two conditions, labelled in a single TMT plex and searched with Proteome Discoverer (PD). That combination covers the majority of TMT experiments, and the choices made below are the conventional ones for it.
 
@@ -33,7 +33,7 @@ Experiments that depart from it are covered separately, since the departures cha
 - **Several plexes.** A design too large for one plex needs each plex processed on its own and then brought onto a common scale — see [multi-plex TMT](TMT_multiplex.html).
 - **An enrichment design.** An IP, BioID or TurboID experiment breaks the assumptions behind normalisation and behind discarding missing values — see [enrichment designs](interactome_designs.html).
 - **An enriched PTM fraction.** Modified peptides have to be localised to a residue, summarised to sites rather than proteins, and normalised against a matched total fraction rather than against themselves — see [PTM site quantification](PTM_site_quantification.html).
-- **MaxQuant instead of PD.** The principles are the same, but the column names differ and the PD-specific QC metrics (signal:noise, interference, SPS-MM) are unavailable. [Reading MaxQuant output](#reading-maxquant-output) at the end of this vignette covers what transfers and what does not.
+- **MaxQuant instead of PD.** The principles are the same, but the column names differ and two of the QC metrics used below — reporter signal:noise and SPS mass matches — are not reported at all, so the PSM quality filter has to be rebuilt around the one that is. [Reading MaxQuant output](#reading-maxquant-output) at the end of this vignette covers what transfers and what does not.
 
 # Load required packages
 
@@ -334,50 +334,65 @@ Two of those steps are specific to this being a straightforward whole-proteome c
 
 # Reading MaxQuant output {#reading-maxquant-output}
 
-Everything above is Proteome Discoverer specific in its column names, and in one
-section more deeply than that. This part covers what transfers to MaxQuant and
-what does not, using `psm_tmt_per2_mq`, the `evidence.txt` PSM-level output from
-a TMT experiment, with `tmt_per2_mq_design`.
-
-That dataset is a bait pulldown rather than a whole-proteome comparison, because
-it is the only packaged MaxQuant TMT dataset. The reading and filtering below
-transfer to any TMT experiment; the normalisation and testing it goes on to need
-do not, and [enrichment designs](interactome_designs.html) works it through as
-the enrichment experiment it is.
+Everything above is Proteome Discoverer specific in its column names, and one
+section of it more deeply than that. This part covers what transfers to
+MaxQuant and what does not, using `psm_tmt_factorial`: the `evidence.txt`
+PSM-level output from a TMT18plex whole-proteome experiment, with
+`tmt_factorial_design`. It is subsetted to a random sample of proteins, so the
+counts below are smaller than a full experiment's, but every filtering step is
+doing real work on real PSMs.
 
 | Quantity | Proteome Discoverer | MaxQuant |
 |---|---|---|
 | Protein assignment | `Master.Protein.Accessions` | `Leading.razor.protein` |
+| All candidate proteins | `Protein.Accessions` | `Proteins` |
 | Contaminant accessions | search FASTA, `Cont_` prefix | `get_maxquant_cont_accessions()`, `CON__` prefix |
+| Decoy flag | removed before export | `Reverse` |
 | Search engine rank | `Rank` | not reported per PSM |
 | Co-isolation | `Isolation.Interference.in.Percent` | `PIF` |
 | Reporter signal:noise | `Average.Reporter.SN` | **not reported** |
 | SPS mass matches | `SPS.Mass.Matches.in.Percent` | **not reported** |
+| Missing quantification | empty | `0` |
+
+The design is crossed rather than a single comparison: three cell lines, each
+treated with a vehicle or a compound, in three replicates.
 
 ```{r}
-knitr::kable(tmt_per2_mq_design)
+knitr::kable(tmt_factorial_design)
 ```
 
-Reading in is the same operation, with one addition: MaxQuant writes an intensity
-of exactly zero where it has no measurement, so those have to become `NA` before
-anything else happens.
+Nothing in the reading or filtering below depends on that structure. It starts
+to matter at the point of testing, where a second factor changes both what the
+model should contain and what its coefficients mean, and
+[data exploration and statistical testing](exploration_and_statistical_testing.html)
+picks this dataset up there.
 
 ```{r, message=FALSE, warning=FALSE}
-tmt_mq <- QFeatures::readQFeatures(assayData = psm_tmt_per2_mq,
-                                   colData = tmt_per2_mq_design,
-                                   quantCols = rownames(tmt_per2_mq_design),
-                                   name = "psms_raw")
+tmt_mq <- QFeatures::readQFeatures(assayData = psm_tmt_factorial,
+                                   colData = tmt_factorial_design,
+                                   quantCols = rownames(tmt_factorial_design),
+                                   name = 'psms_raw')
 
 tmt_mq <- sync_coldata(tmt_mq, 'psms_raw')
+```
 
+One step has no counterpart in the PD workflow and has to come first. MaxQuant
+writes an intensity of exactly zero where it has no measurement, whereas PD
+leaves the cell empty. Mass spectrometry cannot assert that a peptide was
+absent, only that it was not detected, so those zeros have to become `NA` —
+left as they are they are treated as real measurements at the bottom of the
+scale, and they pull every median, every summarisation and every fold change
+towards it.
+
+```{r}
 tmt_mq[['psms_raw']] <- QFeatures::zeroIsNA(tmt_mq[['psms_raw']])
 ```
 
 `filter_features_mq_dda()` replaces `filter_features_pd_dda()`, and takes its
-contaminant accessions from `get_maxquant_cont_accessions()`. There is no
-`unique_master` argument: MaxQuant nominates one leading razor protein per PSM
-rather than reporting a tie, so the question that filter asks does not arise. See
-[peptides are not proteins](gotcha_peptide_to_protein.html).
+contaminant accessions from `get_maxquant_cont_accessions()` rather than from a
+search FASTA, because MaxQuant searches against its own contaminants database
+with `CON__` prefixed accessions. It also removes hits to the decoy database,
+which PD has already removed before the PSM export exists.
 
 ```{r, message=FALSE, warning=FALSE}
 tmt_mq[['psms_filtered']] <- filter_features_mq_dda(
@@ -387,36 +402,129 @@ tmt_mq[['psms_filtered']] <- filter_features_mq_dda(
   filter_associated_contaminant = TRUE)
 
 tmt_mq <- sync_coldata(tmt_mq, 'psms_filtered')
-
-nrow(tmt_mq[['psms_filtered']])
 ```
 
-**The low-quality PSM section is the part that does not transfer.** MaxQuant does
-not report reporter ion signal:noise at all, so the S:N threshold that does most
-of the quality filtering above has no counterpart, and neither has the SPS mass
-match percentage. What remains is `PIF`, the precursor intensity fraction, which
-measures the same thing as PD's co-isolation percentage from the other direction:
-the fraction of the isolation window accounted for by the intended precursor, so
-a high `PIF` is good where a high interference percentage is bad.
+Normalisation is unchanged, and rests on the same assumption: equal loading per
+channel, and most proteins unchanged between conditions.
+
+```{r, warning=FALSE}
+tmt_mq[['psms_norm']] <- QFeatures::normalize(
+  logTransform(tmt_mq[['psms_filtered']], base = 2), method = 'diff.median')
+
+assay(tmt_mq[['psms_norm']]) <- 2^assay(tmt_mq[['psms_norm']])
+
+tmt_mq <- sync_coldata(tmt_mq, 'psms_norm')
+```
+
+**The low-quality PSM section is the part that does not transfer.** MaxQuant
+does not report reporter ion signal:noise at all, so the S:N threshold that
+does most of the quality filtering above has no counterpart, and neither has
+the SPS mass match percentage. What remains is `PIF`, the precursor intensity
+fraction, which measures the same thing as PD's co-isolation percentage from
+the other direction: the fraction of the isolation window accounted for by the
+intended precursor, so a high `PIF` is good where a high interference
+percentage is bad.
 
 ```{r}
-summary(rowData(tmt_mq[['psms_filtered']])$PIF)
+summary(rowData(tmt_mq[['psms_norm']])$PIF)
 ```
 
-Two consequences follow, and both are worth taking seriously rather than working
-around. Filtering has to lean on `PIF` alone, which controls for co-isolation but
-not for how close a reporter ion was to the noise. And `PIF` is itself frequently
-`NA` — reported only where MaxQuant could assess the window — so a threshold on it
-carries a decision about what to do with the PSMs it cannot assess.
-[Enrichment designs](interactome_designs.html) applies a `PIF` filter and counts
-both groups.
+Two consequences follow, and both are worth taking seriously rather than
+working around.
 
-Everything from summarisation onwards applies unchanged, with
-`Leading.razor.protein` in place of `Master.Protein.Accessions` wherever it
-appears as a `master_protein_col` or an `fcol`. Missing values are the one thing
-to re-check rather than assume: the argument above for discarding PSMs with any
-missing value rests on there being very few, and that rested in turn on the S:N
-filter which is not available here.
+The first is that filtering has to lean on `PIF` alone, which controls for
+co-isolation but says nothing about how close a reporter ion was to the noise.
+The PD filter above discarded PSMs on both counts, and only one of them is
+available here.
+
+The second is that `PIF` is itself frequently `NA`, reported only where
+MaxQuant could assess the window — `r sum(is.na(rowData(tmt_mq[['psms_norm']])$PIF))`
+of `r nrow(tmt_mq[['psms_norm']])` PSMs here — so a threshold on it carries a
+second decision about what to do with the PSMs it cannot assess. Discarding
+them is the conservative choice and the one taken below.
+
+The threshold itself is a judgement rather than a standard. The direct
+counterpart of the PD filter used above, interference under 50%, is `PIF` above
+0.5, which would remove
+`r sum(rowData(tmt_mq[['psms_norm']])$PIF <= 0.5, na.rm = TRUE)` PSMs; the
+stricter `PIF` above 0.75 used here removes
+`r sum(rowData(tmt_mq[['psms_norm']])$PIF <= 0.75, na.rm = TRUE)`. The stricter
+threshold buys cleaner ratios at the price of those PSMs, and is worth it in a
+whole-proteome experiment where PSMs are plentiful. In an experiment where they
+are not — a low-input sample, or a protein of interest identified by two
+peptides — the same threshold can remove the measurement being sought.
+
+```{r}
+pif <- rowData(tmt_mq[['psms_norm']])$PIF
+
+tmt_mq[['psms_pif']] <- tmt_mq[['psms_norm']][!is.na(pif) & pif > 0.75, ]
+
+tmt_mq <- sync_coldata(tmt_mq, 'psms_pif')
+
+nrow(tmt_mq[['psms_pif']])
+```
+
+The rank filter has no MaxQuant equivalent and is simply omitted: `evidence.txt`
+reports the accepted match rather than every candidate, and the confidence
+filtering has already been applied through MaxQuant's posterior error
+probabilities.
+
+Missing values are the one thing to re-check rather than carry over. The
+argument above for discarding PSMs with any missing value rested on there being
+very few, and that in turn rested on the S:N filter, which is not available
+here — so it has to be re-made on this dataset.
+
+```{r}
+miss_mq <- condition_miss_score(tmt_mq, i = 'psms_pif', group_cols = 'Treatment')
+
+condition_miss_index(miss_mq$summary)$index
+```
+
+**The argument survives.** Only
+`r as.integer(miss_mq$global['n_features_informative'])` of
+`r as.integer(miss_mq$global['n_features_total'])` PSMs have any missing value, and the
+condition missingness index is near zero, so discarding them costs little and
+loses nothing that tracks `Treatment`.
+
+```{r}
+tmt_mq[['psms_complete']] <- QFeatures::filterNA(tmt_mq[['psms_pif']], 0)
+
+tmt_mq[['psms_forSum']] <- filter_features_per_protein(
+  tmt_mq[['psms_complete']],
+  master_protein_col = 'Leading.razor.protein',
+  min_features = 2)
+
+tmt_mq <- sync_coldata(tmt_mq, 'psms_forSum')
+```
+
+Summarisation is then the same operation with a different column name.
+`Leading.razor.protein` replaces `Master.Protein.Accessions` everywhere it
+appears as a `master_protein_col` or an `fcol`, which is the single most common
+cause of a MaxQuant analysis failing partway through a workflow written for PD.
+
+```{r, message=FALSE}
+tmt_mq <- QFeatures::aggregateFeatures(tmt_mq,
+                                       i = 'psms_forSum',
+                                       fcol = 'Leading.razor.protein',
+                                       name = 'protein',
+                                       fun = base::colSums)
+
+tmt_mq <- sync_coldata(tmt_mq, 'protein')
+
+tmt_mq[['protein']] <- QFeatures::logTransform(tmt_mq[['protein']], base = 2)
+
+nrow(tmt_mq[['protein']])
+```
+
+```{r, eval = FALSE}
+# Save to the package so the testing vignette can read it back in. Only the
+# protein assay is kept: the PSM-level assays are already available as
+# `psm_tmt_factorial`, and carrying them here would make the saved object an
+# order of magnitude larger.
+tmt_qf_factorial <- tmt_mq[, , 'protein']
+
+usethis::use_data(tmt_qf_factorial, overwrite = TRUE)
+```
 
 # Getting help
 

@@ -162,7 +162,7 @@ To start from raw search engine output instead, the corresponding input files ar
 dir(system.file("extdata", package = "biomasslmb"))
 ```
 
-`tmt_qf_mq` is the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq`, `psm_tmt_2plex` and their design tables provide PSM-level starting points with accompanying experimental designs. `psm_tmt_2plex` spans two TMT plexes, each with a pooled bridge channel.
+`tmt_qf_mq` and `tmt_qf_factorial` are the same TMT pipeline run from MaxQuant rather than Proteome Discoverer output, and `psm_tmt_clock`, `psm_tmt_per2_mq`, `psm_tmt_2plex`, `psm_tmt_factorial` and their design tables provide PSM-level starting points with accompanying experimental designs. Two of them carry a design the others do not: `psm_tmt_2plex` spans two TMT plexes, each with a pooled bridge channel, and `psm_tmt_factorial` crosses two experimental factors rather than comparing two groups.
 
 # What the package assumes
 
@@ -264,7 +264,7 @@ Not every normalisation is of this form. Quantile normalisation, for instance, n
 
 If you are starting an analysis, go to the vignette for your acquisition type and work forwards, then on to [data exploration and statistical testing](exploration_and_statistical_testing.html) and [functional enrichment](functional_enrichment.html).
 
-The testing stage itself is covered in two places, because an enrichment design asks for different choices from a whole-proteome one. [Data exploration and statistical testing](exploration_and_statistical_testing.html) works through a whole-proteome comparison and a single-plex TMT pulldown, testing both in the conventional two-sided way. Part B of [enrichment designs](interactome_designs.html) works through a label-free pulldown with the treatment that design calls for: a testability rule that keeps the proteins absent from the control, imputation restricted to where absence is defensible, and a one-sided test.
+The testing stage itself is covered in two places, because an enrichment design asks for different choices from a whole-proteome one. [Data exploration and statistical testing](exploration_and_statistical_testing.html) works through a whole-proteome comparison, a single-plex TMT pulldown and a design with two crossed factors, testing all three in the conventional two-sided way. Part B of [enrichment designs](interactome_designs.html) works through a label-free pulldown with the treatment that design calls for: a testability rule that keeps the proteins absent from the control, imputation restricted to where absence is defensible, and a one-sided test.
 
 If you are trying to decide between two ways of doing something, the [summarisation methods](summarisation_methods.html) vignette compares summarisation approaches directly, [handling missing values](handling_missing_values.html) sets out the options at each stage and what each one costs, and [comparing processing pipelines](processing_pipeline_comparison.html) asks how much of a result depends on the software that produced it.
 

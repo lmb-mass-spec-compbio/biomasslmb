@@ -210,12 +210,15 @@ reference:
   - tmt_2plex_design
   - psm_tmt_per2_mq
   - tmt_per2_mq_design
+  - psm_tmt_factorial
+  - tmt_factorial_design
   - psm_tmt_phospho
   - psm_tmt_phospho_total
   - tmt_phospho_design
   - psm_tmt_total
   - tmt_qf
   - tmt_qf_mq
+  - tmt_qf_factorial
   - lfq_qf
   - lfq_qf_turboid
   - dia_qf

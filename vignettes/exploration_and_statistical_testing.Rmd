@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-Once protein-level abundances have been QCed, filtered and summarised, the next step is to explore the data with respect to the experimental design, then test for differential abundance between conditions. Below, we work through that process twice, using datasets carried over from the QC vignettes: first with `dia_qf` (Part A), an LFQ-DIA whole-proteome comparison of blood plasma from MPXV-infected and healthy individuals; then with `tmt_qf_mq` (Part B), a TMT immunoprecipitation comparing a bait pulldown (`IP`) against a `Control` pulldown. The two designs call for different choices at the statistical testing stage, which we highlight in Part B.
+Once protein-level abundances have been QCed, filtered and summarised, the next step is to explore the data with respect to the experimental design, then test for differential abundance between conditions. Below, that process is worked through three times, using datasets carried over from the QC vignettes: first with `dia_qf` (Part A), an LFQ-DIA whole-proteome comparison of blood plasma from MPXV-infected and healthy individuals; then with `tmt_qf_mq` (Part B), a TMT immunoprecipitation comparing a bait pulldown (`IP`) against a `Control` pulldown; and finally with `tmt_qf_factorial` (Part C), a TMT experiment with two crossed factors rather than one. Each design calls for different choices at the testing stage — an enrichment design changes what counts as a meaningful fold change, and a second factor changes what the model should contain and what its coefficients mean.
 
 # Load required packages
 
@@ -31,6 +31,7 @@ library(limma)
 
 dia_qf <- biomasslmb::dia_qf
 tmt_qf_mq <- biomasslmb::tmt_qf_mq
+tmt_qf_factorial <- biomasslmb::tmt_qf_factorial
 ```
 
 # Part A: LFQ-DIA whole-proteome comparison
@@ -299,9 +300,193 @@ plot_protein_assays(
 
 The PSMs consistently show higher abundance in the IP samples than the Control samples, supporting this as a genuine interactor rather than an artefact of a single PSM or a missing-value pattern.
 
+# Part C: two factors at once
+
+`tmt_qf_factorial` is the whole-proteome TMT experiment from
+[reading MaxQuant output](TMT_PSM_QC_Summarisation.html#reading-maxquant-output):
+three cell lines, each treated with a vehicle (`Control`) or a compound
+(`Treated`), in three replicates.
+
+Both parts above had one factor and one comparison to make. This one has two
+crossed factors, which changes three things: which terms belong in the model,
+what the coefficients mean once they are there, and how much of the answer is
+lost by leaving a factor out. Nothing about the QC or the summarisation
+changed — the design only starts to matter here.
+
+```{r}
+knitr::kable(data.frame(colData(tmt_qf_factorial)))
+```
+
+```{r}
+factorial_prot <- assay(tmt_qf_factorial[['protein']])
+
+genotype <- factor(tmt_qf_factorial[['protein']]$Genotype,
+                   levels = c('Line_A', 'Line_B', 'Line_AB'))
+
+treatment <- factor(tmt_qf_factorial[['protein']]$Treatment,
+                    levels = c('Control', 'Treated'))
+```
+
+## Which factor dominates
+
+```{r, fig.height=4, fig.width=5.5, out.width='65%'}
+plot_pca(tmt_qf_factorial, 'protein', colour_by = 'Genotype', shape_by = 'Treatment',
+         scale. = TRUE, center = TRUE) +
+  theme_biomasslmb(base_size = 10)
+```
+
+**The cell line separates the samples; the treatment does not.** That is the
+ordinary situation for cell lines and it is visible before any model is fitted. Quantifying it makes
+the size of the problem clear.
+
+```{r}
+n_sig <- function(design, coef) {
+  fit <- eBayes(lmFit(factorial_prot, design), trend = TRUE, robust = TRUE)
+  sum(topTable(fit, coef = coef, number = Inf)$adj.P.Val < 0.05)
+}
+
+additive <- model.matrix(~ genotype + treatment)
+
+c(proteins = nrow(factorial_prot),
+  differ_between_lines = n_sig(additive, 2:3))
+```
+
+`r n_sig(model.matrix(~ genotype + treatment), 2:3)` of the
+`r nrow(factorial_prot)` proteins differ between the lines. A factor that moves
+most of the proteome is not a detail to be only mentioned in the methods; it is the
+largest source of variance in the experiment, and every decision below follows
+from that.
+
+## Testing for impact of treatment - what leaving the genotype out costs
+
+The experiment is balanced — every line appears equally often in both treatment
+groups — so leaving `genotype` out of the model does not bias the treatment
+estimate. It is tempting to conclude from that it can be left out when testing for an impact of treatment. It cannot,
+because bias is not the only thing at stake: variance the model does not
+explain stays in the residual, and the residual is what every p-value is
+measured against.
+
+```{r}
+c(ignoring_line = n_sig(model.matrix(~ treatment), 'treatmentTreated'),
+  adjusting_for_line = n_sig(additive, 'treatmentTreated'))
+```
+
+**Leaving the genotype out costs most of the result.** The two models estimate the
+same fold changes, and disagree only on how much noise those fold changes are
+being compared against.
+
+```{r}
+residual_sd <- function(design) {
+  median(sqrt(eBayes(lmFit(factorial_prot, design),
+                     trend = TRUE, robust = TRUE)$s2.post))
+}
+
+round(c(ignoring_line = residual_sd(model.matrix(~ treatment)),
+        adjusting_for_line = residual_sd(additive)), 3)
+```
+
+This is the argument for recording every structured source of variation you
+know about — culture batch, passage number, the day the samples were prepared,
+which operator prepared them — and carrying it into `colData` whether or not
+you expect to use it. A factor that was never recorded cannot be adjusted for,
+and its variance is then indistinguishable from noise. The
+[technical replicates](gotcha_technical_replicates.html) article covers the
+case where the repeated measurements are of the same biological sample, which
+needs a different treatment again.
+
+## Does the effect depend on the cell line?
+
+`genotype + treatment` assumes the compound does the same thing in every line.
+`genotype * treatment` drops that assumption and lets the treatment effect
+differ between them. Which is right is a question about the data, and it is
+answered by testing the interaction terms rather than by choosing in advance.
+
+```{r}
+interaction_design <- model.matrix(~ genotype * treatment)
+
+colnames(interaction_design)
+```
+
+```{r}
+interaction_terms <- grep(':', colnames(interaction_design), value = TRUE)
+
+c(tested = nrow(factorial_prot),
+  line_specific_response = n_sig(interaction_design, interaction_terms))
+```
+
+Two proteins out of `r nrow(factorial_prot)` respond to the compound
+differently depending on the line. Those two are real findings and worth
+following up individually, but a line-specific response is not a general
+feature of this experiment, so the additive model describes the other
+`r nrow(factorial_prot) - n_sig(interaction_design, interaction_terms)`
+proteins better than the interaction model does.
+
+## What an interaction term does to the other coefficients
+
+Keeping the interaction term anyway looks harmless. It is not, and the reason
+has nothing to do with the extra parameters.
+
+```{r}
+c(additive = n_sig(additive, 'treatmentTreated'),
+  interaction = n_sig(interaction_design, 'treatmentTreated'))
+```
+
+**The same coefficient name means different things in the two models.** In
+`~ genotype + treatment`, `treatmentTreated` is the treatment effect averaged
+over the lines. In `~ genotype * treatment`, it is the treatment effect *in the
+reference line alone* — `Line_A` here, because that is the first level of the
+factor — and the other two lines' effects are that coefficient plus their own
+interaction term. Testing it answers a question about one third of the
+experiment.
+
+The average effect is still recoverable from the interaction model, with a
+contrast that puts it back together explicitly.
+
+```{r}
+contrast <- rep(0, ncol(interaction_design))
+names(contrast) <- colnames(interaction_design)
+contrast['treatmentTreated'] <- 1
+contrast[interaction_terms] <- 1/3
+
+averaged <- eBayes(contrasts.fit(lmFit(factorial_prot, interaction_design), contrast),
+                   trend = TRUE, robust = TRUE)
+
+c(additive = n_sig(additive, 'treatmentTreated'),
+  interaction_averaged = sum(topTable(averaged, number = Inf)$adj.P.Val < 0.05))
+```
+
+Which settles what the earlier drop was. The interaction model has lost almost
+no power — the two numbers above agree. Reading `treatmentTreated` out of it
+without the contrast answers a different question, and reports the answer under
+a name that looks like the one you asked for.
+
+## Which model to report
+
+The interaction was tested and, for all but two proteins, not found, so the
+additive model is the one to report here.
+
+```{r}
+final_fit <- eBayes(lmFit(factorial_prot, additive), trend = TRUE, robust = TRUE)
+
+factorial_results <- topTable(final_fit, coef = 'treatmentTreated', number = Inf) %>%
+  tibble::rownames_to_column('Protein') %>%
+  arrange(P.Value)
+
+head(factorial_results, 5)
+```
+
+One thing carried over from Part A is deliberately absent: there is no `treat`
+fold-change threshold. Applied here at the 1.2-fold threshold Part A used, it
+returns `r {ft <- treat(lmFit(factorial_prot, additive), fc = 1.2, trend = TRUE, robust = TRUE); sum(topTreat(ft, coef = 'treatmentTreated', number = Inf)$adj.P.Val < 0.05)}`
+proteins, because this compound's proteome-wide effects are genuinely small
+rather than because they are unreliable. A `treat` threshold encodes a claim
+about which effect sizes are worth reporting, and that claim has to be made for
+the experiment in front of you — a threshold that was right for a plasma case
+series is not right for a cell line treated for a few hours.
+
 # Reporting the result
 
-A volcano plot is a summary, not a deliverable. What goes back to whoever ran the experiment is a table, and what makes it usable is the columns that let a reader judge each row without re-running the analysis.
+A volcano plot is a summary, not the end goal. What we will actually use downstream is a table, and what makes it usable is the columns that let a reader judge each row without re-running the analysis.
 
 ## The results table
 

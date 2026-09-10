@@ -153,15 +153,17 @@ nrow(uniprot2groups)
 
 # Adding the annotations to a `QFeatures` object
 
-The annotations are joined onto the assay by matching row names, which for a protein-level assay produced by PD are the `Master.Protein.Accessions` strings. Matching rather than merging keeps the assay's rows in their existing order and leaves an `NA` for anything unannotated, rather than silently dropping it.
+The annotations belong in the assay's `rowData`, joined on `Master.Protein.Accessions` — the column the protein-level row names are taken from. A left join keeps every row of the assay, in its existing order, and leaves an `NA` wherever a group has no annotation. `rowData()` returns a `DataFrame` rather than a `data.frame`, so it needs converting before `dplyr` will accept it, and select down to the columns you want so that the join does not bring the whole annotation table across.
 
 ```{r}
 protein_se <- lfq_qf[['protein']]
 
-annotation_ix <- match(rownames(protein_se), uniprot2groups$UniprotID)
-
-rowData(protein_se)$Gene.Names.First <- uniprot2groups$Gene.Names.First[annotation_ix]
-rowData(protein_se)$Protein.names <- uniprot2groups$Protein.names[annotation_ix]
+rowData(protein_se) <- rowData(protein_se) %>%
+  as.data.frame() %>%
+  left_join(
+    uniprot2groups %>% select(UniprotID, Gene.Names.First, Protein.names),
+    by = c('Master.Protein.Accessions' = 'UniprotID')
+  )
 
 lfq_qf[['protein']] <- protein_se
 
@@ -169,10 +171,12 @@ rowData(lfq_qf[['protein']])[1:5, c('Gene.Names.First', 'Protein.names')] %>%
   as.data.frame()
 ```
 
-Every row matched here, since the contaminants were removed from `lfq_qf` during QC:
+Reach for `left_join()` rather than `merge()` here: `merge()` sorts its output by the key and drops unmatched rows unless told otherwise, either of which puts `rowData` out of step with the rows of the assay.
+
+Every group matched here, since the contaminants were removed from `lfq_qf` during QC:
 
 ```{r}
-sum(is.na(annotation_ix))
+sum(!rowData(protein_se)$Master.Protein.Accessions %in% uniprot2groups$UniprotID)
 ```
 
 DIA-NN output is the exception to all of this: it carries `Genes` and `Protein.Names` columns of its own, taken from the search FASTA, and the [exploration and statistical testing](exploration_and_statistical_testing.html) vignette uses them directly. They are convenient, but they are frozen at whatever release the FASTA came from, and they do not include GO terms or topology, so a UniProt query is still needed for anything beyond labelling.

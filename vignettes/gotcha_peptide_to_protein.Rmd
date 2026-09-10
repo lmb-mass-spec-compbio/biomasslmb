@@ -112,7 +112,7 @@ This is why the median tells you nothing useful here: half of the proteins in bo
 
 # What the search engine does about it
 
-Faced with a peptide that maps to several proteins, a search engine picks one. Proteome Discoverer reports a **master protein** and MaxQuant a **razor protein**; both are, roughly, the protein with the most evidence among the candidates, on the reasoning that if a protein is definitely present it is the most parsimonious explanation for its shared peptides too.
+Faced with a peptide that maps to several proteins, a search engine nominates the protein it holds responsible for it. Proteome Discoverer reports a **master protein** and MaxQuant a **razor protein**; both are, roughly, the protein with the most evidence among the candidates, on the reasoning that if a protein is definitely present it is the most parsimonious explanation for its shared peptides too. The two columns are not equivalent, and the difference between them matters as soon as you try to compare them.
 
 The two export formats record the ambiguity differently, and both keep enough to recover it.
 
@@ -130,9 +130,13 @@ table(`MaxQuant: peptide unique to its protein` = mq_peptides$Unique..Proteins.)
 
 Every `filter_features_*()` function takes `proteotypic`, which drops these rows using whichever column the search engine provides: `Number.of.Proteins` for PD, `Unique..Proteins.` for MaxQuant, `Proteotypic` for DIA-NN and `PEP.IsProteotypic` for Spectronaut. It is a separate question from `unique_master`, which asks only whether the search engine resolved the feature to a single protein identity: a peptide can have an unambiguous master protein and still be shared with the other proteins inside that protein group. Filtering on either is the conservative choice, but it is a choice: it discards real measurements, and it discards them preferentially from exactly the proteins that had least unique evidence to begin with.
 
-## The engines do not always agree
+## Comparing the two assignments
 
-These two files are the same six acquisitions processed two ways (see [comparing processing pipelines](processing_pipeline_comparison.html)), so for peptides identified by both we can ask directly whether they were assigned to the same protein.
+These two files are the same six acquisitions processed two ways (see [comparing processing pipelines](processing_pipeline_comparison.html)), so for peptides identified by both we can ask whether they were assigned to the same protein.
+
+The two columns have to be compared with their definitions in mind, because they do not report the same thing. `Master.Protein.Accessions` names the master protein of every protein group the peptide was assigned to, so where the evidence does not separate two groups it lists both masters, and `Number.of.Protein.Groups` counts them. `Leading.razor.protein` names one protein and only ever one, because MaxQuant assigns each peptide to the razor protein of a single group whether or not the evidence supports singling that protein out. Proteome Discoverer can decline to resolve a peptide to one identity; MaxQuant's column has no way to express that.
+
+Comparing the two fields as strings would therefore score every unresolved PD assignment as a disagreement. The question that means something is whether MaxQuant's razor protein is among the proteins PD named.
 
 ```{r}
 pd_peptides$Sequence <- toupper(pd_peptides$Sequence)
@@ -149,25 +153,36 @@ assignments <- merge(
   # disagreements for a reason that has nothing to do with protein inference
   filter(Contaminant != 'True', Potential.contaminant != '+',
          !grepl('Cont_|CON__', Master.Protein.Accessions)) %>%
-  mutate(agree = Master.Protein.Accessions == Leading.razor.protein,
+  mutate(masters = strsplit(Master.Protein.Accessions, '; '),
+         n_masters = lengths(masters),
+         razor_is_a_master = mapply(is.element, Leading.razor.protein, masters),
          shared = Number.of.Proteins > 1)
 
-with(assignments, table(peptide_is_shared = shared, same_protein_assigned = agree))
+with(assignments[assignments$shared, ],
+     table(proteins_PD_named = n_masters, razor_is_one_of_them = razor_is_a_master))
 ```
 
-Overall agreement is high, and it is entirely carried by the unshared peptides, where there was never a decision to make. Among the peptides that genuinely map to more than one protein, the two engines pick the same one less than half the time.
+```{r, echo=FALSE}
+sh <- assignments[assignments$shared, ]
+n_one <- sum(sh$n_masters == 1)
+n_many <- sum(sh$n_masters > 1)
+n_disagree <- sum(!sh$razor_is_a_master)
+```
 
-That last figure rests on the `r sum(assignments$shared)` shared peptides in this one truncated dataset, so treat it as an indication of the size of the problem rather than as a rate to quote. What it does establish is that the assignment is a decision the search engine makes and not a measurement it reports, since two engines given identical spectra reach different answers often enough to matter.
+Of the `r nrow(sh)` shared peptides, `r n_one` were resolved by PD to a single master protein, and MaxQuant's razor protein is that same protein in every one of them: there is no peptide here where the two engines each committed to an identity and committed to different ones. The remaining `r n_many` are peptides PD assigned to more than one protein group, and in `r n_many - n_disagree` of those the razor protein is one of the group masters PD listed. Read as strings, those `r n_many - n_disagree` peptides look like disagreements and would put agreement among shared peptides below half. They are not disagreements. They are one engine reporting a choice the other declined to make.
+
+That leaves `r n_disagree`.
 
 ```{r}
 assignments %>%
-  filter(shared, !agree) %>%
+  filter(shared, !razor_is_a_master) %>%
   select(Sequence, Master.Protein.Accessions, Leading.razor.protein,
-         Number.of.Proteins) %>%
-  head(6)
+         Number.of.Proteins)
 ```
 
-These are not obscure edge cases: they are paralogue pairs of the kind that turn up in most experiments. A quantitative difference reported for one member of such a pair may be a real difference in that protein, or it may be its partner's signal arriving under a different name because a different search engine was used.
+Both are histone peptides, one matching `r paste(assignments$Number.of.Proteins[assignments$shared & !assignments$razor_is_a_master], collapse = ' candidate proteins and the other ')` candidates, and in each case every accession named by either engine is a member of the same histone family. Here the two engines did reach incompatible answers from the same spectra. That is the shape of the problem when it is real: not scattered through the data, but concentrated in the largest families of near-identical paralogues, where the candidates are numerous enough and similar enough that any choice between them is close to arbitrary. A quantitative difference reported for one member of such a family may be a real difference in that protein, or it may be a neighbour's signal arriving under a different name because a different pipeline was used.
+
+The more common hazard is the `r n_many` peptides PD did not resolve to a single group. Those are exactly what `unique_master` removes, and they are invisible in MaxQuant output — not because MaxQuant resolved them, but because its format cannot record that they were unresolved.
 
 # When the assumption breaks completely
 
@@ -180,7 +195,7 @@ Everything above assumes the search database is a reference proteome: one entry 
 
 - The overwhelming majority of tryptic peptides map to exactly one protein, so protein inference is uncontroversial for most of the proteome and this is not a reason to distrust proteomics generally.
 - The exceptions are concentrated, not scattered. In the human proteome around `r round(100 * mean(peptide_uniqueness[['Homo sapiens']]$proteins$perc_unique < 50), 0)`% of proteins have under half their peptides to themselves, and `r format(sum(peptide_uniqueness[['Homo sapiens']]$proteins$n_unique == 0), big.mark = ',')` have none at all. In a small bacterial proteome the problem is close to absent.
-- Master and razor protein assignments are inferences, not measurements. On the `r sum(assignments$shared)` shared peptides in the dataset above, two search engines given identical spectra agreed on the protein less than half the time.
+- Master and razor protein assignments are inferences, not measurements, and the two search engines record them differently: PD names one protein per protein group and may name several, MaxQuant always names exactly one. Compared on that basis they are compatible on `r nrow(sh) - n_disagree` of the `r nrow(sh)` shared peptides above, with the `r n_disagree` genuine disagreements both falling inside a histone family.
 - Before believing a protein-level result, check whether that protein had unique peptides — `Number.of.Proteins` in a PD export, `Unique..Proteins.` in MaxQuant — and be especially careful with members of paralogue families and with any result that distinguishes between two closely related proteins.
 
 The QC vignettes for each acquisition type show where this filtering belongs in a pipeline: [TMT](TMT_PSM_QC_Summarisation.html), [LFQ-DDA](LFQ_DDA_Peptide_QC_Summarisation.html) and [LFQ-DIA](LFQ_DIA_Precursor_QC_Summarisation.html).

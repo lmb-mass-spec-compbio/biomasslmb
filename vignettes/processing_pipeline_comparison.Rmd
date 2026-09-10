@@ -1,11 +1,11 @@
 ---
-title: "Comparing search engines"
+title: "Comparing processing pipelines"
 author: "Tom Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: biomasslmb.json
 vignette: >
-  %\VignetteIndexEntry{Comparing search engines}
+  %\VignetteIndexEntry{Comparing processing pipelines}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -17,11 +17,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-The same raw files can be searched with Proteome Discoverer, MaxQuant, Spectronaut or DIA-NN, and the four will not give you the same answer. They differ in how spectra are matched, in how peptides are assigned to proteins when a peptide could have come from several, and in how intensities are extracted and normalised. Each of those differences propagates to the protein-level matrix, and from there to the fold changes and the list of significant proteins.
+The same raw files can be processed with Proteome Discoverer, MaxQuant, Spectronaut or DIA-NN, and the four will not give you the same answer. Each searches spectra with a different engine — Proteome Discoverer is not itself a search engine, but a platform that can be configured with several, and the data here were searched with CHIMERYS — then assigns peptides to proteins by different rules, and extracts and normalises intensities differently. Each of those differences propagates to the protein-level matrix, and from there to the fold changes and the list of significant proteins.
 
-This vignette runs one experiment through two pipelines — Proteome Discoverer (searched with CHIMERYS) and MaxQuant — and asks how much of the result survives the change. It is worth knowing the answer for two reasons. If you have output from more than one pipeline, you need to decide what to make of the differences. And if you have output from only one, the size of the differences here is a reasonable guide to how much of your protein list is a property of the biology and how much is a property of the software.
+This vignette runs one experiment through two of those pipelines — Proteome Discoverer and MaxQuant — and asks how much of the result survives the change. It is worth knowing the answer for two reasons. If you have output from more than one pipeline, you need to decide what to make of the differences. And if you have output from only one, the size of the differences here is a reasonable guide to how much of your protein list is a property of the biology and how much is a property of the software.
 
-**What this comparison can and cannot show.** Both example datasets are subset to a shared set of proteins, so that the vignette stays small. That makes it a fair comparison of *quantification and testing* on proteins both pipelines had the chance to see, and an unfair comparison of *identification depth*, since neither was given the chance to contribute proteins the other's subset lacks. Depth is a real difference between search engines and it is not what is measured below.
+**What this comparison can and cannot show.** Both example datasets are subset to a shared set of proteins, so that the vignette stays small. That makes it a fair comparison of *quantification and testing* on proteins both pipelines had the chance to see, and an unfair comparison of *identification depth*, since neither was given the chance to contribute proteins the other's subset lacks. Depth is a real difference between pipelines and it is not what is measured below.
 
 # Load required packages
 

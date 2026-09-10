@@ -132,7 +132,7 @@ Every `filter_features_*()` function takes `proteotypic`, which drops these rows
 
 ## The engines do not always agree
 
-These two files are the same six acquisitions searched two ways (see [comparing search engines](search_engine_comparison.html)), so for peptides identified by both we can ask directly whether they were assigned to the same protein.
+These two files are the same six acquisitions processed two ways (see [comparing processing pipelines](processing_pipeline_comparison.html)), so for peptides identified by both we can ask directly whether they were assigned to the same protein.
 
 ```{r}
 pd_peptides$Sequence <- toupper(pd_peptides$Sequence)

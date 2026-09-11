@@ -115,20 +115,40 @@ compare_protein_abundances <- qfeatures_long(
 
 ```
 
-The proteins where the methods disagree most are the informative ones to look at, so the five with the lowest between-method correlation across samples are selected.
+The proteins where the methods disagree most are the informative ones to look at, and a disagreement between three methods has three shapes: any one of them can be the odd one out while the other two agree. One protein is taken for each shape — the protein where that method departs furthest from the other two, scored as the correlation between the other two minus the better of the departing method's own two correlations.
+
+The comparison is restricted to proteins where all three methods summarise an identical set of PSMs. `robustSummary` accepts PSMs carrying missing values that `sum` and `median` never see, and where it does, a departure would be a difference in the features available to it rather than in the estimator — that is Part 2's subject, and it would confound this one.
 
 ```{r}
-proteins_of_interest <- compare_protein_abundances %>%
-    select(method, value, rowname,colname) %>%
+psms_per_protein <- function(i) {
+  split(rownames(tmt_qf[[i]]),
+        rowData(tmt_qf[[i]])$Master.Protein.Accessions)
+}
+
+sum_psms <- psms_per_protein('psms_filtered_forSum')
+robust_psms <- psms_per_protein('psms_filtered_forRobust')
+
+same_psms <- Filter(function(protein) setequal(sum_psms[[protein]], robust_psms[[protein]]),
+                    intersect(names(sum_psms), names(robust_psms)))
+
+method_agreement <- compare_protein_abundances %>%
+  filter(rowname %in% same_psms) %>%
+  select(method, value, rowname, colname) %>%
   pivot_wider(names_from = method, values_from = value) %>%
   group_by(rowname) %>%
-  summarise(cor_sum_median=cor(Sum, Median),
-            cor_sum_robust=cor(Sum, Robust)) %>%
-  pivot_longer(cols=-rowname) %>%
-  group_by(rowname) %>%
-  summarise(min_cor=min(value)) %>%
-  slice_min(min_cor, n=5) %>%
-  pull(rowname)
+  filter(!any(is.na(c(Sum, Robust, Median)))) %>%
+  summarise(sum_robust = cor(Sum, Robust),
+            sum_median = cor(Sum, Median),
+            robust_median = cor(Robust, Median)) %>%
+  mutate(Sum = robust_median - pmax(sum_robust, sum_median),
+         Robust = sum_median - pmax(sum_robust, robust_median),
+         Median = sum_robust - pmax(sum_median, robust_median))
+
+proteins_of_interest <- sapply(
+  c(Sum = 'Sum', Robust = 'Robust', Median = 'Median'),
+  function(method) method_agreement$rowname[which.max(method_agreement[[method]])])
+
+proteins_of_interest
 ```
 
 A helper plots one protein twice: its PSM-level abundances on their original scale, and the protein-level abundance from each method normalised to mean abundance, so the three methods sit on a comparable scale.
@@ -180,34 +200,85 @@ plot_pep_and_protein <- function(protein_of_interest) {
 In the peptide-level plots below, each grey line is a single PSM's abundance on its original scale. In the protein-level plots, each summarisation method's abundance profile is mean-normalised, so the methods sit on a comparable scale and can be compared directly. The important thing to focus on is the abundance profile across the tags for any one summarisation method or PSM.
 
 ```{r, plot.show='hold', out.width='45%', fig.width=7, fig.height=7, warning=FALSE, message=FALSE}
-for(poi in proteins_of_interest) {
-  plots <- plot_pep_and_protein(poi)
-  print(plots$peptide)
-  print(plots$protein)
+for(method in names(proteins_of_interest)) {
+  plots <- plot_pep_and_protein(proteins_of_interest[[method]])
+  print(plots$peptide + labs(subtitle = paste(method, 'departs')))
+  print(plots$protein + labs(subtitle = paste(method, 'departs')))
 }
 ```
 
 
-In all cases, the protein-level quantification values are relatively similar for most tags, with differences between the approaches typically restricted to one or two tags where the PSMs disagree on the relative abundances between the samples.
+Two of the three are shapes of genuine conflict: for `r proteins_of_interest[['Sum']]` and `r proteins_of_interest[['Median']]`, the departing method describes a different profile across most of the plex rather than a discrepancy at one or two tags.
 
-Since `sum` simply adds together the abundance values across the PSMs for a given tag and the abundance values may span multiple orders of magnitude, the protein-level abundance pattern across the tags is weighted towards the most abundant PSMs. This is likely to be a positive attribute, since the most abundant PSMs will be more accurately quantified. However, the summarisation is also sensitive to high abundance outliers. `robustSummary` and `median`, by contrast, are less sensitive to any single PSM, but treat all PSMs more equally regardless of abundance.
+**`robustSummary` is seldom the method that departs.** The worst case for `sum` scores `r round(max(method_agreement$Sum), 2)` on the measure above and the worst case for `median` `r round(max(method_agreement$Median), 2)`, while across the `r nrow(method_agreement)` proteins compared here the worst case for `robustSummary` reaches only `r round(max(method_agreement$Robust), 2)`. That worst case is milder than its correlations suggest: the `robustSummary` profile for `r proteins_of_interest[['Robust']]` varies across the tags with a standard deviation of `r round(sd(assay(tmt_qf[['protein_robust']])[proteins_of_interest[['Robust']], ]), 2)` against `r round(sd(assay(tmt_qf[['protein_median']])[proteins_of_interest[['Robust']], ]), 2)` for `median`, so the disagreement is between a nearly flat profile and a structured one rather than between two conflicting accounts of the protein.
 
-This is visible directly for one of the proteins above. Correlating each PSM's abundance profile across the tags against the `sum`-summarised protein profile gives a low or negative value for any PSM that disagrees with the majority.
+Since `sum` simply adds together the abundance values across the PSMs for a given tag and the abundance values may span multiple orders of magnitude, the protein-level abundance pattern across the tags is weighted towards the most abundant PSMs. This is likely to be a positive attribute, since the most abundant PSMs will be more accurately quantified. However, the summarisation is also sensitive to high abundance outliers. `robustSummary` and `median`, by contrast, ignore absolute abundance: `robustSummary` weights each PSM by how far it sits from the consensus profile, while `median` keeps only whichever PSMs fall in the middle of the range.
+
+This is visible directly for the protein where `median` departs. Correlating each PSM's abundance profile across the tags against the `sum`-summarised protein profile gives a low or negative value for any PSM that disagrees with the majority.
 
 ```{r}
-poi <- proteins_of_interest[grepl("^Q9C", proteins_of_interest)][1]
+poi <- proteins_of_interest[['Median']]
 
 rd <- rowData(tmt_qf[['psms_filtered_sn']])
 psm_mask <- rd$Master.Protein.Accessions == poi
 psm_values <- log2(assay(tmt_qf[['psms_filtered_sn']])[psm_mask, , drop = FALSE])
 sum_profile <- assay(tmt_qf[['protein']])[poi, ]
 
-sort(apply(psm_values, 1, function(x) cor(x, sum_profile, use = "complete.obs")))
+psm_cors <- apply(psm_values, 1, function(x) cor(x, sum_profile, use = "complete.obs"))
+
+sort(psm_cors)
 ```
 
-The PSM with the lowest (most negative) correlation is in the same broad abundance range as several of the other PSMs for this protein, so it isn't simply down-weighted by `sum` for being low intensity: because this method combines all PSMs, its disagreement with the majority still shows up in the summarised profile, whereas `robustSummary` and `median` are less influenced by a single disagreeing PSM.
+Colouring the same PSM traces by that correlation puts the disagreement and the abundance on one pair of axes.
 
-The median is less sensitive to outliers than the mean, but ignores much of the quantitative data since it's only affected by the 'middle' PSMs. In the most extreme instances, median just simplifies the PSM level abundances down to a single representative 'middle' PSM.
+```{r, fig.width=7, fig.height=5, warning=FALSE, message=FALSE}
+psm_cor_long <- data.frame(psm_values, check.names = FALSE) %>%
+  mutate(rowname = rownames(psm_values),
+         correlation = psm_cors[rowname]) %>%
+  pivot_longer(cols = all_of(colnames(psm_values)),
+               names_to = 'colname', values_to = 'abundance')
+
+psm_cor_long %>%
+  ggplot(aes(x = colname, y = abundance, group = rowname, colour = correlation)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 1.5) +
+  scale_colour_gradient2(low = get_cat_palette(2)[2], mid = 'grey80',
+                         high = get_cat_palette(1), midpoint = 0,
+                         limits = c(-1, 1),
+                         name = 'Correlation with\nsum profile') +
+  theme_biomasslmb(base_size = 15, border = FALSE, base_family = 'sans') +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = poi, x = '', y = 'PSM abundance (log2)')
+```
+
+**Disagreement concentrates in the faint PSMs, and the one that matters is the exception.** Agreement with the summed profile rises with abundance — Spearman `r round(cor(rowMeans(psm_values), psm_cors, method = 'spearman'), 2)` between the two here — which is what noise in the poorly quantified PSMs would look like, and it is the case for weighting by intensity, since `sum` discounts those automatically. The most strongly anticorrelated PSM is the one that breaks the pattern: it ranks `r rank(rowMeans(psm_values))[[names(which.min(psm_cors))]]` of `r nrow(psm_values)` by mean abundance and carries `r round(100 * mean(2^psm_values[names(which.min(psm_cors)), ] / colSums(2^psm_values)), 1)`% of the summed signal against the `r round(100 / nrow(psm_values), 1)`% an equal split would give it, so `sum` neither discounts it for being dim nor lets it dominate for being bright.
+
+What a PSM in that position costs each method can be measured by dropping each PSM in turn and re-summarising from the rest.
+
+```{r}
+summarise_psms <- function(ids, method) {
+  m <- 2^psm_values[ids, , drop = FALSE]
+  profile <- switch(method,
+                    Sum = log2(colSums(m)),
+                    Robust = MsCoreUtils::robustSummary(log2(m), maxit = 1000),
+                    Median = log2(matrixStats::colMedians(m)))
+  profile - mean(profile)
+}
+
+loo_cor <- sapply(c(Sum = 'Sum', Robust = 'Robust', Median = 'Median'), function(method) {
+  full <- summarise_psms(rownames(psm_values), method)
+  sapply(rownames(psm_values), function(psm)
+    cor(full, summarise_psms(setdiff(rownames(psm_values), psm), method)))
+})
+
+# the largest and second-largest effect any single PSM has on each method
+round(data.frame(worst = apply(loo_cor, 2, min),
+                 next_worst = apply(loo_cor, 2, function(x) sort(x)[2])), 3)
+```
+
+**One PSM out of `r nrow(psm_values)` decides the `median` profile, and none of them decides the other two.** No single PSM moves `sum` below a correlation of `r round(min(loo_cor[, 'Sum']), 3)` with its original profile, or `robustSummary` below `r round(min(loo_cor[, 'Robust']), 3)`. `median` survives the loss of any PSM equally well — down to `r round(sort(loo_cor[, 'Median'], decreasing = TRUE)[[nrow(psm_values) - 1]], 2)` — except one, whose removal takes it to `r round(min(loo_cor[, 'Median']), 2)`, inverting the profile. That PSM ranks `r rank(rowMeans(psm_values))[[names(which.min(loo_cor[, 'Median']))]]` of `r nrow(psm_values)` by abundance: `median` reads the middle of the range and nothing else, so whichever PSM sits there controls the result, and here that PSM disagrees with the rest. `sum` gives it only the weight its intensity earns and `robustSummary` discounts it further for sitting away from the consensus, which is why the two of them track each other at `r round(cor(sum_profile, assay(tmt_qf[['protein_robust']])[poi, ]), 2)` for this protein while `median` sits at `r round(cor(sum_profile, assay(tmt_qf[['protein_median']])[poi, ]), 2)` against `sum`.
+
+The median is less sensitive to a bright outlier than the mean, but ignores much of the quantitative data since it's only affected by the 'middle' PSMs. In the most extreme instances, median just simplifies the PSM level abundances down to a single representative 'middle' PSM. That instability is a general property of the estimator rather than a quirk of this protein, and the next section measures it across the dataset.
 
 ## Why the median is the least stable summarisation
 

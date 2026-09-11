@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/v0.1.0/DESCRIPTION)
 
 Smith T (2026). *biomasslmb: LMB Proteomics Data Analysis*. R package
 version 0.1.0, <https://lmb-mass-spec-compbio.github.io/biomasslmb/>.

@@ -1,5 +1,5 @@
 Package: biomasslmb
-Title: BioMass LMB Proteomics Data Analysis Utility Functions 
+Title: LMB Proteomics Data Analysis 
 Version: 0.1.0
 Authors@R: c(
     person(given = "Tom", family = "Smith", role = c("aut", "cre"),

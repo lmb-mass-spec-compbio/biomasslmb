@@ -2,11 +2,26 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  absolute_quantification_iBAQ: absolute_quantification_iBAQ.html
+  biomasslmb: biomasslmb.html
+  exploration_and_statistical_testing: exploration_and_statistical_testing.html
+  functional_enrichment: functional_enrichment.html
+  gotcha_contaminants_and_FDR: gotcha_contaminants_and_FDR.html
+  gotcha_peptide_to_protein: gotcha_peptide_to_protein.html
+  gotcha_technical_replicates: gotcha_technical_replicates.html
+  handling_missing_values: handling_missing_values.html
+  interactome_designs: interactome_designs.html
   LFQ_DDA_Peptide_QC_Summarisation: LFQ_DDA_Peptide_QC_Summarisation.html
-  LFQ_DIA_Peptide_QC: LFQ_DIA_Peptide_QC.html
+  LFQ_DIA_Precursor_QC_Summarisation: LFQ_DIA_Precursor_QC_Summarisation.html
+  ORA_vs_GSEA: ORA_vs_GSEA.html
+  processing_pipeline_comparison: processing_pipeline_comparison.html
+  protein_annotation: protein_annotation.html
+  PTM_site_quantification: PTM_site_quantification.html
+  qfeatures_objects: qfeatures_objects.html
+  summarisation_methods: summarisation_methods.html
+  TMT_multiplex: TMT_multiplex.html
   TMT_PSM_QC_Summarisation: TMT_PSM_QC_Summarisation.html
-  TMT_summarisation_methods: TMT_summarisation_methods.html
-last_built: 2026-08-27T10:12Z
+last_built: 2026-09-11T11:59Z
 urls:
   reference: https://lmb-mass-spec-compbio.github.io/biomasslmb/reference
   article: https://lmb-mass-spec-compbio.github.io/biomasslmb/articles

@@ -33,3 +33,23 @@ get_samples_present(obj, rowVars, rename_cols = NULL)
 ## Value
 
 `data.frame` object.
+
+## Examples
+
+``` r
+rename_cols <- c("All PSMs" = "psms_raw", "Protein" = "protein")
+
+samples_present <- get_samples_present(
+  tmt_qf, rowVars = "Master.Protein.Accessions", rename_cols = rename_cols)
+
+head(samples_present)
+#> # A tibble: 6 × 3
+#>   Master.Protein.Accessions `All PSMs` Protein
+#>   <chr>                          <int>   <int>
+#> 1 A0A286YCX6                        12      12
+#> 2 A0A5F8MQ13                        12      12
+#> 3 A2A8Z1                            12      12
+#> 4 A2AHC3                            12      12
+#> 5 A2AHL1                            12      12
+#> 6 A2AT37                            12      12
+```

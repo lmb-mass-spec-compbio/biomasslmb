@@ -3,17 +3,19 @@
 This function filters the output .txt files (peptide groups or PSMs)
 from Proteome Discoverer for DDA, based on various criteria:
 
-1.  Remove features without a master protein
+1.  Remove hits to the decoy database
 
-2.  Remove features without a unique master protein (i.e.
-    Number.of.Protein.Groups == 1)
+2.  Remove features without a master protein
 
-3.  Remove features matching a contaminant protein
+3.  Remove features which are not proteotypic (i.e. Unique..Proteins. is
+    yes)
 
-4.  Remove features matching any protein associated with a contaminant
+4.  Remove features matching a contaminant protein
+
+5.  Remove features matching any protein associated with a contaminant
     protein (see below)
 
-5.  Remove features without quantification values
+6.  Remove features without quantification values
 
 ## Usage
 
@@ -22,7 +24,8 @@ filter_features_mq_dda(
   obj,
   master_protein_col = "Leading.razor.protein",
   protein_col = "Proteins",
-  unique_master = TRUE,
+  unique_master = FALSE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   filter_associated_contaminant = TRUE,
@@ -48,7 +51,14 @@ filter_features_mq_dda(
 
 - unique_master:
 
-  `logical`. Filter out features without a unique master protein.
+  `logical`. Not available for MaxQuant output, where
+  `Leading.razor.protein` always holds a single accession, so there is
+  nothing to filter. `TRUE` raises an error pointing at `proteotypic`.
+
+- proteotypic:
+
+  `logical`. Filter out features whose peptide sequence is found in more
+  than one protein.
 
 - filter_contaminant:
 
@@ -72,6 +82,13 @@ filter_features_mq_dda(
 Returns a `SummarisedExperiment` with the filtered MaxQuant output.
 
 ## Details
+
+MaxQuant assigns every feature a single razor protein, so unlike the
+other search engines it never reports a tie between protein groups and
+there is nothing for `unique_master` to filter. The ambiguity is instead
+recorded per peptide, in `Unique..Proteins.`, and `proteotypic = TRUE`
+is the equivalent filter. See
+[`vignette("gotcha_peptide_to_protein")`](https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/gotcha_peptide_to_protein.md).
 
 **Associated contaminant proteins** are proteins which have at least one
 feature shared with a contaminant protein. It has been observed that the

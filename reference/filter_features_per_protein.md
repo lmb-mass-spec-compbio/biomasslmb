@@ -35,3 +35,15 @@ filter_features_per_protein(
 ## Value
 
 `SummarizedExperiment`
+
+## Examples
+
+``` r
+# keep only features from proteins with at least 2 features
+psms <- tmt_qf[["psms_filtered_sn"]]
+
+c(before = nrow(psms),
+  after = nrow(filter_features_per_protein(psms, min_features = 2)))
+#> before  after 
+#>   5021   4888 
+```

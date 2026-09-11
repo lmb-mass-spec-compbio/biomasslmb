@@ -5,14 +5,17 @@ various criteria:
 
 1.  Remove features without a master protein (Protein.Group column)
 
-2.  Remove features without a unique master protein
+2.  Remove features without a unique master protein, i.e. where
+    Protein.Group holds more than one accession
 
-3.  Remove features matching a contaminant protein
+3.  Remove features which are not proteotypic (i.e. Proteotypic == 1)
 
-4.  Remove features matching any protein associated with a contaminant
+4.  Remove features matching a contaminant protein
+
+5.  Remove features matching any protein associated with a contaminant
     protein (see below)
 
-5.  Remove features without quantification values
+6.  Remove features without quantification values
 
 ## Usage
 
@@ -22,6 +25,7 @@ filter_features_diann(
   master_protein_col = "Protein.Group",
   protein_col = "Protein.Ids",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   filter_associated_contaminant = TRUE,
@@ -48,7 +52,13 @@ filter_features_diann(
 
 - unique_master:
 
-  `logical`. Filter out features without a unique master protein.
+  `logical`. Filter out features where the master protein column does
+  not resolve to a single protein accession.
+
+- proteotypic:
+
+  `logical`. Filter out features whose peptide sequence is found in more
+  than one protein.
 
 - filter_contaminant:
 

@@ -45,3 +45,18 @@ center_normalise_to_ref(
 
 Returns a `SummarisedExperiment` with the assay data column
 center-median normalised
+
+## Examples
+
+``` r
+# normalise one assay using medians taken from another, as in a PTM
+# experiment where the total fraction supplies the reference
+reference_medians <- get_medians(tmt_qf[["protein"]])
+
+normalised <- center_normalise_to_ref(
+  tmt_qf[["protein"]], reference_medians, on_log_scale = TRUE)
+
+round(get_medians(normalised), 3)
+#>    M1    C6    C5    M4    C3    C1    M6    C4    M3    C2    M2    M5 
+#> 9.928 9.928 9.928 9.928 9.928 9.928 9.928 9.928 9.928 9.928 9.928 9.928 
+```

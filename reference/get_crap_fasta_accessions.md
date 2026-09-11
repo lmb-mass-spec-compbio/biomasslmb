@@ -1,6 +1,8 @@
 # Extract the contaminants protein accessions from a cRAP fasta file
 
-Extract the contaminants protein accessions from a cRAP fasta file
+Renamed to
+[`get_contaminant_fasta_accessions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_contaminant_fasta_accessions.md).
+Kept here, unchanged, for backwards compatibility.
 
 ## Usage
 

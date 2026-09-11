@@ -13,5 +13,5 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Tom Smith <tsmith@mrc-lmb.cam.ac.uk>
+**Maintainer**: Tom Smith <tsmith@mrclmb.ac.uk>
 ([ORCID](https://orcid.org/0000-0002-0697-8777))

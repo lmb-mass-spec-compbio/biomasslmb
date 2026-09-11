@@ -8,12 +8,15 @@ from Proteome Discoverer for DDA, based on various criteria:
 2.  Remove features without a unique master protein (i.e.
     Number.of.Protein.Groups == 1)
 
-3.  Remove features matching a contaminant protein
+3.  Remove features which are not proteotypic (i.e. Number.of.Proteins
+    == 1)
 
-4.  Remove features matching any protein associated with a contaminant
+4.  Remove features matching a contaminant protein
+
+5.  Remove features matching any protein associated with a contaminant
     protein (see below)
 
-5.  Remove features without quantification values
+6.  Remove features without quantification values
 
 ## Usage
 
@@ -23,6 +26,7 @@ filter_features_pd_dda(
   master_protein_col = "Master.Protein.Accessions",
   protein_col = "Protein.Accessions",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   crap_proteins = NULL,
@@ -50,7 +54,13 @@ filter_features_pd_dda(
 
 - unique_master:
 
-  `logical`. Filter out features without a unique master protein.
+  `logical`. Filter out features where the master protein column does
+  not resolve to a single protein accession.
+
+- proteotypic:
+
+  `logical`. Filter out features whose peptide sequence is found in more
+  than one protein.
 
 - filter_contaminant:
 
@@ -86,6 +96,15 @@ output.
 
 ## Details
 
+`unique_master` and `proteotypic` are different filters. `unique_master`
+asks whether Proteome Discoverer resolved the feature to a single
+protein accession, so it removes features which are ambiguous between
+protein groups. `proteotypic` asks whether the peptide sequence occurs
+in only one protein in the database, so it also removes features whose
+protein group holds several indistinguishable proteins, even where a
+master was assigned. See
+[`vignette("gotcha_peptide_to_protein")`](https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/gotcha_peptide_to_protein.md).
+
 **Associated contaminant proteins** are proteins which have at least one
 feature shared with a contaminant protein. It has been observed that the
 contaminant fasta files often do not contain all possible contaminant
@@ -104,29 +123,44 @@ Master.Protein.Accession column.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# load PD PSM-level output
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+  colData = tmt_clock_design,
+  quantCols = rownames(tmt_clock_design),
+  name = "psms_raw")
+#> Checking arguments.
+#> Loading data as a 'SummarizedExperiment' object.
+#> Formatting sample annotations (colData).
+#> Formatting data as a 'QFeatures' object.
 
-#### PSMs.txt example ####
-# load PD PSMs.txt output
-tmt_qf <- readQFeatures(assayData = psm_tmt_total,
- quantCols = 36:45,
- name = "psms_raw")
+# extract the accessions from the contaminant FASTA, in both the prefixed
+# and bare forms, since the search may not have renamed its entries
+contaminant_fasta <- system.file(
+  "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb")
 
-# extract the UniProt accessions from the contaminant FASTA headers
-contaminant_accessions <- get_crap_fasta_accessions(contaminant_fasta_inf)
+contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta)
+contaminant_accessions <- c(contaminant_accessions,
+                            sub("^Cont_", "", contaminant_accessions))
 
-# filter the PSMs
-psm2 <- filter_features_pd_dda(
-  obj = tmt_qf[['psms_raw']],
-  master_protein_col = "Master.Protein.Accessions",
-  protein_col = "Protein.Accessions",
-  unique_master = TRUE,
-  TMT = TRUE,
-  filter_contaminant = TRUE,
+# remove contaminants and PSMs without a unique master protein
+psms_filtered <- filter_features_pd_dda(
+  obj = tmt_qf[["psms_raw"]],
   contaminant_proteins = contaminant_accessions,
-  filter_associated_contaminant = TRUE
-)
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE,
+  unique_master = TRUE)
+#> Filtering data...
+#> 11281 features found from 790 master proteins => Input
+#> 762 contaminant proteins supplied
+#> 4949 proteins identified as 'contaminant associated'
+#> 9785 features found from 746 master proteins => contaminant features removed
+#> 8956 features found from 727 master proteins => associated contaminant features removed
+#> 8956 features found from 727 master proteins => PD-labelled 'Contaminants' removed
+#> 8953 features found from 726 master proteins => features without a master protein removed
+#> 8822 features found from 648 master proteins => features with non-unique master proteins removed
+#> 6312 features found from 606 master proteins => features without quantification removed
 
-
-} # }
+c(before = nrow(tmt_qf[["psms_raw"]]), after = nrow(psms_filtered))
+#> before  after 
+#>  11281   6312 
 ```

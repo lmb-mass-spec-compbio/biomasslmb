@@ -81,3 +81,17 @@ plot_protein_assays(
 ## Value
 
 `ggplot` object.
+
+## Examples
+
+``` r
+# follow one protein through every assay in a processed QFeatures object
+poi <- rownames(tmt_qf[["protein"]])[1]
+
+plot_protein_assays(tmt_qf, poi,
+  experiments_to_plot = c("psms_filtered_sn", "protein"),
+  log2transform_cols = "psms_filtered_sn")
+#> Warning: 'experiments' dropped; see 'drops()'
+#> harmonizing input:
+#>   removing 72 sampleMap rows not in names(experiments)
+```

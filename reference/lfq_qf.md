@@ -1,8 +1,9 @@
 # LFQ-DDA data
 
-Qfeature containing LFQ-DDA data processed in the
-`LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance`
-vignette
+`QFeatures` object holding the LFQ-DDA whole-proteome dataset
+(`lfq_dda_pd_PeptideGroups.txt`) processed through peptide QC, filtering
+and summarisation to protein level with `robustSummary`, as produced in
+the `LFQ-DDA workflow: peptide QC and protein summarisation` vignette.
 
 ## Usage
 

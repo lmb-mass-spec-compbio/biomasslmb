@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,17 +15,43 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/biomasslmb.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Peptide_QC.html">LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT QC PSM-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_summarisation_methods.html">TMT - comparing protein summarisation approaches</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Start here</h6></li>
+    <li><a class="dropdown-item" href="../articles/qfeatures_objects.html">Working with QFeatures objects</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/protein_annotation.html">Protein annotation: UniProt details, GO terms and topology</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT workflow: PSM QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_multiplex.html">TMT workflow: multiple plexes and bridge correction</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA workflow: peptide QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Precursor_QC_Summarisation.html">LFQ-DIA workflow: precursor QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/exploration_and_statistical_testing.html">Data exploration and statistical testing</a></li>
+    <li><a class="dropdown-item" href="../articles/functional_enrichment.html">Functional enrichment analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Specialised designs</h6></li>
+    <li><a class="dropdown-item" href="../articles/interactome_designs.html">Enrichment designs: IP, BioID and TurboID</a></li>
+    <li><a class="dropdown-item" href="../articles/PTM_site_quantification.html">PTM designs: site-level quantification and normalisation</a></li>
+    <li><a class="dropdown-item" href="../articles/absolute_quantification_iBAQ.html">Absolute quantification with iBAQ, and its limits</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Choosing between options</h6></li>
+    <li><a class="dropdown-item" href="../articles/handling_missing_values.html">Handling missing values</a></li>
+    <li><a class="dropdown-item" href="../articles/summarisation_methods.html">Choosing a summarisation method</a></li>
+    <li><a class="dropdown-item" href="../articles/processing_pipeline_comparison.html">Comparing processing pipelines</a></li>
+    <li><a class="dropdown-item" href="../articles/ORA_vs_GSEA.html">ORA or GSEA?</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Cautionary tales</h6></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_peptide_to_protein.html">Pitfall: peptides are not proteins</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_contaminants_and_FDR.html">Pitfall: contaminants and protein-level FDR</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_technical_replicates.html">Pitfall: technical replicates are not biological replicates</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/lmb-mass-spec-compbio/biomasslmb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -38,9 +64,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="protein-annotation">Protein annotation<a class="anchor" aria-label="anchor" href="#protein-annotation"></a></h2>
 
-
+      <div class="section-desc"><p>Retrieving UniProt annotations, GO terms and membrane topology for the accessions in your data. Worked through in the <a href="articles/protein_annotation.html">protein annotation</a> article.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -49,10 +75,31 @@
 
       <dl><dt>
 
-          <code><a href="add_filter_ptm_pos_rowdata_mq.html">add_filter_ptm_pos_rowdata_mq()</a></code>
+          <code><a href="get_uniprot_details.html">get_uniprot_details()</a></code>
 
         </dt>
-        <dd>Add rowData columns with positions of PTMs with respect to peptide sequence</dd>
+        <dd>Get UniProt annotation details, with UniParc fallback for retired accessions</dd>
+
+        <dt>
+
+          <code><a href="collapse_uniprot_details_multi_accession.html">collapse_uniprot_details_multi_accession()</a></code>
+
+        </dt>
+        <dd>Map per-accession UniProt details onto protein IDs with multiple accessions</dd>
+
+        <dt>
+
+          <code><a href="get_uniparc_fallback.html">get_uniparc_fallback()</a></code>
+
+        </dt>
+        <dd>Recover annotations for retired UniProtKB accessions via UniParc</dd>
+
+        <dt>
+
+          <code><a href="check_uniprot_release.html">check_uniprot_release()</a></code>
+
+        </dt>
+        <dd>Check the current UniProt release</dd>
 
         <dt>
 
@@ -63,45 +110,59 @@
 
         <dt>
 
-          <code><a href="add_independent_filtering_padj.html">add_independent_filtering_padj()</a></code>
+          <code><a href="get_go_terms.html">get_go_terms()</a></code>
 
         </dt>
-        <dd>Perform independent filtering to threshold the over-representation testing on the number of features in each category to limit the multiple testing burden</dd>
+        <dd>Obtain GO term annotations for proteins</dd>
 
         <dt>
 
-          <code><a href="add_peptide_positions.html">add_peptide_positions()</a></code>
+          <code><a href="get_all_mappings.html">get_all_mappings()</a></code>
 
         </dt>
-        <dd>Add a column describing the position of the peptide sequence with respect to the protein</dd>
+        <dd>Get all mappings for GO terms</dd>
 
         <dt>
 
-          <code><a href="add_peptide_positions_from_cleavage.html">add_peptide_positions_from_cleavage()</a></code>
+          <code><a href="get_ancestor_go.html">get_ancestor_go()</a></code>
 
         </dt>
-        <dd>Add peptide positions with respect to the protein</dd>
+        <dd>Get all ancestor GO terms</dd>
 
         <dt>
 
-          <code><a href="add_ptm_pos_rowdata_mq.html">add_ptm_pos_rowdata_mq()</a></code>
+          <code><a href="expand_terms.html">expand_terms()</a></code>
 
         </dt>
-        <dd>Add rowData columns with positions of PTMs with respect to peptide sequence</dd>
+        <dd>Expand data.frame GO terms</dd>
 
         <dt>
 
-          <code><a href="add_ptm_positions.html">add_ptm_positions()</a></code>
+          <code><a href="determine_ancestor_function.html">determine_ancestor_function()</a></code>
 
         </dt>
-        <dd>Add rowData columns with details of PTMs positions</dd>
+        <dd>Determine GO ancestor object</dd>
 
         <dt>
 
-          <code><a href="add_site_sequence.html">add_site_sequence()</a></code>
+          <code><a href="determine_offspring_function.html">determine_offspring_function()</a></code>
 
         </dt>
-        <dd>Add a column with amino acid sequence around a PTM</dd>
+        <dd>Determine GO offspring object</dd>
+
+        <dt>
+
+          <code><a href="get_protein_tm_topology.html">get_protein_tm_topology()</a></code>
+
+        </dt>
+        <dd>Obtain protein transmembrane-domains and topology information</dd>
+
+        <dt>
+
+          <code><a href="query_protein_tm_topology.html">query_protein_tm_topology()</a></code>
+
+        </dt>
+        <dd>Query UniProt to determine protein transmembrane-domains and topology</dd>
 
         <dt>
 
@@ -116,118 +177,22 @@
 
         </dt>
         <dd>Add topology details</dd>
+      </dl></div><div class="section level2">
+      <h2 id="reading-and-filtering-search-engine-output">Reading and filtering search engine output<a class="anchor" aria-label="anchor" href="#reading-and-filtering-search-engine-output"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Getting features out of Proteome Discoverer, MaxQuant, DIA-NN or Spectronaut output and removing the ones that should not be quantified. One function per search engine, plus the filters common to all of them and the helper that reports how many features and master proteins survive a step.</p></div>
 
-          <code><a href="add_tryptic_termini_flags.html">add_tryptic_termini_flags()</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Evaluate peptide termini against theoretical cleavage positions</dd>
 
-        <dt>
 
-          <code><a href="append_fasta.html">append_fasta()</a></code>
 
-        </dt>
-        <dd>Append sequences to end of a FASTA</dd>
+      <dl><dt>
 
-        <dt>
-
-          <code><a href="bb2014.html">bb2014()</a></code>
+          <code><a href="filter_features_pd_dda.html">filter_features_pd_dda()</a></code>
 
         </dt>
-        <dd>Benjamini &amp; Bogomolov (2014) selective-inference adjustment using external screening p-values (e.g., F-test p-values)</dd>
-
-        <dt>
-
-          <code><a href="center_normalise_to_ref.html">center_normalise_to_ref()</a></code>
-
-        </dt>
-        <dd>Center-median normalise the expression matrix in an MSnSet using medians from a reference dataset</dd>
-
-        <dt>
-
-          <code><a href="check_uniprot_release.html">check_uniprot_release()</a></code>
-
-        </dt>
-        <dd>Check the current UniProt release</dd>
-
-        <dt>
-
-          <code><a href="collapse_uniprot_details_multi_accession.html">collapse_uniprot_details_multi_accession()</a></code>
-
-        </dt>
-        <dd>Map per-accession UniProt details onto protein IDs with multiple accessions</dd>
-
-        <dt>
-
-          <code><a href="condition_miss_index.html">condition_miss_index()</a></code>
-
-        </dt>
-        <dd>Summarise per-feature condition missingness scores into a dataset-level index</dd>
-
-        <dt>
-
-          <code><a href="condition_miss_score.html">condition_miss_score()</a></code>
-
-        </dt>
-        <dd>Score features by how well missingness can be predicted by experimental condition</dd>
-
-        <dt>
-
-          <code><a href="create_long_form_imputed_data.html">create_long_form_imputed_data()</a></code>
-
-        </dt>
-        <dd>Create long format data with column defining if quantification value is imputed</dd>
-
-        <dt>
-
-          <code><a href="dia_qf.html">dia_qf</a></code>
-
-        </dt>
-        <dd>DIA data</dd>
-
-        <dt>
-
-          <code><a href="estimate_overrep.html">estimate_overrep()</a></code>
-
-        </dt>
-        <dd>Estimate effect size of over-representation</dd>
-
-        <dt>
-
-          <code><a href="extract_peptide_positions.html">extract_peptide_positions()</a></code>
-
-        </dt>
-        <dd>Extract Peptide Position Start and End Columns from a QFeatures Object</dd>
-
-        <dt>
-
-          <code><a href="filter_TMT_PSMs.html">filter_TMT_PSMs()</a></code>
-
-        </dt>
-        <dd>Filter a PSM-level summarizedExperiment to remove low quality PSMs</dd>
-
-        <dt>
-
-          <code><a href="filter_by_protein_fdr.html">filter_by_protein_fdr()</a></code>
-
-        </dt>
-        <dd>Filter to remove peptides from proteins failing the protein FDR threshold</dd>
-
-        <dt>
-
-          <code><a href="filter_complete_groups.html">filter_complete_groups()</a></code>
-
-        </dt>
-        <dd>Filter a QFeatures assay to samples with complete group annotations</dd>
-
-        <dt>
-
-          <code><a href="filter_features_diann.html">filter_features_diann()</a></code>
-
-        </dt>
-        <dd>Filter DIA-NN output</dd>
+        <dd>Filter Proteome Discoverer DDA output</dd>
 
         <dt>
 
@@ -238,17 +203,10 @@
 
         <dt>
 
-          <code><a href="filter_features_pd_dda.html">filter_features_pd_dda()</a></code>
+          <code><a href="filter_features_diann.html">filter_features_diann()</a></code>
 
         </dt>
-        <dd>Filter Proteome Discoverer DDA output</dd>
-
-        <dt>
-
-          <code><a href="filter_features_per_protein.html">filter_features_per_protein()</a></code>
-
-        </dt>
-        <dd>Remove features which are assigned to a protein with too few supporting features in total</dd>
+        <dd>Filter DIA-NN output</dd>
 
         <dt>
 
@@ -259,45 +217,82 @@
 
         <dt>
 
-          <code><a href="filter_maxquant_ptm.html">filter_maxquant_ptm()</a></code>
+          <code><a href="readDIANNFilterQJoin.html">readDIANNFilterQJoin()</a></code>
 
         </dt>
-        <dd>Filter PTM data from MaxQuant to retain those with a given PTM</dd>
+        <dd>Read in data from DIA-NN</dd>
 
         <dt>
 
-          <code><a href="get_ancestor_go.html">get_ancestor_go()</a></code>
+          <code><a href="filter_TMT_PSMs.html">filter_TMT_PSMs()</a></code>
 
         </dt>
-        <dd>Get all ancestor GO terms</dd>
+        <dd>Filter a PSM-level summarizedExperiment to remove low quality PSMs</dd>
 
         <dt>
 
-          <code><a href="get_cat_palette.html">get_cat_palette()</a></code>
+          <code><a href="filter_features_per_protein.html">filter_features_per_protein()</a></code>
 
         </dt>
-        <dd>Generate a colour-blind friendly palette for categorical colour encoding</dd>
+        <dd>Remove features which are assigned to a protein with too few supporting features in total</dd>
 
         <dt>
 
-          <code><a href="get_crap_fasta_accessions.html">get_crap_fasta_accessions()</a></code>
+          <code><a href="filter_complete_groups.html">filter_complete_groups()</a></code>
 
         </dt>
-        <dd>Extract the contaminants protein accessions from a cRAP fasta file</dd>
+        <dd>Filter a QFeatures assay to samples with complete group annotations</dd>
 
         <dt>
 
-          <code><a href="get_enriched_go.html">get_enriched_go()</a></code>
+          <code><a href="filter_by_protein_fdr.html">filter_by_protein_fdr()</a></code>
 
         </dt>
-        <dd>GO term enrichment using goseq</dd>
+        <dd>Filter to remove peptides from proteins failing the protein FDR threshold</dd>
 
         <dt>
 
-          <code><a href="get_go_terms.html">get_go_terms()</a></code>
+          <code><a href="remove_redundant_psm_quant.html">remove_redundant_psm_quant()</a></code>
 
         </dt>
-        <dd>Obtain GO term annotations for proteins</dd>
+        <dd>Remove redundant Peptide Spectrum Matches</dd>
+
+        <dt>
+
+          <code><a href="update_peptide_assignments.html">update_peptide_assignments()</a></code>
+
+        </dt>
+        <dd>Update PSM level protein/master protein assignments using peptide-level assignments</dd>
+
+        <dt>
+
+          <code><a href="update_average_sn.html">update_average_sn()</a></code>
+
+        </dt>
+        <dd>Adds new feature describing the average reporter Signal/Noise ratio.</dd>
+
+        <dt>
+
+          <code><a href="message_parse.html">message_parse()</a></code>
+
+        </dt>
+        <dd>Report how many features and master proteins remain</dd>
+      </dl></div><div class="section level2">
+      <h2 id="contaminants">Contaminants<a class="anchor" aria-label="anchor" href="#contaminants"></a></h2>
+
+      <div class="section-desc"><p>Building the accession lists the filtering functions match against. See <a href="articles/gotcha_contaminants_and_FDR.html">contaminants and protein FDR</a> for what each defence actually catches.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="get_contaminant_fasta_accessions.html">get_contaminant_fasta_accessions()</a></code>
+
+        </dt>
+        <dd>Extract the contaminants protein accessions from a contaminants fasta file</dd>
 
         <dt>
 
@@ -308,17 +303,33 @@
 
         <dt>
 
-          <code><a href="get_medians.html">get_medians()</a></code>
+          <code><a href="get_crap_fasta_accessions.html">get_crap_fasta_accessions()</a></code>
 
         </dt>
-        <dd>Extract the assay column medians from an MSnSet</dd>
+        <dd>Extract the contaminants protein accessions from a cRAP fasta file</dd>
 
         <dt>
 
-          <code><a href="get_n_feature_per_prot.html">get_n_feature_per_prot()</a></code>
+          <code><a href="sub_crap.html">sub_crap()</a></code>
 
         </dt>
-        <dd>Identify how many features (PSMs/Peptides) are quantified for each protein</dd>
+        <dd>Insert cRAP numbers into a character vector</dd>
+      </dl></div><div class="section level2">
+      <h2 id="summarisation-and-normalisation">Summarisation and normalisation<a class="anchor" aria-label="anchor" href="#summarisation-and-normalisation"></a></h2>
+
+      <div class="section-desc"><p>Turning features into protein-level abundance, and putting samples or plexes onto a common scale.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="maxlfq_wrapper.html">maxlfq_wrapper()</a></code>
+
+        </dt>
+        <dd>Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures</dd>
 
         <dt>
 
@@ -329,38 +340,77 @@
 
         <dt>
 
-          <code><a href="get_protein_tm_topology.html">get_protein_tm_topology()</a></code>
+          <code><a href="mask_protein_level_quant.html">mask_protein_level_quant()</a></code>
 
         </dt>
-        <dd>Obtain protein transmembrane-domains and topology information</dd>
+        <dd>Replace protein-level quantifications with NA if they derive from too few lower feature level quantifications</dd>
 
         <dt>
 
-          <code><a href="get_samples_present.html">get_samples_present()</a></code>
+          <code><a href="get_n_feature_per_prot.html">get_n_feature_per_prot()</a></code>
 
         </dt>
-        <dd>Extract the number of samples each feature was detected in for each experiment in a Qfeatures object</dd>
+        <dd>Identify how many features (PSMs/Peptides) are quantified for each protein</dd>
 
         <dt>
 
-          <code><a href="get_sequence.html">get_sequence()</a></code>
+          <code><a href="get_medians.html">get_medians()</a></code>
 
         </dt>
-        <dd>Get the amino acid sequence around a PTM</dd>
+        <dd>Extract the assay column medians from an MSnSet</dd>
 
         <dt>
 
-          <code><a href="get_uniparc_fallback.html">get_uniparc_fallback()</a></code>
+          <code><a href="center_normalise_to_ref.html">center_normalise_to_ref()</a></code>
 
         </dt>
-        <dd>Recover annotations for retired UniProtKB accessions via UniParc</dd>
+        <dd>Center-median normalise the expression matrix in an MSnSet using medians from a reference dataset</dd>
 
         <dt>
 
-          <code><a href="get_uniprot_details.html">get_uniprot_details()</a></code>
+          <code><a href="bridge_normalise.html">bridge_normalise()</a></code>
 
         </dt>
-        <dd>Get UniProt annotation details, with UniParc fallback for retired accessions</dd>
+        <dd>Put TMT plexes onto a common scale using bridge (pooled reference) channels</dd>
+      </dl></div><div class="section level2">
+      <h2 id="working-with-qfeatures-objects">Working with QFeatures objects<a class="anchor" aria-label="anchor" href="#working-with-qfeatures-objects"></a></h2>
+
+      <div class="section-desc"><p>Helpers for the object every analysis is built in. See <a href="articles/qfeatures_objects.html">working with QFeatures objects</a> for the object model and the design-table contract.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="sync_coldata.html">sync_coldata()</a></code>
+
+        </dt>
+        <dd>Copy the experimental design onto one or more assays</dd>
+      </dl></div><div class="section level2">
+      <h2 id="missing-values">Missing values<a class="anchor" aria-label="anchor" href="#missing-values"></a></h2>
+
+      <div class="section-desc"><p>Diagnosing how much missingness there is and whether it is explained by abundance or by experimental condition, and imputing where that is defensible. See <a href="articles/handling_missing_values.html">handling missing values</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="condition_miss_score.html">condition_miss_score()</a></code>
+
+        </dt>
+        <dd>Score features by how well missingness can be predicted by experimental condition</dd>
+
+        <dt>
+
+          <code><a href="condition_miss_index.html">condition_miss_index()</a></code>
+
+        </dt>
+        <dd>Summarise per-feature condition missingness scores into a dataset-level index</dd>
 
         <dt>
 
@@ -371,87 +421,24 @@
 
         <dt>
 
-          <code><a href="lfq_qf.html">lfq_qf</a></code>
+          <code><a href="restrict_imputation.html">restrict_imputation()</a></code>
 
         </dt>
-        <dd>LFQ-DDA data</dd>
+        <dd>Restrict imputed values to specific conditions</dd>
 
         <dt>
 
-          <code><a href="make_fasta.html">make_fasta()</a></code>
+          <code><a href="create_long_form_imputed_data.html">create_long_form_imputed_data()</a></code>
 
         </dt>
-        <dd>Make a FASTA using UniProt accessions</dd>
+        <dd>Create long format data with column defining if quantification value is imputed</dd>
 
         <dt>
 
-          <code><a href="make_unique_all.html">make_unique_all()</a></code>
+          <code><a href="plot_missing_upset.html">plot_missing_upset()</a></code>
 
         </dt>
-        <dd>Make Elements of a Character Vector Unique (Numbering From 1)</dd>
-
-        <dt>
-
-          <code><a href="mask_protein_level_quant.html">mask_protein_level_quant()</a></code>
-
-        </dt>
-        <dd>Replace protein-level quantifications with NA if they derive from too few lower feature level quantifications</dd>
-
-        <dt>
-
-          <code><a href="maxlfq_wrapper.html">maxlfq_wrapper()</a></code>
-
-        </dt>
-        <dd>Wrapper for iq::maxLFQ to use with QFeatures::aggregateFeatures</dd>
-
-        <dt>
-
-          <code><a href="mnar_global_score.html">mnar_global_score()</a></code>
-
-        </dt>
-        <dd>Deprecated: use global_condition_miss_score()</dd>
-
-        <dt>
-
-          <code><a href="mnar_index.html">mnar_index()</a></code>
-
-        </dt>
-        <dd>Deprecated: use condition_miss_index()</dd>
-
-        <dt>
-
-          <code><a href="mnar_score.html">mnar_score()</a></code>
-
-        </dt>
-        <dd>Deprecated: use condition_miss_score()</dd>
-
-        <dt>
-
-          <code><a href="parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code>
-
-        </dt>
-        <dd>Parse the PTM probabilities from Proteome Discoverer and add new columns with PTM information</dd>
-
-        <dt>
-
-          <code><a href="plot_cor_samples.html">plot_cor_samples()</a></code>
-
-        </dt>
-        <dd>Plot the correlation between sample</dd>
-
-        <dt>
-
-          <code><a href="plot_go.html">plot_go()</a></code>
-
-        </dt>
-        <dd>Plot selected GO terms</dd>
-
-        <dt>
-
-          <code><a href="plot_go_terms_upset.html">plot_go_terms_upset()</a></code>
-
-        </dt>
-        <dd>Plot selected GO terms</dd>
+        <dd>Plot the most common missing value patterns</dd>
 
         <dt>
 
@@ -469,17 +456,163 @@
 
         <dt>
 
-          <code><a href="plot_missing_upset.html">plot_missing_upset()</a></code>
+          <code><a href="mnar_score.html">mnar_score()</a></code>
 
         </dt>
-        <dd>Plot the most common missing value patterns</dd>
+        <dd>Deprecated: use condition_miss_score()</dd>
+
+        <dt>
+
+          <code><a href="mnar_index.html">mnar_index()</a></code>
+
+        </dt>
+        <dd>Deprecated: use condition_miss_index()</dd>
+
+        <dt>
+
+          <code><a href="mnar_global_score.html">mnar_global_score()</a></code>
+
+        </dt>
+        <dd>Deprecated: use global_condition_miss_score()</dd>
+      </dl></div><div class="section level2">
+      <h2 id="post-translational-modifications">Post-translational modifications<a class="anchor" aria-label="anchor" href="#post-translational-modifications"></a></h2>
+
+      <div class="section-desc"><p>Localising a modification to a residue, placing it within the protein and summarising to sites. Worked through in <a href="articles/PTM_site_quantification.html">PTM site quantification</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code>
+
+        </dt>
+        <dd>Parse the PTM probabilities from Proteome Discoverer and add new columns with PTM information</dd>
+
+        <dt>
+
+          <code><a href="filter_maxquant_ptm.html">filter_maxquant_ptm()</a></code>
+
+        </dt>
+        <dd>Filter PTM data from MaxQuant to retain those with a given PTM</dd>
+
+        <dt>
+
+          <code><a href="add_ptm_positions.html">add_ptm_positions()</a></code>
+
+        </dt>
+        <dd>Add rowData columns with details of PTMs positions</dd>
+
+        <dt>
+
+          <code><a href="add_ptm_pos_rowdata_mq.html">add_ptm_pos_rowdata_mq()</a></code>
+
+        </dt>
+        <dd>Add rowData columns with positions of PTMs with respect to peptide sequence</dd>
+
+        <dt>
+
+          <code><a href="add_filter_ptm_pos_rowdata_mq.html">add_filter_ptm_pos_rowdata_mq()</a></code>
+
+        </dt>
+        <dd>Add rowData columns with positions of PTMs with respect to peptide sequence</dd>
+
+        <dt>
+
+          <code><a href="add_site_sequence.html">add_site_sequence()</a></code>
+
+        </dt>
+        <dd>Add a column with amino acid sequence around a PTM</dd>
+      </dl></div><div class="section level2">
+      <h2 id="peptides-sequences-and-fasta-files">Peptides, sequences and FASTA files<a class="anchor" aria-label="anchor" href="#peptides-sequences-and-fasta-files"></a></h2>
+
+      <div class="section-desc"><p>In silico digestion, peptide positions within a protein, and retrieving or assembling sequence databases.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="make_fasta.html">make_fasta()</a></code>
+
+        </dt>
+        <dd>Make a FASTA using UniProt accessions</dd>
+
+        <dt>
+
+          <code><a href="append_fasta.html">append_fasta()</a></code>
+
+        </dt>
+        <dd>Append sequences to end of a FASTA</dd>
+
+        <dt>
+
+          <code><a href="get_sequence.html">get_sequence()</a></code>
+
+        </dt>
+        <dd>Get the amino acid sequence around a PTM</dd>
+
+        <dt>
+
+          <code><a href="add_peptide_positions.html">add_peptide_positions()</a></code>
+
+        </dt>
+        <dd>Add a column describing the position of the peptide sequence with respect to the protein</dd>
+
+        <dt>
+
+          <code><a href="add_peptide_positions_from_cleavage.html">add_peptide_positions_from_cleavage()</a></code>
+
+        </dt>
+        <dd>Add peptide positions with respect to the protein</dd>
+
+        <dt>
+
+          <code><a href="extract_peptide_positions.html">extract_peptide_positions()</a></code>
+
+        </dt>
+        <dd>Extract Peptide Position Start and End Columns from a QFeatures Object</dd>
+
+        <dt>
+
+          <code><a href="add_tryptic_termini_flags.html">add_tryptic_termini_flags()</a></code>
+
+        </dt>
+        <dd>Evaluate peptide termini against theoretical cleavage positions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="exploration-and-plotting">Exploration and plotting<a class="anchor" aria-label="anchor" href="#exploration-and-plotting"></a></h2>
+
+      <div class="section-desc"><p>Checking that an experiment worked, and displaying a result. Every function here returns a <code>ggplot</code> object, so it can be modified in the usual way.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot_quant.html">plot_quant()</a></code>
+
+        </dt>
+        <dd>Plot distributions for feature intensities per sample.</dd>
 
         <dt>
 
           <code><a href="plot_pca.html">plot_pca()</a></code>
 
         </dt>
-        <dd>Create a Principle Component plot from the feature quantification</dd>
+        <dd>Create a Principal Component plot from the feature quantification</dd>
+
+        <dt>
+
+          <code><a href="plot_cor_samples.html">plot_cor_samples()</a></code>
+
+        </dt>
+        <dd>Plot the correlation between sample</dd>
 
         <dt>
 
@@ -490,10 +623,10 @@
 
         <dt>
 
-          <code><a href="plot_quant.html">plot_quant()</a></code>
+          <code><a href="plot_volcano.html">plot_volcano()</a></code>
 
         </dt>
-        <dd>Plot distributions for feature intensities per sample.</dd>
+        <dd>Volcano plot for differential abundance testing</dd>
 
         <dt>
 
@@ -511,87 +644,17 @@
 
         <dt>
 
+          <code><a href="get_samples_present.html">get_samples_present()</a></code>
+
+        </dt>
+        <dd>Extract the number of samples each feature was detected in for each experiment in a Qfeatures object</dd>
+
+        <dt>
+
           <code><a href="plot_samples_present.html">plot_samples_present()</a></code>
 
         </dt>
         <dd>Plots the number of samples each feature was detected in for each experiment in a Qfeatures object</dd>
-
-        <dt>
-
-          <code><a href="plot_volcano.html">plot_volcano()</a></code>
-
-        </dt>
-        <dd>Volcano plot for differential abundance testing</dd>
-
-        <dt>
-
-          <code><a href="predict.tls_model.html">predict(<i>&lt;tls_model&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Predict method for tls_model</dd>
-
-        <dt>
-
-          <code><a href="psm_tmt_total.html">psm_tmt_total</a></code>
-
-        </dt>
-        <dd>PSM-level PD output for total proteome TMT10-plex data</dd>
-
-        <dt>
-
-          <code><a href="query_protein_tm_topology.html">query_protein_tm_topology()</a></code>
-
-        </dt>
-        <dd>Query UniProt to determine protein transmembrane-domains and topology</dd>
-
-        <dt>
-
-          <code><a href="readDIANNFilterQJoin.html">readDIANNFilterQJoin()</a></code>
-
-        </dt>
-        <dd>Read in data from DIA-NN</dd>
-
-        <dt>
-
-          <code><a href="remove_dots.html">remove_dots()</a></code>
-
-        </dt>
-        <dd>Remove duplicated full stops</dd>
-
-        <dt>
-
-          <code><a href="remove_redundant_go.html">remove_redundant_go()</a></code>
-
-        </dt>
-        <dd>Remove redundant GO terms</dd>
-
-        <dt>
-
-          <code><a href="remove_redundant_psm_quant.html">remove_redundant_psm_quant()</a></code>
-
-        </dt>
-        <dd>Remove redundant Peptide Spectrum Matches</dd>
-
-        <dt>
-
-          <code><a href="remove_x.html">remove_x()</a></code>
-
-        </dt>
-        <dd>Remove leading X</dd>
-
-        <dt>
-
-          <code><a href="restrict_imputation.html">restrict_imputation()</a></code>
-
-        </dt>
-        <dd>Restrict imputed values to specific conditions</dd>
-
-        <dt>
-
-          <code><a href="sub_crap.html">sub_crap()</a></code>
-
-        </dt>
-        <dd>Insert cRAP numbers into a character vector</dd>
 
         <dt>
 
@@ -602,10 +665,184 @@
 
         <dt>
 
+          <code><a href="get_cat_palette.html">get_cat_palette()</a></code>
+
+        </dt>
+        <dd>Generate a colour-blind friendly palette for categorical colour encoding</dd>
+      </dl></div><div class="section level2">
+      <h2 id="functional-enrichment">Functional enrichment<a class="anchor" aria-label="anchor" href="#functional-enrichment"></a></h2>
+
+      <div class="section-desc"><p>Over-representation testing against the proteins that were tested, with a correction for abundance bias. See <a href="articles/functional_enrichment.html">functional enrichment</a> and <a href="articles/ORA_vs_GSEA.html">ORA or GSEA?</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="get_enriched_go.html">get_enriched_go()</a></code>
+
+        </dt>
+        <dd>GO term enrichment using goseq</dd>
+
+        <dt>
+
+          <code><a href="estimate_overrep.html">estimate_overrep()</a></code>
+
+        </dt>
+        <dd>Estimate effect size of over-representation</dd>
+
+        <dt>
+
+          <code><a href="add_independent_filtering_padj.html">add_independent_filtering_padj()</a></code>
+
+        </dt>
+        <dd>Perform independent filtering to threshold the over-representation testing on the number of features in each category to limit the multiple testing burden</dd>
+
+        <dt>
+
+          <code><a href="remove_redundant_go.html">remove_redundant_go()</a></code>
+
+        </dt>
+        <dd>Remove redundant GO terms</dd>
+
+        <dt>
+
+          <code><a href="plot_go.html">plot_go()</a></code>
+
+        </dt>
+        <dd>Plot selected GO terms</dd>
+
+        <dt>
+
+          <code><a href="plot_go_terms_upset.html">plot_go_terms_upset()</a></code>
+
+        </dt>
+        <dd>Plot selected GO terms</dd>
+      </dl></div><div class="section level2">
+      <h2 id="statistics">Statistics<a class="anchor" aria-label="anchor" href="#statistics"></a></h2>
+
+      <div class="section-desc"><p>Fitting and adjustment helpers used by the articles.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
           <code><a href="tls.html">tls()</a></code>
 
         </dt>
         <dd>Total least squares regression (for use with geom_smooth)</dd>
+
+        <dt>
+
+          <code><a href="predict.tls_model.html">predict(<i>&lt;tls_model&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Predict method for tls_model</dd>
+
+        <dt>
+
+          <code><a href="bb2014.html">bb2014()</a></code>
+
+        </dt>
+        <dd>Benjamini &amp; Bogomolov (2014) selective-inference adjustment using external screening p-values (e.g., F-test p-values)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a></h2>
+
+      <div class="section-desc"><p>Search engine output and processed <code>QFeatures</code> objects used throughout the articles, so that every example can be run without your own data.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="psm_tmt_clock.html">psm_tmt_clock</a></code>
+
+        </dt>
+        <dd>PSM-level PD output for a TMT12plex Control vs Mutant experiment</dd>
+
+        <dt>
+
+          <code><a href="tmt_clock_design.html">tmt_clock_design</a></code>
+
+        </dt>
+        <dd>Experimental design for <code>psm_tmt_clock</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_2plex.html">psm_tmt_2plex</a></code>
+
+        </dt>
+        <dd>PSM-level PD output for a two-plex TMTpro 18plex experiment</dd>
+
+        <dt>
+
+          <code><a href="tmt_2plex_design.html">tmt_2plex_design</a></code>
+
+        </dt>
+        <dd>Experimental design for <code>psm_tmt_2plex</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_per2_mq.html">psm_tmt_per2_mq</a></code>
+
+        </dt>
+        <dd>PSM-level MaxQuant output for a TMT18plex IP vs control experiment</dd>
+
+        <dt>
+
+          <code><a href="tmt_per2_mq_design.html">tmt_per2_mq_design</a></code>
+
+        </dt>
+        <dd>Experimental design for <code>psm_tmt_per2_mq</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_factorial.html">psm_tmt_factorial</a></code>
+
+        </dt>
+        <dd>PSM-level MaxQuant output for a TMT18plex whole-proteome factorial experiment</dd>
+
+        <dt>
+
+          <code><a href="tmt_factorial_design.html">tmt_factorial_design</a></code>
+
+        </dt>
+        <dd>Experimental design for <code>psm_tmt_factorial</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_phospho.html">psm_tmt_phospho</a></code>
+
+        </dt>
+        <dd>PSM-level PD output for the phospho-enriched fraction of a TMTpro experiment</dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_phospho_total.html">psm_tmt_phospho_total</a></code>
+
+        </dt>
+        <dd>PSM-level PD output for the total fraction matching <code>psm_tmt_phospho</code></dd>
+
+        <dt>
+
+          <code><a href="tmt_phospho_design.html">tmt_phospho_design</a></code>
+
+        </dt>
+        <dd>Experimental design for <code>psm_tmt_phospho</code> and <code>psm_tmt_phospho_total</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_total.html">psm_tmt_total</a></code>
+
+        </dt>
+        <dd>PSM-level PD output for total proteome TMT10-plex data</dd>
 
         <dt>
 
@@ -616,19 +853,78 @@
 
         <dt>
 
-          <code><a href="update_average_sn.html">update_average_sn()</a></code>
+          <code><a href="tmt_qf_mq.html">tmt_qf_mq</a></code>
 
         </dt>
-        <dd>Adds new feature describing the average reporter Signal/Noise ratio.</dd>
+        <dd>TMT data (MaxQuant input)</dd>
 
         <dt>
 
-          <code><a href="update_peptide_assignments.html">update_peptide_assignments()</a></code>
+          <code><a href="tmt_qf_factorial.html">tmt_qf_factorial</a></code>
 
         </dt>
-        <dd>Update PSM level protein/master protein assignments using peptide-level assignments</dd>
+        <dd>Protein-level abundances for the TMT factorial experiment</dd>
+
+        <dt>
+
+          <code><a href="lfq_qf.html">lfq_qf</a></code>
+
+        </dt>
+        <dd>LFQ-DDA data</dd>
+
+        <dt>
+
+          <code><a href="lfq_qf_turboid.html">lfq_qf_turboid</a></code>
+
+        </dt>
+        <dd>LFQ-DDA TurboID pulldown data</dd>
+
+        <dt>
+
+          <code><a href="dia_qf.html">dia_qf</a></code>
+
+        </dt>
+        <dd>LFQ-DIA data</dd>
+      </dl></div><div class="section level2">
+      <h2 id="utilities">Utilities<a class="anchor" aria-label="anchor" href="#utilities"></a></h2>
+
+      <div class="section-desc"><p>Small helpers for tidying column names and identifiers.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="make_unique_all.html">make_unique_all()</a></code>
+
+        </dt>
+        <dd>Make Elements of a Character Vector Unique (Numbering From 1)</dd>
+
+        <dt>
+
+          <code><a href="remove_dots.html">remove_dots()</a></code>
+
+        </dt>
+        <dd>Remove duplicated full stops</dd>
+
+        <dt>
+
+          <code><a href="remove_x.html">remove_x()</a></code>
+
+        </dt>
+        <dd>Remove leading X</dd>
+
+        <dt>
+
+          <code><a href="qfeatures_long.html">qfeatures_long()</a></code>
+
+        </dt>
+        <dd>Compatibility wrapper for QFeatures long-format extraction</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -49,3 +49,16 @@ get_protein_no_quant_mask(
 
 `Matrix` defining whether the protein was quantified from sufficient
 features
+
+## Examples
+
+``` r
+# which protein-by-sample values rest on fewer than 2 PSMs?
+mask <- get_protein_no_quant_mask(
+  tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+
+table(retained = mask, useNA = "ifany")
+#> retained
+#> TRUE 
+#> 4824 
+```

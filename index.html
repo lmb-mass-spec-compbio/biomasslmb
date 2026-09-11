@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,14 +31,39 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/biomasslmb.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="articles/LFQ_DIA_Peptide_QC.html">LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="articles/TMT_PSM_QC_Summarisation.html">TMT QC PSM-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="articles/TMT_summarisation_methods.html">TMT - comparing protein summarisation approaches</a></li>
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Start here</h6></li>
+    <li><a class="dropdown-item" href="articles/qfeatures_objects.html">Working with QFeatures objects</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core workflow</h6></li>
+    <li><a class="dropdown-item" href="articles/protein_annotation.html">Protein annotation: UniProt details, GO terms and topology</a></li>
+    <li><a class="dropdown-item" href="articles/TMT_PSM_QC_Summarisation.html">TMT workflow: PSM QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="articles/TMT_multiplex.html">TMT workflow: multiple plexes and bridge correction</a></li>
+    <li><a class="dropdown-item" href="articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA workflow: peptide QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="articles/LFQ_DIA_Precursor_QC_Summarisation.html">LFQ-DIA workflow: precursor QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="articles/exploration_and_statistical_testing.html">Data exploration and statistical testing</a></li>
+    <li><a class="dropdown-item" href="articles/functional_enrichment.html">Functional enrichment analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Specialised designs</h6></li>
+    <li><a class="dropdown-item" href="articles/interactome_designs.html">Enrichment designs: IP, BioID and TurboID</a></li>
+    <li><a class="dropdown-item" href="articles/PTM_site_quantification.html">PTM designs: site-level quantification and normalisation</a></li>
+    <li><a class="dropdown-item" href="articles/absolute_quantification_iBAQ.html">Absolute quantification with iBAQ, and its limits</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Choosing between options</h6></li>
+    <li><a class="dropdown-item" href="articles/handling_missing_values.html">Handling missing values</a></li>
+    <li><a class="dropdown-item" href="articles/summarisation_methods.html">Choosing a summarisation method</a></li>
+    <li><a class="dropdown-item" href="articles/processing_pipeline_comparison.html">Comparing processing pipelines</a></li>
+    <li><a class="dropdown-item" href="articles/ORA_vs_GSEA.html">ORA or GSEA?</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Cautionary tales</h6></li>
+    <li><a class="dropdown-item" href="articles/gotcha_peptide_to_protein.html">Pitfall: peptides are not proteins</a></li>
+    <li><a class="dropdown-item" href="articles/gotcha_contaminants_and_FDR.html">Pitfall: contaminants and protein-level FDR</a></li>
+    <li><a class="dropdown-item" href="articles/gotcha_technical_replicates.html">Pitfall: technical replicates are not biological replicates</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -47,6 +72,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/lmb-mass-spec-compbio/biomasslmb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -59,9 +85,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><code>biomasslmb</code> is an R package which provide functions to pipe together proteomics data analysis pipelines using <a href="https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html" class="external-link"><code>QFeatures</code></a> for data generated by the <a href="https://www2.mrc-lmb.cam.ac.uk/research/scientific-facilities-and-support-services/mass-spectrometry-home/" class="external-link">Biological Mass Spectrometry and Proteomics Facility</a> at the <a href="https://www2.mrc-lmb.cam.ac.uk/" class="external-link">MRC Laboratory of Molecular Biology</a>.</p>
-<p>Alongside the general purpose functions for routine proteomics data analyses, this package also provides some more esoteric and/or opinionated functionality for bespoke proteomics data analysis.</p>
-<p>Much of the initial code is a re-working of <a href="https://github.com/CambridgeCentreForProteomics/camprotR" class="external-link"><code>camprotR</code></a> which was co-developed by Charlotte Dawson (<a href="https://github.com/csdaw" class="external-link uri">https://github.com/csdaw</a>) and myself (<a href="https://github.com/tomsmithCGAT" class="external-link uri">https://github.com/tomsmithCGAT</a>) and was designed to work with <a href="https://bioconductor.org/packages/release/bioc/html/MSnbase.html" class="external-link"><code>MSnbase</code></a>. Hence I’ve reworked the code here as a separate package to work with <code>QFeatures</code> to simplify issues with backward compatibility. Thank you to Charlotte for any of the code lifted from <code>camprotR</code> for which I had no part in writing!</p>
+<p><code>biomasslmb</code> is an R package which provides functions to pipe together proteomics data analysis pipelines using <a href="https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html" class="external-link"><code>QFeatures</code></a> for data generated by the <a href="https://www2.mrc-lmb.cam.ac.uk/research/scientific-facilities-and-support-services/mass-spectrometry-home/" class="external-link">Biological Mass Spectrometry and Proteomics Facility</a> at the <a href="https://www2.mrc-lmb.cam.ac.uk/" class="external-link">MRC Laboratory of Molecular Biology</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -70,12 +94,21 @@
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"lmb-mass-spec-compbio/biomasslmb"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p>See the vignettes for examples how to use the package. The vignettes are also available via the ‘articles’ tab <a href="https://lmb-mass-spec-compbio.github.io/biomasslmb">here</a>.</p>
+<p>The <a href="https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/biomasslmb.html">‘Get started’</a> article explains what the package assumes, which vignette applies to your experiment, and which analysis decisions are worth thinking about rather than accepting a default. From there, the vignette for your acquisition type works through a complete analysis. All of the vignettes are available via the ‘articles’ tab <a href="https://lmb-mass-spec-compbio.github.io/biomasslmb">here</a>.</p>
+<p>The initial code was a re-working of <a href="https://github.com/CambridgeCentreForProteomics/camprotR" class="external-link"><code>camprotR</code></a> which was co-developed by Charlotte Dawson (<a href="https://github.com/csdaw" class="external-link uri">https://github.com/csdaw</a>) and was designed to work with <a href="https://bioconductor.org/packages/release/bioc/html/MSnbase.html" class="external-link"><code>MSnbase</code></a>. Rather than updating <code>camprotR</code> to handle <code>QFeatures</code> whilst maintaining backwards compatibility, I reworked the code here instead. Thank you to Charlotte for any of the code lifted from <code>camprotR</code> for which I had no part in writing!</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>

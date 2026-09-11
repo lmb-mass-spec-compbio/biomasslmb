@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance • biomasslmb</title>
+<title>LFQ-DDA workflow: peptide QC and protein summarisation • biomasslmb</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="LFQ-DDA workflow: peptide QC and protein summarisation">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,14 +29,39 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../articles/biomasslmb.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Peptide_QC.html">LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT QC PSM-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_summarisation_methods.html">TMT - comparing protein summarisation approaches</a></li>
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Start here</h6></li>
+    <li><a class="dropdown-item" href="../articles/qfeatures_objects.html">Working with QFeatures objects</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/protein_annotation.html">Protein annotation: UniProt details, GO terms and topology</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT workflow: PSM QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_multiplex.html">TMT workflow: multiple plexes and bridge correction</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA workflow: peptide QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Precursor_QC_Summarisation.html">LFQ-DIA workflow: precursor QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/exploration_and_statistical_testing.html">Data exploration and statistical testing</a></li>
+    <li><a class="dropdown-item" href="../articles/functional_enrichment.html">Functional enrichment analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Specialised designs</h6></li>
+    <li><a class="dropdown-item" href="../articles/interactome_designs.html">Enrichment designs: IP, BioID and TurboID</a></li>
+    <li><a class="dropdown-item" href="../articles/PTM_site_quantification.html">PTM designs: site-level quantification and normalisation</a></li>
+    <li><a class="dropdown-item" href="../articles/absolute_quantification_iBAQ.html">Absolute quantification with iBAQ, and its limits</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Choosing between options</h6></li>
+    <li><a class="dropdown-item" href="../articles/handling_missing_values.html">Handling missing values</a></li>
+    <li><a class="dropdown-item" href="../articles/summarisation_methods.html">Choosing a summarisation method</a></li>
+    <li><a class="dropdown-item" href="../articles/processing_pipeline_comparison.html">Comparing processing pipelines</a></li>
+    <li><a class="dropdown-item" href="../articles/ORA_vs_GSEA.html">ORA or GSEA?</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Cautionary tales</h6></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_peptide_to_protein.html">Pitfall: peptides are not proteins</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_contaminants_and_FDR.html">Pitfall: contaminants and protein-level FDR</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_technical_replicates.html">Pitfall: technical replicates are not biological replicates</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -45,6 +70,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/lmb-mass-spec-compbio/biomasslmb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -58,46 +84,57 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</h1>
+      <h1>LFQ-DDA workflow: peptide QC and protein summarisation</h1>
                         <h4 data-toc-skip class="author">Tom Smith</h4>
             
-            <h4 data-toc-skip class="date">2026-08-27</h4>
+            <h4 data-toc-skip class="date">2026-09-11</h4>
       
-
+      <small class="dont-index">Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/main/vignettes/LFQ_DDA_Peptide_QC_Summarisation.Rmd" class="external-link"><code>vignettes/LFQ_DDA_Peptide_QC_Summarisation.Rmd</code></a></small>
       <div class="d-none name"><code>LFQ_DDA_Peptide_QC_Summarisation.Rmd</code></div>
     </div>
 
     
     
 <p>Label-Free Quantification (LFQ) is the simplest form of quantitative
-proteomics, in which different samples are quantified in separate MS
-runs. Quantification is either performed by Data-Dependent Aquisition
-(DDA), where the Mass Spectrometer triggers fragmentation of ions within
-a given m/z range with the aim being to focus attention of individual
-peptides separately, or Data-Independent Aquisition (DIA), where a much
-wider m/z range is used and a mix of peptides are co-fragmented and
-quantified simultaneously by deconvoluting the resultant complex
-spectra. Here, we will focus on just LFQ-DDA.</p>
+bottom-up proteomics, in which different samples are quantified in
+separate MS runs. Quantification is either performed by Data-Dependent
+Acquisition (DDA), where the Mass Spectrometer triggers fragmentation of
+ions within a given m/z range with the aim being to focus attention of
+individual peptides separately, or Data-Independent Acquisition (DIA),
+where a much wider m/z range is used and a mix of peptides are
+co-fragmented and quantified simultaneously by deconvoluting the
+resultant complex spectra. This article covers LFQ-DDA; DIA is a
+different enough problem to have its own, in <a href="LFQ_DIA_Precursor_QC_Summarisation.html">LFQ-DIA precursor
+QC</a>.</p>
 <p>Since each sample is run separately, different peptides will be
 quantified in each sample and the peptide intensities may not be
 directly comparable between samples. The common solution to the higher
-burden of missing values is to use the ‘match-between-runs’ (Cox et
-al. 2014[UPDATE REF!!!]), or the functionally equivalent ‘Minora’
-algorithm employed by Proteome Discoverer (PD). These algorithms use the
-observed retention times of MS1 ions which were successfully spectrum
-matched in one sample to identify the likely peptide sequence of MS1
-ions that could not be spectrum matched in another sample. However, even
-with these algorithms, DDA LFQ will still typically have many more
-missing values than labelled LFQ, e.g TMT.</p>
-<p>Despite the pitfalls of LFQ, the data analysis is still relatively
-straightforward, though there are steps that need some careful
-consideration and quality control assessment.</p>
+burden of missing values is to use the ‘match-between-runs’ <span class="citation">(Cox et al. 2014)</span>, or the functionally
+equivalent ‘Minora’ algorithm employed by Proteome Discoverer (PD).
+These algorithms use the observed retention times of MS1 ions which were
+successfully spectrum matched in one sample to identify the likely
+peptide sequence of MS1 ions that could not be spectrum matched in
+another sample. However, even with these algorithms enabled, DDA LFQ
+will still typically have many more missing values than labelled
+proteomics, e.g TMT.</p>
+<p>The analysis is straightforward in outline. Three of its steps carry
+most of the risk — normalisation, the missing value threshold, and the
+protein inference that summarisation rests on — and each is flagged
+where it arrives below.</p>
+<p>This vignette works through one typical experiment from end to end: a
+whole-proteome comparison between two conditions, three replicates each.
+That is the common case, and the choices made below are the conventional
+ones for it. An enrichment experiment — an IP, BioID or TurboID pulldown
+— needs different reasoning about normalisation and about missing
+values, and is covered in <a href="interactome_designs.html">enrichment
+designs</a>.</p>
+<p>If this is your first analysis with the package, <a href="biomasslmb.html">getting started</a> explains which route applies
+to your experiment and shows a complete one in forty lines, and <a href="qfeatures_objects.html">working with QFeatures objects</a> covers
+the object every step below operates on. Annotations are worth
+retrieving before any of this — see <a href="protein_annotation.html">protein annotation</a>.</p>
 <div class="section level2">
 <h2 id="load-required-packages">Load required packages<a class="anchor" aria-label="anchor" href="#load-required-packages"></a>
 </h2>
-<p>To clarify which functionality is provided by which package, we will
-use <code>package::function</code>. For your own code, there is no need
-to specify the package unless you want to maintain this clarity.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rformassspectrometry.github.io/QFeatures" class="external-link">QFeatures</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lmb-mass-spec-compbio.github.io/biomasslmb/">biomasslmb</a></span><span class="op">)</span></span>
@@ -106,370 +143,413 @@ to specify the package unless you want to maintain this clarity.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="the-experimental-design">The experimental design<a class="anchor" aria-label="anchor" href="#the-experimental-design"></a>
+</h2>
+<p><code>lfq_dda_pd_PeptideGroups.txt</code> is a file available from
+the <code>biomasslmb</code> package containing the peptide-level output
+from Proteome Discoverer (PD) for a real DDA LFQ experiment: a
+whole-proteome comparison between a wild type human cell line and a
+point mutant of the same line, 3 replicates each. It is truncated to a
+subset of proteins for a manageable vignette.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pep_inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>, <span class="st">"lfq_dda_pd_PeptideGroups.txt"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"biomasslmb"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="defining-the-contaminant-proteins">Defining the contaminant proteins<a class="anchor" aria-label="anchor" href="#defining-the-contaminant-proteins"></a>
 </h2>
-<p>We need to remove contaminant proteins. These were defined here using
-the cRAP database. Below, we parse the contaminants fasta to extract the
-IDs for the proteins in both ‘cRAP’ format and Uniprot IDs.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p>Contaminant proteins have to be removed. This search was performed
+against the ‘0602_Universal Contaminants’ database <span class="citation">(Frankenfield et al. 2022)</span>, so parsing that same
+fasta gives the accessions to match against.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="va">crap_fasta_inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"extdata"</span>, <span class="st">"cRAP_20190401.fasta.gz"</span>, </span>
+<span><span class="va">contaminant_fasta_inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>, <span class="st">"0602_Universal_Contaminants.fasta.gz"</span>,</span>
 <span>  package <span class="op">=</span> <span class="st">"biomasslmb"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Extract the protein IDs associated with each cRAP protein</span></span>
-<span><span class="va">crap_accessions</span> <span class="op">&lt;-</span> <span class="fu">biomasslmb</span><span class="fu">::</span><span class="fu"><a href="../reference/get_crap_fasta_accessions.html">get_crap_fasta_accessions</a></span><span class="op">(</span><span class="va">crap_fasta_inf</span><span class="op">)</span></span>
+<span><span class="co"># Extract the protein IDs associated with each contaminant protein</span></span>
+<span><span class="va">contaminant_accessions</span> <span class="op">&lt;-</span> <span class="fu">biomasslmb</span><span class="fu">::</span><span class="fu"><a href="../reference/get_contaminant_fasta_accessions.html">get_contaminant_fasta_accessions</a></span><span class="op">(</span><span class="va">contaminant_fasta_inf</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">crap_accessions</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "cRAP001" "P00330"  "cRAP002" "P02768"  "cRAP003" "P00883"</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">contaminant_accessions</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Cont_P00722" "Cont_P09870" "Cont_P30879" "Cont_P0C1U8" "Cont_Q2FZL2"</span></span>
+<span><span class="co">#&gt; [6] "Cont_P00698"</span></span></code></pre></div>
+<p>This PD export also includes PD’s own <code>Contaminant</code>
+column, populated from the same search against the ‘0602_Universal
+Contaminants’ database. <code>filter_features_pd_dda</code> uses this
+column automatically, in addition to the
+<code>contaminant_accessions</code> extracted above.</p>
+<p>These are separate defences that do not always agree with one
+another, and when one of them silently fails the filtering still appears
+to work. <a href="gotcha_contaminants_and_FDR.html">Contaminants and
+protein FDR</a> measures what each one catches and what a mismatch
+between the accession list and the search database leaves behind.</p>
 </div>
 <div class="section level2">
 <h2 id="read-in-input-data">Read in input data<a class="anchor" aria-label="anchor" href="#read-in-input-data"></a>
 </h2>
-<p>We start by reading in quantitative proteomics data into a
-<code>QFeatures</code> object, which is the standard Bioconductor object
-for holding quantitative proteomics data. See <a href="https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html" class="external-link">here</a>
-for documentation about the <code>QFeatures</code> object.In this case,
-we are not adding any experimental details to the <code>QFeatures</code>
-object, so the <code>ColData</code> will be empty.</p>
-<p><code>??</code> is a data set available from the
-<code>biomasslmb</code> package</p>
-<p><code>lfq_dda_pd_PeptideGroups.txt</code> is a file available from
-the <code>biomasslmb</code> package containing the Peptide-level output
-from Proteome Discoverer (PD) for an experiment with 6 samples. It is a
-truncated file containing the precursors peptides quantification for
-just 500 proteins.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pep_inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>  <span class="st">"extdata"</span>, <span class="st">"lfq_dda_pd_PeptideGroups.txt"</span>, </span>
-<span>  package <span class="op">=</span> <span class="st">"biomasslmb"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>Inspecting the column names for the abundances, we see the names are
-not particularly useful. The <code>Abundance.FXX.na.Sample.</code> part
-is irrelevant and the replicate number is not included</p>
+<p>The data go into a <code>QFeatures</code> object, the standard
+Bioconductor container for quantitative proteomics data. See <a href="https://www.bioconductor.org/packages/release/bioc/html/QFeatures.html" class="external-link">here</a>
+for documentation about the <code>QFeatures</code> object.</p>
+<p>The abundance column names are not useful as they stand — they carry
+the PD file ID (<code>F7</code>, <code>F8</code>, …) rather than which
+sample is which.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">infdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="va">pep_inf</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">abundance_cols_ix</span> <span class="op">&lt;-</span><span class="fl">18</span><span class="op">:</span><span class="fl">23</span></span>
+<span><span class="va">abundance_cols_ix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">'^Abundance'</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span></span>
-<span><span class="co">#&gt; [1] "Abundance.F12.na.Sample.A" "Abundance.F13.na.Sample.A"</span></span>
-<span><span class="co">#&gt; [3] "Abundance.F14.na.Sample.A" "Abundance.F15.na.Sample.B"</span></span>
-<span><span class="co">#&gt; [5] "Abundance.F16.na.Sample.B" "Abundance.F17.na.Sample.B"</span></span></code></pre></div>
-<p>Below, we update the column names for the abundance columns</p>
+<span><span class="co">#&gt; [1] "Abundance.F7.Sample"  "Abundance.F8.Sample"  "Abundance.F9.Sample" </span></span>
+<span><span class="co">#&gt; [4] "Abundance.F10.Sample" "Abundance.F11.Sample" "Abundance.F12.Sample"</span></span></code></pre></div>
+<p>Which file ID corresponds to which sample comes from the design table
+supplied with the experiment, so that is built first. The three wild
+type replicates were acquired before the three mutant replicates.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Clean up sample names</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">'Abundance.F\\d+.na.Sample.'</span>, <span class="st">''</span>,</span>
-<span>                                        <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times<span class="op">=</span><span class="fl">2</span><span class="op">)</span>, sep<span class="op">=</span><span class="st">'_'</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">exp_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  quantCols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span>,</span>
+<span>  Condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'WT'</span>, <span class="st">'Mutant'</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  Replicate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span></span>
-<span><span class="co">#&gt; [1] "A_1" "A_2" "A_3" "B_1" "B_2" "B_3"</span></span></code></pre></div>
-<p>Before we read in the data, we also want to define the experimental
-conditions for each sample. We can then provide the</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">exp_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>quantCols<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/separate.html" class="external-link">separate</a></span><span class="op">(</span><span class="va">quantCols</span>, sep<span class="op">=</span><span class="st">'_'</span>, into<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'condition'</span>, <span class="st">'replicate'</span><span class="op">)</span>, remove <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> </span>
+<span><span class="va">exp_design</span><span class="op">$</span><span class="va">Sample</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">exp_design</span><span class="op">$</span><span class="va">Condition</span>, <span class="va">exp_design</span><span class="op">$</span><span class="va">Replicate</span>, sep <span class="op">=</span> <span class="st">'_'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">exp_design</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">quantCols</th>
-<th align="left">condition</th>
-<th align="left">replicate</th>
+<th align="left">Condition</th>
+<th align="right">Replicate</th>
+<th align="left">Sample</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">A_1</td>
-<td align="left">A</td>
-<td align="left">1</td>
+<td align="left">Abundance.F7.Sample</td>
+<td align="left">WT</td>
+<td align="right">1</td>
+<td align="left">WT_1</td>
 </tr>
 <tr class="even">
-<td align="left">A_2</td>
-<td align="left">A</td>
-<td align="left">2</td>
+<td align="left">Abundance.F8.Sample</td>
+<td align="left">WT</td>
+<td align="right">2</td>
+<td align="left">WT_2</td>
 </tr>
 <tr class="odd">
-<td align="left">A_3</td>
-<td align="left">A</td>
-<td align="left">3</td>
+<td align="left">Abundance.F9.Sample</td>
+<td align="left">WT</td>
+<td align="right">3</td>
+<td align="left">WT_3</td>
 </tr>
 <tr class="even">
-<td align="left">B_1</td>
-<td align="left">B</td>
-<td align="left">1</td>
+<td align="left">Abundance.F10.Sample</td>
+<td align="left">Mutant</td>
+<td align="right">1</td>
+<td align="left">Mutant_1</td>
 </tr>
 <tr class="odd">
-<td align="left">B_2</td>
-<td align="left">B</td>
-<td align="left">2</td>
+<td align="left">Abundance.F11.Sample</td>
+<td align="left">Mutant</td>
+<td align="right">2</td>
+<td align="left">Mutant_2</td>
 </tr>
 <tr class="even">
-<td align="left">B_3</td>
-<td align="left">B</td>
-<td align="left">3</td>
+<td align="left">Abundance.F12.Sample</td>
+<td align="left">Mutant</td>
+<td align="right">3</td>
+<td align="left">Mutant_3</td>
 </tr>
 </tbody>
 </table>
-<p>Now we can read the data into a <code>QFeatures</code> object</p>
+<p>Relabelling the abundance columns with the sample names means
+everything downstream refers to samples rather than file IDs.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">exp_design</span><span class="op">$</span><span class="va">Sample</span></span>
+<span><span class="va">exp_design</span><span class="op">$</span><span class="va">quantCols</span> <span class="op">&lt;-</span> <span class="va">exp_design</span><span class="op">$</span><span class="va">Sample</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">infdf</span><span class="op">)</span><span class="op">[</span><span class="va">abundance_cols_ix</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "WT_1"     "WT_2"     "WT_3"     "Mutant_1" "Mutant_2" "Mutant_3"</span></span></code></pre></div>
+<p>The data can now be read in.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Read in PSM-level quantification from TMT experiment (using QFeatures function)</span></span>
+<code class="sourceCode R"><span><span class="co"># Read in peptide-level quantification from the DDA LFQ experiment (using QFeatures function)</span></span>
 <span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html" class="external-link">readQFeatures</a></span><span class="op">(</span>assayData <span class="op">=</span> <span class="va">infdf</span>,</span>
-<span>                        quantCols <span class="op">=</span> <span class="va">abundance_cols_ix</span>, </span>
+<span>                        quantCols <span class="op">=</span> <span class="va">abundance_cols_ix</span>,</span>
 <span>                        colData <span class="op">=</span> <span class="va">exp_design</span>,</span>
 <span>                        name <span class="op">=</span> <span class="st">"peptides_raw"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Checking arguments.</span></span>
 <span><span class="co">#&gt; Loading data as a 'SummarizedExperiment' object.</span></span>
 <span><span class="co">#&gt; Formatting sample annotations (colData).</span></span>
 <span><span class="co">#&gt; Formatting data as a 'QFeatures' object.</span></span></code></pre></div>
-<p>Adding the <code>colData</code> to the peptide-level data too.</p>
+<p><code><a href="https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html" class="external-link">readQFeatures()</a></code> attaches the design at the object level
+only, so <code><a href="../reference/sync_coldata.html">sync_coldata()</a></code> copies it onto the assay as well,
+which is what the plotting and modelling functions read. See <a href="qfeatures_objects.html">working with QFeatures objects</a>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">colData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">colData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">)</span></span></code></pre></div>
-<p>Extract the gene name and long-form protein name from the
-descriptions.</p>
+<code class="sourceCode R"><span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="st">'peptides_raw'</span><span class="op">)</span></span></code></pre></div>
+<p>The retention time (RT) distribution is worth assessing before
+anything is filtered, because a chromatography problem is cheaper to
+find now than after summarisation. <code>plot_rt_dist</code> defaults to
+the column name Proteome Discoverer uses for a Sequest HT search; this
+search was run with CHIMERYS, so the column is named explicitly.</p>
+<p><strong>The peptide count holds up across most of the
+gradient</strong>, tailing off over the last 20 minutes, which is what
+an even elution looks like. A large early or late spike, or a gap in the
+middle, would point at a chromatography problem worth resolving before
+going further.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">tmt_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_gene_long_protein_name_pd.html">add_gene_long_protein_name_pd</a></span><span class="op">(</span><span class="va">tmt_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p>It’s helpful to assess the retention time (RT) for the peptides and
-the relationship with the delta mass for the precursor ion. Everything
-looks OK here.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_rt_dist.html">plot_rt_dist</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_rt_vs_delta.html">plot_rt_vs_delta</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="50%"><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-10-2.png" class="r-plt" alt="" width="50%"></p>
+<code class="sourceCode R"><span><span class="va">rt_col</span> <span class="op">&lt;-</span> <span class="st">'PSM.RT.in.min.by.Search.Engine.CHIMERYS'</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plot_rt_dist.html">plot_rt_dist</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span>, rt_col <span class="op">=</span> <span class="va">rt_col</span><span class="op">)</span></span></code></pre></div>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="60%"></p>
+<p>The companion check, <code>plot_rt_vs_delta</code>, plots the
+precursor mass error against RT and would reveal a mass calibration that
+drifts across the run. It needs a reported mass error to work with, and
+this export gives a delta of exactly zero for every peptide, so there is
+nothing to plot here. A Sequest HT export reports the measured error and
+the check is worth making.</p>
 </div>
 <div class="section level2">
 <h2 id="filter-peptides">Filter peptides<a class="anchor" aria-label="anchor" href="#filter-peptides"></a>
 </h2>
-<p>We first perform routine filtering to remove PSMs that:</p>
+<p>Routine filtering removes peptides that:</p>
 <ul>
-<li>Could originate from contaminants. See <code>?filter_features</code>
-for further details, including the removal of ‘associated cRAP’.</li>
-<li>Don’t have a unique master protein</li>
+<li>Could originate from contaminants. See
+<code><a href="../reference/filter_features_pd_dda.html">?filter_features_pd_dda</a></code> for further details, including the
+removal of ‘associated’ contaminants.</li>
 <li>Don’t have any quantification values</li>
 </ul>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p><code>unique_master = FALSE</code> keeps the peptides whose master
+protein is a group of several accessions, such as
+<code>Q16875; P16118</code> — 318 of the 3544 peptides here, in 162
+distinct groups. Each group summarises to its own protein row later in
+this vignette, separate from the rows for its individual members;
+<code>unique_master = TRUE</code> drops those peptides instead. The
+<code>proteotypic</code> argument asks a different question — whether
+the peptide sequence occurs in only one protein at all — and is likewise
+not applied here. See <a href="gotcha_peptide_to_protein.html">peptides
+are not proteins</a>.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Perform routine raw data filtering.</span></span>
-<span><span class="co"># - Remove PSMs from contaminant proteins</span></span>
-<span><span class="co"># - Remove PSMs where protein ID is empty or not unique</span></span>
+<span><span class="co"># - Remove peptides from contaminant proteins</span></span>
+<span><span class="co"># - Remove peptides with no master protein</span></span>
 <span></span>
 <span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_features_pd_dda.html">filter_features_pd_dda</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>                                                        protein_col<span class="op">=</span><span class="st">'Master.Protein.Accessions'</span>, <span class="co"># UPDATE WHEN RE-EXPORTED</span></span>
-<span>                                                 contaminant_proteins<span class="op">=</span><span class="va">crap_accessions</span>,</span>
-<span>                                                 filter_contaminant <span class="op">=</span><span class="cn">TRUE</span>,</span>
+<span>                                                 contaminant_proteins<span class="op">=</span><span class="va">contaminant_accessions</span>,</span>
+<span>                                                 filter_contaminant<span class="op">=</span><span class="cn">TRUE</span>,</span>
 <span>                                                 filter_associated_contaminant<span class="op">=</span><span class="cn">TRUE</span>,</span>
 <span>                                                 unique_master<span class="op">=</span><span class="cn">FALSE</span>,</span>
 <span>                                                 remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Filtering data...</span></span>
-<span><span class="co">#&gt; 3106 features found from 500 master proteins =&gt; Input</span></span>
-<span><span class="co">#&gt; 242 contaminant proteins supplied</span></span>
-<span><span class="co">#&gt; 15 proteins identified as 'contaminant associated'</span></span>
-<span><span class="co">#&gt; 3091 features found from 498 master proteins =&gt; contaminant features removed</span></span>
-<span><span class="co">#&gt; 3091 features found from 498 master proteins =&gt; associated contaminant features removed</span></span>
-<span><span class="co">#&gt; 3091 features found from 498 master proteins =&gt; features without a master protein removed</span></span>
-<span><span class="co">#&gt; 2746 features found from 461 master proteins =&gt; features without quantification removed</span></span></code></pre></div>
-<p>We will also remove peptides that are not rank 1 according to the
-search engine</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 3544 features found from 670 master proteins =&gt; Input</span></span>
+<span><span class="co">#&gt; 381 contaminant proteins supplied</span></span>
+<span><span class="co">#&gt; 743 proteins identified as 'contaminant associated'</span></span>
+<span><span class="co">#&gt; 3389 features found from 609 master proteins =&gt; contaminant features removed</span></span>
+<span><span class="co">#&gt; 3375 features found from 599 master proteins =&gt; associated contaminant features removed</span></span>
+<span><span class="co">#&gt; 3375 features found from 599 master proteins =&gt; PD-labelled 'Contaminants' removed</span></span>
+<span><span class="co">#&gt; 3375 features found from 599 master proteins =&gt; features without a master protein removed</span></span>
+<span><span class="co">#&gt; 2325 features found from 402 master proteins =&gt; features without quantification removed</span></span>
+<span></span>
+<span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="st">'peptides_filtered'</span><span class="op">)</span></span></code></pre></div>
+<p>Peptides that are not rank 1 according to the search engine are
+removed next. Every peptide in this export is rank 1, so nothing goes at
+this step — but it belongs in the pipeline, because an export that
+reports lower-ranked matches will contain some.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="va">lfq_qf</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/filterFeatures.html" class="external-link">filterFeatures</a></span><span class="op">(</span><span class="op">~</span> <span class="va">Search.Engine.Rank.by.Search.Engine.Sequest.HT</span> <span class="op">==</span> <span class="fl">1</span>,</span>
-<span>               i <span class="op">=</span> <span class="st">"peptides_filtered"</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; 'Search.Engine.Rank.by.Search.Engine.Sequest.HT' found in 2 out of 2 assay(s).</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/filterFeatures.html" class="external-link">filterFeatures</a></span><span class="op">(</span><span class="op">~</span> <span class="va">PSM.Search.Engine.Rank.by.Search.Engine.CHIMERYS</span> <span class="op">==</span> <span class="fl">1</span>,</span>
+<span>               i <span class="op">=</span> <span class="st">"peptides_filtered"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 'PSM.Search.Engine.Rank.by.Search.Engine.CHIMERYS' found in 2 out of 2 assay(s).</span></span>
 <span></span>
-<span><span class="fu">biomasslmb</span><span class="fu">:::</span><span class="fu">message_parse</span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span><span class="fu"><a href="../reference/message_parse.html">message_parse</a></span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>                           <span class="st">'Master.Protein.Accessions'</span>,</span>
 <span>                           <span class="st">"Removing peptides that are not rank 1"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 2741 features found from 461 master proteins =&gt; Removing peptides that are not rank 1</span></span></code></pre></div>
-<p>For the normalisation and summarisation, we need our quantification
-values to be on a log-scale, so we log-transform below</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 2325 features found from 402 master proteins =&gt; Removing peptides that are not rank 1</span></span></code></pre></div>
+<p>Summarisation needs the quantification values on a log scale, so they
+are transformed here.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-processing.html" class="external-link">logTransform</a></span><span class="op">(</span></span>
 <span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span>, base<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p>Next, we plot the peptide intensities.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<p>The peptide intensity distributions, coloured by
+<code>Condition</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Plot the peptide-level quantification distributions per sample</span></span>
 <span><span class="fu"><a href="../reference/plot_quant.html">plot_quant</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span>, log2transform<span class="op">=</span><span class="cn">FALSE</span>, method<span class="op">=</span><span class="st">'density'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_colour_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_cat_palette.html">get_cat_palette</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>, each<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_linetype_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/theme_biomasslmb.html">theme_biomasslmb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>colour<span class="op">=</span><span class="va">Condition</span>, group<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">'Peptide abundance (log2)'</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="50%"></p>
 <div class="section level3">
 <h3 id="normalise">Normalise<a class="anchor" aria-label="anchor" href="#normalise"></a>
 </h3>
-<p>Since the same amount of sample was injected for each sample, we want
-to normalise to remove differences in the overall disribution of
-abundances. We will thus perform ‘diff.median’ normalisation with
-<code><a href="https://rdrr.io/pkg/BiocGenerics/man/normalize.html" class="external-link">QFeatures::normalize</a></code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_norm'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/normalize.html" class="external-link">normalize</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>                                                  method<span class="op">=</span><span class="st">'diff.median'</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Plot the peptide-level quantification distributions per sample</span></span>
-<span><span class="fu"><a href="../reference/plot_quant.html">plot_quant</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_norm'</span><span class="op">]</span><span class="op">]</span>, log2transform<span class="op">=</span><span class="cn">FALSE</span>, method<span class="op">=</span><span class="st">'density'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_colour_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_cat_palette.html">get_cat_palette</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>, each<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_linetype_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<p>The same amount of material was injected for every sample, and this
+is a whole-proteome comparison in which most proteins are expected to be
+unchanged between the two conditions, so any systematic offset between
+the distributions above is technical rather than biological.
+<code>diff.median</code> normalisation shifts each sample to a common
+median and removes it.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_norm'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/normalize.html" class="external-link">normalize</a></span><span class="op">(</span></span>
+<span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span>, method <span class="op">=</span> <span class="st">'diff.median'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="st">'peptides_filtered_norm'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plot_quant.html">plot_quant</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_norm'</span><span class="op">]</span><span class="op">]</span>, log2transform<span class="op">=</span><span class="cn">FALSE</span>, method<span class="op">=</span><span class="st">'density'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/theme_biomasslmb.html">theme_biomasslmb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>colour<span class="op">=</span><span class="va">Condition</span>, group<span class="op">=</span><span class="va">sample</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">'Peptide abundance (log2)'</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="50%"></p>
+<p>That assumption is what makes this step safe, and it is worth stating
+explicitly because it is not always true: an <a href="interactome_designs.html">enrichment design</a> expects the
+conditions to differ in overall composition, and normalising to a common
+median there erodes the signal being measured.</p>
 </div>
 <div class="section level3">
 <h3 id="summarising-to-protein-level-abundances">Summarising to protein-level abundances<a class="anchor" aria-label="anchor" href="#summarising-to-protein-level-abundances"></a>
 </h3>
-<p>For the summarisation to protein, we will use
-<code>robustSummary</code>. We do not need to remove peptides with any
-missing values. However, we still don’t want to retain peptides with too
-many missing values, since these will not be very informative in
-estimating the protein-level quantification.</p>
-<p>Below, we inspect the most common patterns for the missing
-values.</p>
-<p>The missingness is most frequently consigned to all samples from one
-condition and also commonly 2/3 replicates from one condition. It looks
-like the missingness is far from missing at random (MAR) and is likely
-missing due to falling below detection limits.</p>
+<p>Summarisation takes the master protein assignment at face value:
+every peptide contributes to exactly one protein, the one the search
+engine assigned it to. That assignment is an inference rather than a
+measurement, and for proteins whose peptides are largely shared with
+their homologues it is not a reliable one. <a href="gotcha_peptide_to_protein.html">Peptides are not proteins</a>
+covers how the assignment is made and how to tell which of your proteins
+it can support.</p>
+<p>Before deciding how to handle missing values, it’s worth checking how
+much missingness there is, and whether it’s structured by
+<code>Condition</code>. <code>condition_miss_score</code> fits, for each
+peptide, a logistic regression of missingness against
+<code>Condition</code>, and returns Tjur’s R² as a per-feature score:
+values near 1 mean a peptide’s missingness pattern is well explained by
+<code>Condition</code>. <code>condition_miss_index</code> aggregates
+these into a single dataset-level value between 0 and 1.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">miss_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/condition_miss_score.html">condition_miss_score</a></span><span class="op">(</span><span class="va">lfq_qf</span>, i <span class="op">=</span> <span class="st">'peptides_filtered_norm'</span>, group_cols <span class="op">=</span> <span class="st">'Condition'</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Analysing assay 'peptides_filtered_norm': 2325 features x 6 samples</span></span>
+<span><span class="co">#&gt; Group variable: Condition (2 levels: Mutant, WT)</span></span>
+<span><span class="co">#&gt; Results: 787 informative features | mean condition miss score = 0.281 | condition-structured: 2.1% | condition-independent: 22.8%</span></span>
+<span><span class="fu"><a href="../reference/condition_miss_index.html">condition_miss_index</a></span><span class="op">(</span><span class="va">miss_res</span><span class="op">$</span><span class="va">summary</span><span class="op">)</span><span class="op">$</span><span class="va">index</span></span>
+<span><span class="co">#&gt; Condition missingness index: 0.1048 | Weighted mean score: 0.3095 | Coverage: 33.8% (787 / 2325 features informative) [coverage penalty applied]</span></span>
+<span><span class="co">#&gt; [1] 0.1047774</span></span></code></pre></div>
+<p><strong>Missing values are common, but they are not structured by
+condition.</strong> 787 of the 2325 peptides have at least one, and yet
+the index is low. That is the expected picture for a whole-proteome
+comparison: a peptide near the limit of detection drops out of whichever
+runs happened to miss it, rather than out of one condition specifically.
+<code>plot_missing_upset</code> shows the most common patterns.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_missing_upset.html">plot_missing_upset</a></span><span class="op">(</span><span class="va">lfq_qf</span>, i<span class="op">=</span><span class="st">'peptides_filtered_norm'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="768"></p>
+<p>Unstructured or not, there are far too many missing values to discard
+every peptide that has one, which is the usual state of affairs for DDA
+LFQ. That rules out summing, which needs complete features, and makes
+<code><a href="https://rdrr.io/pkg/MsCoreUtils/man/robustSummary.html" class="external-link">MsCoreUtils::robustSummary</a></code> the appropriate estimator: it
+summarises accurately without requiring complete data <span class="citation">(Sticker et al. 2020)</span>. Peptides missing in
+almost every sample still contribute little beyond noise, so a threshold
+is applied first — at most 4/6 missing values here. Set it tighter and
+more of the proteome falls below the two-peptide rule imposed next; set
+it looser and protein estimates rest on peptides measured twice. <a href="summarisation_methods.html">Comparing protein summarisation
+approaches</a> puts <code>sum</code> and <code>robustSummary</code> side
+by side on this same dataset.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_missing_upset.html">plot_missing_upset</a></span><span class="op">(</span><span class="va">lfq_qf</span>, i<span class="op">=</span><span class="st">'peptides_norm'</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: `aes_string()` was deprecated in ggplot2 3.0.0.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use tidy evaluation idioms with `aes()`.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> See also `vignette("ggplot2-in-packages")` for more information.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/hms-dbmi/UpSetR/issues&gt;</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
-<span><span class="co">#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use `linewidth` instead.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/hms-dbmi/UpSetR/issues&gt;</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
-<span><span class="co">#&gt; Warning: The `size` argument of `element_line()` is deprecated as of ggplot2 3.4.0.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use the `linewidth` argument instead.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">UpSetR</span> package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/hms-dbmi/UpSetR/issues&gt;</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="768"></p>
-<p>Since DDA LFQ typically has too many missing values to exclude
-peptides with missing values, the
-<code><a href="https://rdrr.io/pkg/MsCoreUtils/man/robustSummary.html" class="external-link">MsCoreUtils::robustSummary</a></code> method should preferred for
-summarisation to protein-level abundance. With
-<code>robustSummary</code>, we do not need to remove all PSMs with
-missing values since the summarisation algorithm deals with them
-appropriately <span class="citation">(Sticker et al. 2020)</span>..
-However, we still don’t want to retain PSMs with too many missing
-values, since these will not be very informative in estimating the
-protein-level quantification. Here, we will retain PSMs with at most 4/6
-missing values</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_missing'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">filterNA</a></span><span class="op">(</span></span>
-<span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_norm'</span><span class="op">]</span><span class="op">]</span>, <span class="fl">4</span><span class="op">/</span><span class="fl">6</span><span class="op">)</span></span>
+<span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_norm'</span><span class="op">]</span><span class="op">]</span>, <span class="fl">4</span><span class="op">/</span><span class="fl">6</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">biomasslmb</span><span class="fu">:::</span><span class="fu">message_parse</span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_missing'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span><span class="fu"><a href="../reference/message_parse.html">message_parse</a></span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_missing'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>                           <span class="st">'Master.Protein.Accessions'</span>,</span>
 <span>                           <span class="st">"Removing peptides with more than 4/6 missing values"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 2704 features found from 457 master proteins =&gt; Removing peptides with more than 4/6 missing values</span></span></code></pre></div>
-<p>Next, we remove peptides for proteins with fewer than 2 peptides.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 2226 features found from 392 master proteins =&gt; Removing peptides with more than 4/6 missing values</span></span></code></pre></div>
+<p>Peptides belonging to proteins with fewer than 2 peptides are then
+removed.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">min_peps</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
 <span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_for_summarisation'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_features_per_protein.html">filter_features_per_protein</a></span><span class="op">(</span></span>
 <span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered_missing'</span><span class="op">]</span><span class="op">]</span>, min_features <span class="op">=</span> <span class="va">min_peps</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">biomasslmb</span><span class="fu">:::</span><span class="fu">message_parse</span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_for_summarisation'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span><span class="fu"><a href="../reference/message_parse.html">message_parse</a></span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_for_summarisation'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>                           <span class="st">'Master.Protein.Accessions'</span>,</span>
 <span>                           <span class="st">"Removing 'one-hit' wonders"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 2586 features found from 339 master proteins =&gt; Removing 'one-hit' wonders</span></span></code></pre></div>
-<p>Now we can summarise with <code>robustSummary</code></p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 2064 features found from 230 master proteins =&gt; Removing 'one-hit' wonders</span></span></code></pre></div>
+<p>Summarising with <code>robustSummary</code>:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Aggregate to protein-level abundances (using QFeatures function)</span></span>
-<span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">aggregateFeatures</a></span><span class="op">(</span><span class="va">lfq_qf</span>, </span>
+<span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">aggregateFeatures</a></span><span class="op">(</span><span class="va">lfq_qf</span>,</span>
 <span>                            i <span class="op">=</span> <span class="st">"peptides_for_summarisation"</span>,</span>
-<span>                            <span class="co">#i = "peptides_filtered_missing", </span></span>
 <span>                            fcol <span class="op">=</span> <span class="st">"Master.Protein.Accessions"</span>,</span>
 <span>                            name <span class="op">=</span> <span class="st">"protein"</span>,</span>
 <span>                            fun <span class="op">=</span> <span class="fu">MsCoreUtils</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/MsCoreUtils/man/robustSummary.html" class="external-link">robustSummary</a></span>,</span>
 <span>                            maxit<span class="op">=</span><span class="fl">10000</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Your quantitative and row data contain missing values. Please read the</span></span>
-<span><span class="co">#&gt; relevant section(s) in the aggregateFeatures manual page regarding the</span></span>
-<span><span class="co">#&gt; effects of missing values on data aggregation.</span></span>
-<span><span class="co">#&gt; Aggregated: 1/1</span></span></code></pre></div>
-<p>Prior to summaristaion, we removed PSMs from proteins with fewer than
-2 peptides. However, since we left in peptides with missing values, it’s
-possible for some protein-level abundances to be derived from just a
-single peptide. We can use the <code>get_protein_no_quant_mask</code>
-from <code>biomasslmb</code> to identify where the protein abundances
-will be derived from fewer than <code>n</code> features (peptides). We
-can then give this mask to <code>mask_protein_level_quant</code> to
-replace these quantification values with NA.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; Your quantitative data contain missing values. Please read the relevant</span></span>
+<span><span class="co">#&gt; section(s) in the aggregateFeatures manual page regarding the effects</span></span>
+<span><span class="co">#&gt; of missing values on data aggregation.</span></span>
+<span><span class="co">#&gt; Aggregated: 1/1</span></span>
+<span></span>
+<span><span class="va">lfq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="st">'protein'</span><span class="op">)</span></span></code></pre></div>
+<p>The two-peptide filter above was applied per protein, not per sample,
+and peptides with missing values were deliberately kept — so in any
+given sample a protein can still end up summarised from a single
+peptide. Nothing in the output marks these values as weaker than the
+rest. <code><a href="../reference/get_protein_no_quant_mask.html">get_protein_no_quant_mask()</a></code> finds where a protein
+abundance rests on fewer than <code>n</code> peptides, and
+<code><a href="../reference/mask_protein_level_quant.html">mask_protein_level_quant()</a></code> replaces those values with
+<code>NA</code>.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot = TRUE means we will also get a plot of the number of proteins quantified in each sample</span></span>
 <span><span class="va">protein_retain_mask</span> <span class="op">&lt;-</span> <span class="fu">biomasslmb</span><span class="fu">::</span><span class="fu"><a href="../reference/get_protein_no_quant_mask.html">get_protein_no_quant_mask</a></span><span class="op">(</span></span>
-<span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_for_summarisation'</span><span class="op">]</span><span class="op">]</span>, min_features<span class="op">=</span><span class="va">min_peps</span>, plot<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> </span>
+<span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'peptides_for_summarisation'</span><span class="op">]</span><span class="op">]</span>, min_features<span class="op">=</span><span class="va">min_peps</span>, plot<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">biomasslmb</span><span class="fu">::</span><span class="fu"><a href="../reference/mask_protein_level_quant.html">mask_protein_level_quant</a></span><span class="op">(</span></span>
 <span>  <span class="va">lfq_qf</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span>, <span class="va">protein_retain_mask</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="50%"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="50%"></p>
 </div>
 <div class="section level3">
 <h3 id="re-inspecting-missing-values-at-protein-level">Re-inspecting missing values at protein-level<a class="anchor" aria-label="anchor" href="#re-inspecting-missing-values-at-protein-level"></a>
 </h3>
-<p>Now that we have protein-level abundances, we would like to
-re-inspect the missing values. Overall, we have 5.064 % missing values,
-with at most 10.565 % missing values in any given sample. The most
-common missingness patterns are for the protein to be missing from 1,2
-or 3 replicates from a single condition, suggesting the quantification
-is missing due to detection limits.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<p>Masking changes the missingness picture, so it is worth re-reading at
+protein level. 11.377% of protein values are missing overall, and at
+most 13.913% in any one sample. Summarising has reduced the missingness
+considerably relative to the peptide level, since a protein only loses a
+sample when every one of its peptides does. What remains is spread
+across samples rather than concentrated in one condition, consistent
+with the peptide-level picture above.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/plot_missing_upset.html">plot_missing_upset</a></span><span class="op">(</span><span class="va">lfq_qf</span>, i<span class="op">=</span><span class="st">'protein'</span> <span class="op">)</span></span></code></pre></div>
-<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="inspecting-the-number-of-peptides-and-proteins-through-the-processing-steps">Inspecting the number of peptides and proteins through the
 processing steps<a class="anchor" aria-label="anchor" href="#inspecting-the-number-of-peptides-and-proteins-through-the-processing-steps"></a>
 </h3>
-<p>Now that we have performed all the filtering steps and summarisation
-to protein-level abundances, it’s helpful to visualise how many
-peptides/proteins were retained at each level of the processing. We can
-use the <code><a href="../reference/get_samples_present.html">biomasslmb::get_samples_present</a></code> and
-<code><a href="../reference/plot_samples_present.html">biomasslmb::plot_samples_present</a></code> functions for this. First
-though, we need to decide which ‘experiments’ we want to plot and define
-a named character vector since the QFeatures names are not sufficiently
-clear by themselves</p>
-<p>Below, we inspect the experiment names.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<p>Each filtering step above removed something, and the totals are
+easier to judge together than one message at a time.
+<code><a href="../reference/get_samples_present.html">get_samples_present()</a></code> and
+<code><a href="../reference/plot_samples_present.html">plot_samples_present()</a></code> show how many peptides and proteins
+survived each stage, and in how many samples. Both take a named
+character vector selecting the assays to plot, since the
+<code>QFeatures</code> names are not self-explanatory.</p>
+<p>The assay names to choose from:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lfq_qf</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "peptides_raw"               "peptides_filtered"         </span></span>
-<span><span class="co">#&gt; [3] "peptides_norm"              "peptides_filtered_missing" </span></span>
+<span><span class="co">#&gt; [3] "peptides_filtered_norm"     "peptides_filtered_missing" </span></span>
 <span><span class="co">#&gt; [5] "peptides_for_summarisation" "protein"</span></span></code></pre></div>
-<p>In this case, we don’t want to plot the <code>peptides_norm</code>,
-since that’s just the normalised quantification present in
-<code>peptides_filtered</code> and no peptides were removed in that
-step.</p>
 <div class="section level4">
 <h4 id="samples-per-peptide">Samples per peptide<a class="anchor" aria-label="anchor" href="#samples-per-peptide"></a>
 </h4>
-<p>We’ll start by inspecting the number of peptides in each experiment.
-We therefore define a named character vector all the peptides-level
-experiments, excluding <code>psms_filtered_norm</code>. We set the row
-variables to be <code>Annotated.Sequence</code> and
-<code>Modifications</code> so that we count the number of unique
-peptides.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<p>Peptides first. The row variables are <code>Annotated.Sequence</code>
+and <code>Modifications</code>, so that the count is of unique modified
+peptides rather than of rows.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span></span>
 <span><span class="va">rename_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'All peptides'</span> <span class="op">=</span> <span class="st">'peptides_raw'</span> ,</span>
 <span>                 <span class="st">'Quantified, contaminants removed'</span> <span class="op">=</span> <span class="st">'peptides_filtered'</span>,</span>
-<span>                 <span class="st">'No missing values'</span> <span class="op">=</span> <span class="st">'peptides_filtered_missing'</span>,</span>
-<span>                 <span class="st">'&gt;1 PSM per protein'</span> <span class="op">=</span> <span class="st">'peptides_for_summarisation'</span><span class="op">)</span></span>
+<span>                 <span class="st">'At most 4/6 missing values'</span> <span class="op">=</span> <span class="st">'peptides_filtered_missing'</span>,</span>
+<span>                 <span class="st">'&gt;1 peptide per protein'</span> <span class="op">=</span> <span class="st">'peptides_for_summarisation'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rowvars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Annotated.Sequence'</span>, <span class="st">'Modifications'</span><span class="op">)</span></span>
 <span></span>
@@ -477,50 +557,269 @@ peptides.</p>
 <span><span class="co">#&gt; Warning: 'experiments' dropped; see 'drops()'</span></span>
 <span><span class="co">#&gt; harmonizing input:</span></span>
 <span><span class="co">#&gt;   removing 12 sampleMap rows not in names(experiments)</span></span>
-<span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">10</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">'PSM'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">6</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">'Peptide'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
 <div class="figure">
-<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" alt="Samples quantified for each PSM at each level of processing" width="75%"><p class="caption">
-Samples quantified for each PSM at each level of processing
+<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" alt="Samples quantified for each peptide at each level of processing" width="75%"><p class="caption">
+Samples quantified for each peptide at each level of processing
 </p>
 </div>
 </div>
 <div class="section level4">
 <h4 id="samples-per-protein">Samples per Protein<a class="anchor" aria-label="anchor" href="#samples-per-protein"></a>
 </h4>
-<p>Next, we’ll use the same functions to inspect the number of proteins
-at each level of processing. We need to supply an updated named
-character vector to include the <code>protein</code> experiment and set
-the row variables to be just the <code>Master.Protein.Accesions</code>
-column.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<p>Then proteins, from the same functions: the named vector gains the
+<code>protein</code> assay, and the row variable becomes
+<code>Master.Protein.Accessions</code> alone.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">rename_cols_prot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">rename_cols</span>, <span class="st">'Protein'</span><span class="op">=</span><span class="st">'protein'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rowvars_prot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Master.Protein.Accessions'</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">samples_present</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_samples_present.html">get_samples_present</a></span><span class="op">(</span><span class="va">lfq_qf</span>, <span class="va">rowvars_prot</span>, <span class="va">rename_cols_prot</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars_prot</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">10</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_samples_present.html">plot_samples_present</a></span><span class="op">(</span><span class="va">samples_present</span>, <span class="va">rowvars_prot</span>, breaks<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">6</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
 <div class="figure">
-<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="Samples quantified for each protein at each level of processing" width="75%"><p class="caption">
+<img src="LFQ_DDA_Peptide_QC_Summarisation_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" alt="Samples quantified for each protein at each level of processing" width="75%"><p class="caption">
 Samples quantified for each protein at each level of processing
 </p>
 </div>
-<p>From these two plots, we can see that the filtering to ensure that
-all proteins have &gt;1 peptides removed only a few peptides, but more
-proteins. Whether this is appropriate will depend on your data in
-hand.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<p><strong>The two-peptide rule is cheap in peptides and expensive in
+proteins.</strong> It removes few peptides, because most peptides belong
+to proteins that have several; it removes many more proteins, because a
+protein identified by one peptide loses its only evidence. Those
+proteins are the ones whose quantification would have been least
+reliable, so the trade is usually worth making — but it is a trade, and
+an experiment targeting a low-abundance protein family may not want
+it.</p>
+<p>The same six runs were also processed with MaxQuant, and <a href="processing_pipeline_comparison.html">comparing processing
+pipelines</a> puts that output through this pipeline to show how much of
+the protein list and the significant hits depend on the choice of
+pipeline rather than on the biology.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Save file to package as data so it can be read back in in other vignettes</span></span>
 <span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_data.html" class="external-link">use_data</a></span><span class="op">(</span><span class="va">lfq_qf</span>, overwrite<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="reading-maxquant-output">Reading MaxQuant output<a class="anchor" aria-label="anchor" href="#reading-maxquant-output"></a>
+</h2>
+<p>Everything above the <code>peptides_filtered</code> assay is Proteome
+Discoverer specific: the file, the column names and the contaminant
+convention. Everything below it is not. This section covers the
+difference, using MaxQuant output from the same six runs.</p>
+<p>MaxQuant’s <code>peptides.txt</code> is the counterpart of PD’s
+peptide groups export, holding the same quantities under different
+names.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Quantity</th>
+<th>Proteome Discoverer</th>
+<th>MaxQuant</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Protein assignment</td>
+<td><code>Master.Protein.Accessions</code></td>
+<td><code>Leading.razor.protein</code></td>
+</tr>
+<tr class="even">
+<td>Quantification</td>
+<td><code>Abundance.&lt;file ID&gt;</code></td>
+<td><code>Intensity.&lt;experiment&gt;</code></td>
+</tr>
+<tr class="odd">
+<td>Contaminant flag</td>
+<td><code>Contaminant</code></td>
+<td><code>Potential.contaminant</code></td>
+</tr>
+<tr class="even">
+<td>Decoy flag</td>
+<td>removed before export</td>
+<td><code>Reverse</code></td>
+</tr>
+<tr class="odd">
+<td>Shared-peptide flag</td>
+<td><code>Number.of.Protein.Groups</code></td>
+<td>
+<code>Unique..Groups.</code> and <code>Unique..Proteins.</code>
+</td>
+</tr>
+<tr class="even">
+<td>Accession separator</td>
+<td><code>"; "</code></td>
+<td><code>";"</code></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"lfq_dda_mq_peptides.txt.gz"</span>,</span>
+<span>                      package <span class="op">=</span> <span class="st">"biomasslmb"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile</a></span><span class="op">(</span><span class="va">mq_inf</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_intensity_ix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">'^Intensity\\.'</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mq_df</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mq_df</span><span class="op">)</span><span class="op">[</span><span class="va">mq_intensity_ix</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "Intensity.A" "Intensity.B" "Intensity.C" "Intensity.D" "Intensity.F"</span></span>
+<span><span class="co">#&gt; [6] "Intensity.G"</span></span></code></pre></div>
+<p>The intensity columns are named for MaxQuant’s ‘experiment’ labels
+rather than for the samples, so as with the PD export the first job is
+to attach the design.</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'WT'</span>, <span class="st">'Mutant'</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  Replicate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_design</span><span class="op">$</span><span class="va">Sample</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">mq_design</span><span class="op">$</span><span class="va">Condition</span>, <span class="va">mq_design</span><span class="op">$</span><span class="va">Replicate</span>, sep <span class="op">=</span> <span class="st">'_'</span><span class="op">)</span></span>
+<span><span class="va">mq_design</span><span class="op">$</span><span class="va">quantCols</span> <span class="op">&lt;-</span> <span class="va">mq_design</span><span class="op">$</span><span class="va">Sample</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mq_df</span><span class="op">)</span><span class="op">[</span><span class="va">mq_intensity_ix</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">mq_design</span><span class="op">$</span><span class="va">Sample</span></span>
+<span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">mq_design</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Condition</th>
+<th align="right">Replicate</th>
+<th align="left">Sample</th>
+<th align="left">quantCols</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">WT</td>
+<td align="right">1</td>
+<td align="left">WT_1</td>
+<td align="left">WT_1</td>
+</tr>
+<tr class="even">
+<td align="left">WT</td>
+<td align="right">2</td>
+<td align="left">WT_2</td>
+<td align="left">WT_2</td>
+</tr>
+<tr class="odd">
+<td align="left">WT</td>
+<td align="right">3</td>
+<td align="left">WT_3</td>
+<td align="left">WT_3</td>
+</tr>
+<tr class="even">
+<td align="left">Mutant</td>
+<td align="right">1</td>
+<td align="left">Mutant_1</td>
+<td align="left">Mutant_1</td>
+</tr>
+<tr class="odd">
+<td align="left">Mutant</td>
+<td align="right">2</td>
+<td align="left">Mutant_2</td>
+<td align="left">Mutant_2</td>
+</tr>
+<tr class="even">
+<td align="left">Mutant</td>
+<td align="right">3</td>
+<td align="left">Mutant_3</td>
+<td align="left">Mutant_3</td>
+</tr>
+</tbody>
+</table>
+<p>One difference has to be dealt with before anything else. MaxQuant
+writes an intensity of exactly zero where it has no measurement, whereas
+PD leaves the cell empty. Mass spectrometry cannot assert that a peptide
+was absent, only that it was not detected, so those zeros have to become
+<code>NA</code> — left as they are, they are treated as real
+measurements at the bottom of the scale and pull every subsequent
+summary down towards it.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html" class="external-link">readQFeatures</a></span><span class="op">(</span>assayData <span class="op">=</span> <span class="va">mq_df</span>, quantCols <span class="op">=</span> <span class="va">mq_intensity_ix</span>,</span>
+<span>                       colData <span class="op">=</span> <span class="va">mq_design</span>, name <span class="op">=</span> <span class="st">'peptides_raw'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">mq_qf</span>, <span class="st">'peptides_raw'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html" class="external-link">zeroIsNA</a></span><span class="op">(</span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<p>The filtering call then changes in three ways.
+<code><a href="../reference/filter_features_mq_dda.html">filter_features_mq_dda()</a></code> replaces
+<code><a href="../reference/filter_features_pd_dda.html">filter_features_pd_dda()</a></code>. The contaminant accessions come
+from <code><a href="../reference/get_maxquant_cont_accessions.html">get_maxquant_cont_accessions()</a></code> rather than from a
+search FASTA, because MaxQuant searches against its own contaminants
+database with <code>CON__</code> prefixed accessions. And there is no
+<code>unique_master</code> argument, because MaxQuant nominates a single
+leading razor protein for every peptide instead of reporting a tie — its
+nearest counterpart is <code>proteotypic</code>, which keeps only
+peptides matching exactly one protein. That is the stricter filter of
+the two and it is left off here, to match what the PD pipeline above
+does. See <a href="gotcha_peptide_to_protein.html">peptides are not
+proteins</a> for what the two questions actually differ on.</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_features_mq_dda.html">filter_features_mq_dda</a></span><span class="op">(</span></span>
+<span>  <span class="va">mq_qf</span><span class="op">[[</span><span class="st">'peptides_raw'</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  contaminant_proteins <span class="op">=</span> <span class="fu"><a href="../reference/get_maxquant_cont_accessions.html">get_maxquant_cont_accessions</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  filter_contaminant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  filter_associated_contaminant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  remove_no_quant <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">mq_qf</span>, <span class="st">'peptides_filtered'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'peptides_filtered'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1952</span></span></code></pre></div>
+<p>From here the vignette applies unchanged, with
+<code>Leading.razor.protein</code> in place of
+<code>Master.Protein.Accessions</code> wherever it appears as a
+<code>master_protein_col</code> or an <code>fcol</code>. The rank filter
+is the one step with no MaxQuant equivalent, and is simply omitted:
+<code>peptides.txt</code> reports one row per peptide rather than one
+per spectrum match, and the confidence filtering has already been
+applied through MaxQuant’s own posterior error probabilities.</p>
+<p><a href="processing_pipeline_comparison.html">Comparing processing
+pipelines</a> takes both exports of these runs through to a tested
+protein list, and measures how much of the answer depends on which of
+the two produced it.</p>
+</div>
+<div class="section level2">
+<h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
+</h2>
+<ul>
+<li>
+<a href="exploration_and_statistical_testing.html">Data exploration
+and statistical testing</a> picks up from the protein-level abundances
+produced here: checking the experiment worked, deciding which proteins
+can be tested, and testing them.</li>
+<li>
+<a href="handling_missing_values.html">Handling missing values</a>
+covers the <code>filterNA</code> threshold applied above in full, and
+what the alternatives to discarding cost.</li>
+<li>
+<a href="summarisation_methods.html">Choosing a summarisation
+method</a> compares <code>robustSummary</code> against summing on this
+same dataset.</li>
+<li>If this was an enrichment experiment rather than a whole-proteome
+comparison, <a href="interactome_designs.html">enrichment designs</a>
+covers the normalisation and missing-value reasoning that changes.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="getting-help">Getting help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
+</h2>
+<p>If your experiment does not fit what this article assumes, or a
+result looks wrong, please get in touch with Tom Smith (<a href="mailto:tsmith@mrclmb.ac.uk" class="email">tsmith@mrclmb.ac.uk</a>)
+rather than guessing — it is far easier to help while an analysis is in
+progress than to unpick a decision afterwards, and easier still before
+the samples are run. <a href="biomasslmb.html">Getting started</a> sets
+out which article applies to which experiment.</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.4 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -541,7 +840,7 @@ hand.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt;  [1] dplyr_1.2.1                 tidyr_1.3.2                </span></span>
-<span><span class="co">#&gt;  [3] ggplot2_4.0.3               biomasslmb_0.0.5           </span></span>
+<span><span class="co">#&gt;  [3] ggplot2_4.0.3               biomasslmb_0.1.0           </span></span>
 <span><span class="co">#&gt;  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.2</span></span>
 <span><span class="co">#&gt;  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             </span></span>
 <span><span class="co">#&gt;  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              </span></span>
@@ -556,14 +855,14 @@ hand.</p>
 <span><span class="co">#&gt; [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         </span></span>
 <span><span class="co">#&gt; [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        </span></span>
 <span><span class="co">#&gt; [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        </span></span>
-<span><span class="co">#&gt; [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.31         </span></span>
+<span><span class="co">#&gt; [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         </span></span>
 <span><span class="co">#&gt; [22] visdat_0.6.0            ragg_1.5.2              UpSetR_1.4.1           </span></span>
 <span><span class="co">#&gt; [25] purrr_1.2.2             bit_4.6.0               xfun_0.60              </span></span>
 <span><span class="co">#&gt; [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             </span></span>
 <span><span class="co">#&gt; [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               </span></span>
 <span><span class="co">#&gt; [34] bslib_0.12.0            stringi_1.8.9           RColorBrewer_1.1-3     </span></span>
 <span><span class="co">#&gt; [37] genefilter_1.92.0       jquerylib_0.1.4         Rcpp_1.1.2             </span></span>
-<span><span class="co">#&gt; [40] knitr_1.51              BiocBaseUtils_1.12.0    Matrix_1.7-4           </span></span>
+<span><span class="co">#&gt; [40] knitr_1.52              BiocBaseUtils_1.12.0    Matrix_1.7-4           </span></span>
 <span><span class="co">#&gt; [43] splines_4.5.3           igraph_2.3.3            tidyselect_1.2.1       </span></span>
 <span><span class="co">#&gt; [46] abind_1.4-8             yaml_2.3.12             lattice_0.22-9         </span></span>
 <span><span class="co">#&gt; [49] tibble_3.3.1            plyr_1.8.9              withr_3.0.3            </span></span>
@@ -579,16 +878,27 @@ hand.</p>
 <span><span class="co">#&gt; [79] gtable_0.3.6            DEoptimR_1.2-1          sass_0.4.10            </span></span>
 <span><span class="co">#&gt; [82] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      </span></span>
 <span><span class="co">#&gt; [85] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        </span></span>
-<span><span class="co">#&gt; [88] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.8             </span></span>
-<span><span class="co">#&gt; [91] bit64_4.8.4             MASS_7.3-65</span></span></code></pre></div>
+<span><span class="co">#&gt; [88] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.9             </span></span>
+<span><span class="co">#&gt; [91] bit64_4.8.6             MASS_7.3-65</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-http://zotero.org/users/5634351/items/87YIDK69" class="csl-entry">
+Cox, Jürgen, Marco Y. Hein, Christian A. Luber, Igor Paron, Nagarjuna
+Nagaraj, and Matthias Mann. 2014. <span>“Accurate Proteome-Wide
+Label-Free Quantification by Delayed Normalization and Maximal Peptide
+Ratio Extraction, Termed MaxLFQ*.”</span> <em>Molecular &amp; Cellular
+Proteomics</em> 13 (9): 2513–26. <a href="https://doi.org/10.1074/mcp.M113.031591" class="external-link">https://doi.org/10.1074/mcp.M113.031591</a>.
+</div>
+<div id="ref-Frankenfield2022" class="csl-entry">
+Frankenfield, Ashley M., Jiawei Ni, Mustafa Ahmed, and Ling Hao. 2022.
+<span>“Protein Contaminants Matter: Building Universal Protein
+Contaminant Libraries for DDA and DIA Proteomics.”</span> <em>Journal of
+Proteome Research</em> 21 (9): 2104–13. <a href="https://doi.org/10.1021/acs.jproteome.2c00145" class="external-link">https://doi.org/10.1021/acs.jproteome.2c00145</a>.
+</div>
 <div id="ref-http://zotero.org/users/5634351/items/FZN3QTTZ" class="csl-entry">
 Sticker, Adriaan, Ludger Goeminne, Lennart Martens, and Lieven Clement.
 2020. <span>“Robust Summarization and Inference in Proteome-wide
 Label-free Quantification.”</span> <em>Molecular &amp; cellular
 proteomics: MCP</em> 19 (7): 1209–19. <a href="https://doi.org/10.1074/mcp.RA119.001624" class="external-link">https://doi.org/10.1074/mcp.RA119.001624</a>.
-</div>
-</div>
 </div>
 </div>
 </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biomasslmb</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,17 +15,43 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/biomasslmb.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Peptide_QC.html">LFQ-DIA QC Peptide-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT QC PSM-level quantification and summarisation to protein-level abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/TMT_summarisation_methods.html">TMT - comparing protein summarisation approaches</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Start here</h6></li>
+    <li><a class="dropdown-item" href="../articles/qfeatures_objects.html">Working with QFeatures objects</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/protein_annotation.html">Protein annotation: UniProt details, GO terms and topology</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_PSM_QC_Summarisation.html">TMT workflow: PSM QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/TMT_multiplex.html">TMT workflow: multiple plexes and bridge correction</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DDA_Peptide_QC_Summarisation.html">LFQ-DDA workflow: peptide QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/LFQ_DIA_Precursor_QC_Summarisation.html">LFQ-DIA workflow: precursor QC and protein summarisation</a></li>
+    <li><a class="dropdown-item" href="../articles/exploration_and_statistical_testing.html">Data exploration and statistical testing</a></li>
+    <li><a class="dropdown-item" href="../articles/functional_enrichment.html">Functional enrichment analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Specialised designs</h6></li>
+    <li><a class="dropdown-item" href="../articles/interactome_designs.html">Enrichment designs: IP, BioID and TurboID</a></li>
+    <li><a class="dropdown-item" href="../articles/PTM_site_quantification.html">PTM designs: site-level quantification and normalisation</a></li>
+    <li><a class="dropdown-item" href="../articles/absolute_quantification_iBAQ.html">Absolute quantification with iBAQ, and its limits</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Choosing between options</h6></li>
+    <li><a class="dropdown-item" href="../articles/handling_missing_values.html">Handling missing values</a></li>
+    <li><a class="dropdown-item" href="../articles/summarisation_methods.html">Choosing a summarisation method</a></li>
+    <li><a class="dropdown-item" href="../articles/processing_pipeline_comparison.html">Comparing processing pipelines</a></li>
+    <li><a class="dropdown-item" href="../articles/ORA_vs_GSEA.html">ORA or GSEA?</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Cautionary tales</h6></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_peptide_to_protein.html">Pitfall: peptides are not proteins</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_contaminants_and_FDR.html">Pitfall: contaminants and protein-level FDR</a></li>
+    <li><a class="dropdown-item" href="../articles/gotcha_technical_replicates.html">Pitfall: technical replicates are not biological replicates</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/lmb-mass-spec-compbio/biomasslmb/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -35,15 +61,71 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-
+      <small>Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="biomasslmb-development-version">biomasslmb (development version)<a class="anchor" aria-label="anchor" href="#biomasslmb-development-version"></a></h2>
-<ul><li><p>New <code><a href="../reference/collapse_uniprot_details_multi_accession.html">collapse_uniprot_details_multi_accession()</a></code> maps a <code><a href="../reference/get_uniprot_details.html">get_uniprot_details()</a></code> result onto protein IDs that bundle several accessions (e.g. Proteome Discoverer’s <code>Master.Protein.Accessions</code>), collapsing back to one row per original ID.</p></li>
-<li><p><code>Remotes:</code> temporarily points <code>uniprotREST</code> at <code>TomSmithCGAT/uniprotREST@check-complete-response</code> instead of <code>csdaw/uniprotREST</code>, to pick up the <code>check_complete</code> argument to <code>uniprot_map()</code> (detects UniProt ID mapping jobs that silently return a truncated result). This is an unmerged fork branch, not a released feature. <strong>Switch <code>Remotes:</code> back to <code>csdaw/uniprotREST</code> once that PR is accepted upstream.</strong></p></li>
+<h2 class="pkg-version" data-toc-text="0.1.0" id="biomasslmb-010">biomasslmb 0.1.0<a class="anchor" aria-label="anchor" href="#biomasslmb-010"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-1-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-1-0"></a></h3>
+<ul><li>
+<p><strong>The <code>filter_features_*()</code> functions now take two separate arguments where they previously took one.</strong> <code>unique_master</code> asks whether the search engine resolved the feature to a single protein accession; <code>proteotypic</code> asks whether the peptide sequence occurs in only one protein. These are different questions, and <code>unique_master</code> had come to mean whichever of them the format happened to expose: <code>Number.of.Protein.Groups</code> for Proteome Discoverer, the accession count for DIA-NN and Spectronaut, but <code>Unique..Proteins.</code> — a proteotypic test — for MaxQuant.</p>
+<p><code><a href="../reference/filter_features_pd_dda.html">filter_features_pd_dda()</a></code>, <code><a href="../reference/filter_features_diann.html">filter_features_diann()</a></code> and <code><a href="../reference/filter_features_sn.html">filter_features_sn()</a></code> are unchanged for existing calls, and gain <code>proteotypic</code> (default <code>FALSE</code>), which tests <code>Number.of.Proteins</code>, <code>Proteotypic</code> and <code>PEP.IsProteotypic</code> respectively.</p>
+<p><strong><code><a href="../reference/filter_features_mq_dda.html">filter_features_mq_dda()</a></code> changes behaviour, and its <code>unique_master</code> default changes with it.</strong> MaxQuant assigns every feature a single razor protein and so never reports a tie between protein groups; there is nothing for <code>unique_master</code> to filter. It now defaults to <code>FALSE</code> and raises an error if passed <code>TRUE</code>, where it previously defaulted to <code>TRUE</code> and silently applied a proteotypic filter. A call that named the argument fails loudly; a call that relied on the default keeps features it used to remove, and nothing announces it. Pass <code>proteotypic = TRUE</code> to reproduce the previous behaviour, which it does exactly.</p>
+</li>
+<li>
+<p><strong><code>dia_qf</code>, <code>lfq_qf</code> and <code>tmt_qf</code> hold different data under the same names.</strong> Each is rebuilt by the rewritten workflow vignette it comes from, and analyses depending on any of them need re-running. Where an assay name is unchanged, the old code runs and quietly returns different numbers; where one is renamed, it errors.</p>
+<ul><li>
+<code>dia_qf</code> is a different experiment: a 31-sample plasma DIA dataset (<code>monkeypox_plasma_proteomes.parquet</code>) summarised to 239 proteins, where it previously held 407 proteins across 6 samples. Its assays are renamed with it — <code>peptides_fdr_cntrl</code> to <code>precursors</code>, <code>peptides_filtered_forRobust</code> to <code>peptides_for_summarisation</code>, and a <code>peptides_filtered_norm</code> assay is added — so code indexing an assay by name errors rather than quietly returning different numbers.</li>
+<li>
+<code>lfq_qf</code> is rebuilt from a replaced, larger <code>lfq_dda_pd_PeptideGroups.txt</code>: 230 proteins across the same 6 samples, where it previously held 339. Its <code>peptides_norm</code> assay is renamed <code>peptides_filtered_norm</code>.</li>
+<li>
+<code>tmt_qf</code> is built from <code>psm_tmt_clock</code>, a TMT12plex experiment, rather than from the TMT10-plex <code>psm_tmt_total</code>: 402 proteins across 12 channels, where it previously held 891 across 10. Its assay names are unchanged.</li>
+</ul><p><code>psm_tmt_total</code> itself is unchanged and still backs the function examples. The vignettes use <code>psm_tmt_clock</code>, which carries an experimental design table with it.</p>
+</li>
+<li><p><code><a href="../reference/get_crap_fasta_accessions.html">get_crap_fasta_accessions()</a></code> is renamed to <code><a href="../reference/get_contaminant_fasta_accessions.html">get_contaminant_fasta_accessions()</a></code>, for consistency with <code>remove_contaminant()</code>/<code>remove_contaminant_mq()</code> and because the function isn’t specific to the cRAP database. The old name is kept as a wrapper that forwards to the new function and emits a deprecation message.</p></li>
 </ul></div>
-  </main></div>
+<div class="section level3">
+<h3 id="new-features-0-1-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-1-0"></a></h3>
+<ul><li><p>New <code><a href="../reference/bridge_normalise.html">bridge_normalise()</a></code> puts TMT plexes onto a common scale using their pooled bridge channels. The correction is per feature and per plex, because that is what a plex effect is — a feature is quantified from a different set of PSMs in each plex — which is what distinguishes it from <code><a href="../reference/center_normalise_to_ref.html">center_normalise_to_ref()</a></code> and its single offset per sample. Features with no usable bridge value in a plex cannot be placed on the scale at all, and <code>on_missing</code> decides whether they are set to <code>NA</code>, dropped, or left uncorrected.</p></li>
+<li><p>New <code><a href="../reference/sync_coldata.html">sync_coldata()</a></code> copies the object-level <code>colData</code> onto named assays, matching on sample name. It replaces the <code>colData(obj[[i]]) &lt;- colData(obj)</code> idiom, which appeared 32 times across the vignettes.</p></li>
+<li><p>New <code><a href="../reference/collapse_uniprot_details_multi_accession.html">collapse_uniprot_details_multi_accession()</a></code> maps a <code><a href="../reference/get_uniprot_details.html">get_uniprot_details()</a></code> result onto protein IDs that bundle several accessions (e.g. Proteome Discoverer’s <code>Master.Protein.Accessions</code>), collapsing back to one row per original ID.</p></li>
+<li><p><code><a href="../reference/get_n_feature_per_prot.html">get_n_feature_per_prot()</a></code>, <code><a href="../reference/message_parse.html">message_parse()</a></code> and <code><a href="../reference/qfeatures_long.html">qfeatures_long()</a></code> are now exported. Each was already used internally and is called directly by the vignettes: <code><a href="../reference/get_n_feature_per_prot.html">get_n_feature_per_prot()</a></code> tallies the finite values per protein per sample that summarisation needs, <code><a href="../reference/message_parse.html">message_parse()</a></code> reports a feature and master protein count in the same format the <code>filter_features_*()</code> functions use, so a count can be reported at a step where no filter function ran, and <code><a href="../reference/qfeatures_long.html">qfeatures_long()</a></code> dispatches to the right QFeatures long-format function for the installed Bioconductor version. <code><a href="../reference/message_parse.html">message_parse()</a></code>’s third argument is named <code>note</code>.</p></li>
+<li><p><code><a href="../reference/plot_missing_upset.html">plot_missing_upset()</a></code> gains a <code>...</code> argument, passed onto <code><a href="https://naniar.njtierney.com/reference/gg_miss_upset.html" class="external-link">naniar::gg_miss_upset()</a></code> and from there onto <code><a href="https://rdrr.io/pkg/UpSetR/man/upset.html" class="external-link">UpSetR::upset()</a></code>. Arguments given this way take precedence over the ones the function sets itself, so <code>nintersects</code>, <code>sets</code> and <code>keep.order</code> are now defaults rather than fixed. Samples are also ordered by name before plotting.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/filter_by_protein_fdr.html">filter_by_protein_fdr()</a></code> honours <code>protein_FDR_col</code>. It took the argument but read <code>Protein.FDR.Confidence.Combined</code> regardless, so a column named anything else was silently ignored.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-example-data-0-1-0">New example data<a class="anchor" aria-label="anchor" href="#new-example-data-0-1-0"></a></h3>
+<p>Each PSM-level dataset is a real facility experiment, subsetted to a few hundred proteins and anonymised, and comes with a design table whose rownames match its sample columns.</p>
+<ul><li><p><code>psm_tmt_clock</code> with <code>tmt_clock_design</code>: Proteome Discoverer output for a TMT12plex control-against-mutant comparison, six replicates each.</p></li>
+<li><p><code>psm_tmt_2plex</code> with <code>tmt_2plex_design</code>: one experiment spread over two TMTpro 18plex plexes, each carrying a pooled bridge channel, in a 3 x 3 factorial of cell line against treatment timepoint. The abundance columns are named by TMT tag, since the same tag means a different sample in each plex.</p></li>
+<li><p><code>psm_tmt_factorial</code> with <code>tmt_factorial_design</code>: MaxQuant <code>evidence.txt</code> output for a TMT18plex whole-proteome experiment crossing three cell lines with vehicle or compound treatment.</p></li>
+<li><p><code>psm_tmt_per2_mq</code> with <code>tmt_per2_mq_design</code>: MaxQuant <code>evidence.txt</code> output for a TMT18plex immunoprecipitation, bait pulldown against control, six replicates each.</p></li>
+<li><p><code>psm_tmt_phospho</code> and <code>psm_tmt_phospho_total</code> with <code>tmt_phospho_design</code>: the phospho-enriched and matched total fractions of one labelled TMTpro pool, a drug treatment against vehicle at two timepoints. The enriched fraction carries the <code>ptmRS</code> columns <code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code> needs.</p></li>
+<li><p><code>tmt_qf_mq</code> holds <code>psm_tmt_per2_mq</code> processed to protein level. Its <code>protein</code> assay is masked with <code><a href="../reference/get_protein_no_quant_mask.html">get_protein_no_quant_mask()</a></code>/<code><a href="../reference/mask_protein_level_quant.html">mask_protein_level_quant()</a></code>, so that every value rests on at least two PSMs, as the LFQ QC vignettes already did; 130 of the 572 proteins were quantified from a single PSM per channel and are masked out, leaving 442.</p></li>
+<li><p><code>tmt_qf_factorial</code> holds the protein-level abundances summarised from <code>psm_tmt_factorial</code>, read back in by the statistical testing article. Only the <code>protein</code> assay is kept — retaining the PSM-level assays would make the object an order of magnitude larger.</p></li>
+<li><p><code>lfq_qf_turboid</code> is an LFQ-DDA TurboID pulldown (three biotin against three control), processed to protein level in Part B of the <code>Enrichment designs</code> vignette, which now carries an enrichment experiment through to a tested list of candidate interactors.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-1-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0"></a></h3>
+<ul><li><p>The vignettes go from four articles to nineteen, covering the four acquisition and search-engine routes through QC and summarisation, then exploration and statistical testing, enrichment designs, PTM site quantification, multiplexed TMT, missing values, functional enrichment, iBAQ, and a set of cautionary <code>gotcha_*</code> articles on contaminants and FDR, peptide-to-protein inference, and technical replicates.</p></li>
+<li><p>New <code>Getting started</code> and <code>Working with QFeatures objects</code> articles cover the object model and the design-table contract, with a complete forty-line worked analysis at the top of the former.</p></li>
+<li><p><strong>Two vignettes are renamed, so their URLs change.</strong> <code>LFQ_DIA_Peptide_QC</code> becomes <code>LFQ_DIA_Precursor_QC_Summarisation</code>, and <code>TMT_summarisation_methods</code> becomes <code>summarisation_methods</code>, which now covers LFQ as well as TMT.</p></li>
+<li><p><code>_pkgdown.yml</code> groups the function reference by task rather than listing it alphabetically, and orders the articles for the sidebar. Nineteen of the commonly used functions gain runnable examples.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="packaging-0-1-0">Packaging<a class="anchor" aria-label="anchor" href="#packaging-0-1-0"></a></h3>
+<ul><li><p>The maintainer address is now <code>tsmith@mrclmb.ac.uk</code>.</p></li>
+<li><p>New <code>Suggests</code>: <code>arrow</code>, <code>fgsea</code>, <code>ggrepel</code>, <code>hexbin</code>, <code>imputeLCMD</code>, <code>limma</code>, <code>limpa</code>, <code>openxlsx</code>, <code>readxl</code> and <code>xml2</code>, all used by the new vignettes. None is needed to use the package itself.</p></li>
+<li><p><code>Remotes:</code> temporarily points <code>uniprotREST</code> at <code>TomSmithCGAT/uniprotREST@check-complete-response</code> instead of <code>csdaw/uniprotREST</code>, to pick up the <code>check_complete</code> argument to <code>uniprot_map()</code> (detects UniProt ID mapping jobs that silently return a truncated result). This is an unmerged fork branch, not a released feature; it is proposed upstream as <a href="https://github.com/csdaw/uniprotREST/pull/7" class="external-link">csdaw/uniprotREST#7</a>. <strong>Switch <code>Remotes:</code> back to <code>csdaw/uniprotREST</code> once that PR is accepted upstream.</strong></p></li>
+</ul></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -28,3 +28,14 @@ plot_samples_present(samples_present, rowvars, breaks = NULL)
 ## Value
 
 `ggplot` object.
+
+## Examples
+
+``` r
+rename_cols <- c("All PSMs" = "psms_raw", "Protein" = "protein")
+
+samples_present <- get_samples_present(
+  tmt_qf, rowVars = "Master.Protein.Accessions", rename_cols = rename_cols)
+
+plot_samples_present(samples_present, rowvars = "Master.Protein.Accessions")
+```

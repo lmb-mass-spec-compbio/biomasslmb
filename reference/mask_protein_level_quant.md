@@ -35,3 +35,15 @@ mask_protein_level_quant(obj, retain_mask)
 
 `SummarizedExperiment` with quantification values replaced by NA where
 they derive from too few lower feature level quantifications
+
+## Examples
+
+``` r
+mask <- get_protein_no_quant_mask(
+  tmt_qf[["psms_filtered_forSum"]], min_features = 2)
+
+masked <- mask_protein_level_quant(tmt_qf[["protein"]], mask)
+
+sum(is.na(SummarizedExperiment::assay(masked)))
+#> [1] 0
+```

@@ -1,8 +1,9 @@
 # TMT data
 
-Qfeature containing TMT data processed in the
-`TMT QC PSM-level quantification and summarisation to protein-level abundance`
-vignette
+`QFeatures` object holding the single-plex TMT dataset (`psm_tmt_clock`)
+processed through PSM QC, filtering and summarisation to protein level
+with `sum`, as produced in the
+`TMT workflow: PSM QC and protein summarisation` vignette.
 
 ## Usage
 

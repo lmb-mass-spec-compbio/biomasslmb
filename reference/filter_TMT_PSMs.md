@@ -80,3 +80,34 @@ filter_TMT_PSMs(
 ## Value
 
 Returns an `summarizedExperiment` with the filtered PSMs.
+
+## Examples
+
+``` r
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+  colData = tmt_clock_design,
+  quantCols = rownames(tmt_clock_design),
+  name = "psms_raw")
+#> Checking arguments.
+#> Loading data as a 'SummarizedExperiment' object.
+#> Formatting sample annotations (colData).
+#> Formatting data as a 'QFeatures' object.
+
+# a more accurate average signal:noise than PD reports
+tmt_qf[["psms_raw"]] <- update_average_sn(tmt_qf[["psms_raw"]])
+
+# drop PSMs with low signal:noise or high co-isolation
+psms_filtered <- filter_TMT_PSMs(tmt_qf[["psms_raw"]],
+                                 inter_thresh = 50, sn_thresh = 10)
+#> Filtering PSMs...
+#> 11281 features found from 790 master proteins => Initial PSMs
+#> 10554 features found from 768 master proteins => PSMs with Quan.Info removed
+#> 10554 features found from 768 master proteins => PSMs which are not selected or unambiguous removed
+#> 6780 features found from 691 master proteins => Removing PSMs without quantification values
+#> 6675 features found from 686 master proteins => Removing PSMs with high Co-isolation/interference
+#> 5921 features found from 631 master proteins => Removing PSMs with low average S:N ratio
+#> Not performing filtering by SPS-MM (`spsmm_thresh`=0)
+
+nrow(psms_filtered)
+#> [1] 5921
+```

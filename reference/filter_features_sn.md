@@ -6,11 +6,15 @@ various criteria:
 1.  Remove features without a master protein (PG.ProteinAccessions
     column)
 
-2.  Remove features without a unique master protein
+2.  Remove features without a unique master protein, i.e. where
+    PG.ProteinAccessions holds more than one accession
 
-3.  Remove features matching a contaminant protein
+3.  Remove features which are not proteotypic (i.e. PEP.IsProteotypic is
+    True)
 
-4.  Remove features without quantification values
+4.  Remove features matching a contaminant protein
+
+5.  Remove features without quantification values
 
 ## Usage
 
@@ -19,6 +23,7 @@ filter_features_sn(
   obj,
   master_protein_col = "PG.ProteinAccessions",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   remove_no_quant = TRUE,
@@ -40,7 +45,13 @@ filter_features_sn(
 
 - unique_master:
 
-  `logical`. Filter out features without a unique master protein.
+  `logical`. Filter out features where the master protein column does
+  not resolve to a single protein accession.
+
+- proteotypic:
+
+  `logical`. Filter out features whose peptide sequence is found in more
+  than one protein.
 
 - filter_contaminant:
 

@@ -73,4 +73,5 @@ Suggests:
     usethis,
     xml2
 Config/testthat/edition: 3
-URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/
+URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/, https://github.com/lmb-mass-spec-compbio/biomasslmb
+BugReports: https://github.com/lmb-mass-spec-compbio/biomasslmb/issues

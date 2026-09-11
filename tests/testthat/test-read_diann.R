@@ -1,6 +1,6 @@
-# diann_report_subset.tsv is the first 3000 rows (6 runs) of the bundled
-# inst/extdata/diann_report.tsv, trimmed to the columns readDIANNFilterQJoin
-# actually uses, to keep the fixture small.
+# diann_report_subset.tsv is 3000 rows (6 runs) of a DIA-NN report for a
+# Human/Yeast/E. coli benchmark mixture, trimmed to the columns
+# readDIANNFilterQJoin actually uses, to keep the fixture small.
 fixture_path <- test_path("read_diann", "diann_report_subset.tsv")
 
 test_that("readDIANNFilterQJoin filters on Q-value thresholds and joins runs into one assay", {

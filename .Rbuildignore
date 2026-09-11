@@ -6,4 +6,4 @@
 ^\.github$
 ^\.claude$
 ^data-raw$
-^VIGNETTE_STYLE\.md$
+^CLAUDE\.md$

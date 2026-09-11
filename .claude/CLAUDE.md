@@ -70,5 +70,5 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Vignette prose
 
 Before writing or editing prose in `vignettes/`, or a `desc:` block in
-`_pkgdown.yml`, read `VIGNETTE_STYLE.md`. It sets the register these articles
-are written in, which is deliberate and not the R package default.
+`_pkgdown.yml`, read `.claude/VIGNETTE_STYLE.md`. It sets the register these
+articles are written in, which is deliberate and not the R package default.

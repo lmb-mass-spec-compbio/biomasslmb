@@ -6,7 +6,9 @@ vignettes should contain and how they are grouped, see the "How these vignettes
 are organised" section of `vignettes/biomasslmb.Rmd` and the `articles:`
 section of `_pkgdown.yml`.
 
-Not shipped in the built package: this file is listed in `.Rbuildignore`.
+Not shipped in the built package and not published to the pkgdown site: it
+lives in `.claude/`, which `.Rbuildignore` excludes and pkgdown does not
+render.
 
 ## The stance
 

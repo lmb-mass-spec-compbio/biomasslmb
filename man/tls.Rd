@@ -16,3 +16,18 @@ tls(formula, data, ...)
 \description{
 Total least squares regression (for use with geom_smooth)
 }
+\examples{
+# both axes are noisy estimates, so ordinary least squares would give a
+# slope that depends on which variable is on the x axis
+x <- rnorm(100)
+df <- data.frame(x = x + rnorm(100, sd = 0.3),
+                 y = x + rnorm(100, sd = 0.3))
+
+unlist(tls(y ~ x, df))
+
+library(ggplot2)
+ggplot(df, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = tls, formula = y ~ x, se = FALSE) +
+  theme_biomasslmb()
+}

@@ -54,3 +54,18 @@ Filter PSMs from TMT quantification to remove the following:
 \item PSM.Ambiguity is not 'Selected' or 'Unambiguous'
 }
 }
+\examples{
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+  colData = tmt_clock_design,
+  quantCols = rownames(tmt_clock_design),
+  name = "psms_raw")
+
+# a more accurate average signal:noise than PD reports
+tmt_qf[["psms_raw"]] <- update_average_sn(tmt_qf[["psms_raw"]])
+
+# drop PSMs with low signal:noise or high co-isolation
+psms_filtered <- filter_TMT_PSMs(tmt_qf[["psms_raw"]],
+                                 inter_thresh = 50, sn_thresh = 10)
+
+nrow(psms_filtered)
+}

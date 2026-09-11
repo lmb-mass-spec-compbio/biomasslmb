@@ -8,13 +8,23 @@ write_fasta <- function(headers, seqs) {
   path
 }
 
-test_that("get_crap_fasta_accessions extracts the accession between the first pair of pipes", {
+test_that("get_contaminant_fasta_accessions extracts the accession between the first pair of pipes", {
   fasta_path <- write_fasta(
     c("sp|P00330|ADH1_YEAST Alcohol dehydrogenase 1", "sp|P62258|1433E_HUMAN 14-3-3 protein epsilon"),
     c("MSIPETQKGVIFYESHGKLEYK", "MDDREDLVYQAKLAEQAERYDE")
   )
 
-  result <- get_crap_fasta_accessions(fasta_path)
+  result <- get_contaminant_fasta_accessions(fasta_path)
+  expect_equal(result, c("P00330", "P62258"))
+})
+
+test_that("get_crap_fasta_accessions is a deprecated alias for get_contaminant_fasta_accessions", {
+  fasta_path <- write_fasta(
+    c("sp|P00330|ADH1_YEAST Alcohol dehydrogenase 1", "sp|P62258|1433E_HUMAN 14-3-3 protein epsilon"),
+    c("MSIPETQKGVIFYESHGKLEYK", "MDDREDLVYQAKLAEQAERYDE")
+  )
+
+  expect_message(result <- get_crap_fasta_accessions(fasta_path), "deprecated")
   expect_equal(result, c("P00330", "P62258"))
 })
 

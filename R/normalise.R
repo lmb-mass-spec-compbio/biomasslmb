@@ -3,6 +3,9 @@
 #' @param obj `SummarisedExperiment`
 #' @return `vector` of assay column medians in colnames order
 #' @importFrom robustbase colMedians
+#' @examples
+#' # per-sample median abundance, used as a normalisation reference
+#' get_medians(tmt_qf[["protein"]])
 #' @export
 get_medians <- function(obj){
   check_se(obj)
@@ -33,6 +36,15 @@ get_medians <- function(obj){
 #' normalised
 #'
 #' @importFrom SummarizedExperiment "assay<-"
+#' @examples
+#' # normalise one assay using medians taken from another, as in a PTM
+#' # experiment where the total fraction supplies the reference
+#' reference_medians <- get_medians(tmt_qf[["protein"]])
+#'
+#' normalised <- center_normalise_to_ref(
+#'   tmt_qf[["protein"]], reference_medians, on_log_scale = TRUE)
+#'
+#' round(get_medians(normalised), 3)
 #' @export
 center_normalise_to_ref <- function(obj, medians,
                                     center_to_zero=FALSE,

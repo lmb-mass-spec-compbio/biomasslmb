@@ -27,6 +27,26 @@ test_that("filter_by_protein_fdr retains only peptides from High-confidence prot
   expect_setequal(SummarizedExperiment::rowData(out)$Master.Protein.Accessions, c("P1", "P3"))
 })
 
+test_that("filter_by_protein_fdr honours protein_FDR_col", {
+  se <- make_peptide_se()
+
+  path <- tempfile(fileext = ".txt")
+  df <- data.frame(
+    Accession = c("P1", "P2", "P3"),
+    # the confidence lives in a differently named column, as it does when the
+    # protein-group rather than the protein FDR is the one of interest
+    Protein.Group.FDR.Confidence.Combined = c("High", "Low", "High"),
+    stringsAsFactors = FALSE
+  )
+  write.table(df, path, sep = "\t", row.names = FALSE, quote = FALSE)
+
+  out <- suppressMessages(filter_by_protein_fdr(
+    se, path, protein_FDR_col = "Protein.Group.FDR.Confidence.Combined"))
+
+  expect_setequal(SummarizedExperiment::rowData(out)$Master.Protein.Accessions,
+                  c("P1", "P3"))
+})
+
 test_that("filter_by_protein_fdr always retains proteins in retain_proteins", {
   se <- make_peptide_se()
   fdr_path <- write_protein_fdr_file()

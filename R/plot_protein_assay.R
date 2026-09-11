@@ -17,6 +17,13 @@
 #' @param colour_assays `logical`. Column each assay
 #' @param alpha_assays `logical`. Set sensible alpha value for each assay
 #' @return `ggplot` object.
+#' @examples
+#' # follow one protein through every assay in a processed QFeatures object
+#' poi <- rownames(tmt_qf[["protein"]])[1]
+#'
+#' plot_protein_assays(tmt_qf, poi,
+#'   experiments_to_plot = c("psms_filtered_sn", "protein"),
+#'   log2transform_cols = "psms_filtered_sn")
 #' @export
 
 plot_protein_assays <- function(obj,

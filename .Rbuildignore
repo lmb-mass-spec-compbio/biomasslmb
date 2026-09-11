@@ -6,3 +6,4 @@
 ^\.github$
 ^\.claude$
 ^data-raw$
+^CLAUDE\.md$

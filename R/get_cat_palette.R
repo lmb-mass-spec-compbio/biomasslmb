@@ -7,6 +7,15 @@
 #' @param n `numeric`. The number of colours required.
 #'
 #' @return Returns a `character` with the Hex codes for the colour palette.
+#' @examples
+#' # a colourblind-friendly categorical palette
+#' get_cat_palette(4)
+#'
+#' library(ggplot2)
+#' ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
+#'   geom_point() +
+#'   scale_colour_manual(values = get_cat_palette(3)) +
+#'   theme_biomasslmb()
 #' @export
 get_cat_palette <- function(n){
 

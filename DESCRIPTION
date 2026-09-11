@@ -1,9 +1,9 @@
 Package: biomasslmb
 Title: BioMass LMB Proteomics Data Analysis Utility Functions 
-Version: 0.0.5
+Version: 0.1.0
 Authors@R: c(
     person(given = "Tom", family = "Smith", role = c("aut", "cre"),
-           email = "tsmith@mrc-lmb.cam.ac.uk", comment = c(ORCID = "0000-0002-0697-8777"))
+           email = "tsmith@mrclmb.ac.uk", comment = c(ORCID = "0000-0002-0697-8777"))
     )
 Description: Utility functions for piping together quantitative proteomics data analysis. Designed for
   projects conducted with the Biological Mass Spectrometry and Proteomics Facility at
@@ -53,14 +53,25 @@ Imports:
     UpSetR,
     utils
 Suggests:
+    arrow,
+    fgsea,
+    ggrepel,
+    hexbin,
     httptest,
     httptest2,
+    imputeLCMD,
     knitr,
+    limma,
+    limpa,
     matrixStats,
     MsCoreUtils,
+    openxlsx,
     pcaMethods,
+    readxl,
     rmarkdown,
     testthat (>= 3.0.0),
-    usethis
+    usethis,
+    xml2
 Config/testthat/edition: 3
-URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/
+URL: https://lmb-mass-spec-compbio.github.io/biomasslmb/, https://github.com/lmb-mass-spec-compbio/biomasslmb
+BugReports: https://github.com/lmb-mass-spec-compbio/biomasslmb/issues

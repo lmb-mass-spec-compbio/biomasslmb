@@ -21,3 +21,11 @@ When exploring the proteome coverage, it is instructive to consider how many sam
 was present in for each level of filtering. This function takes a Qfeatures object and tallies how many samples a variable in the \code{rowData}
 was present in. When the row variables are the protein names, the tally is thus the number of samples the protein was present in.
 }
+\examples{
+rename_cols <- c("All PSMs" = "psms_raw", "Protein" = "protein")
+
+samples_present <- get_samples_present(
+  tmt_qf, rowVars = "Master.Protein.Accessions", rename_cols = rename_cols)
+
+head(samples_present)
+}

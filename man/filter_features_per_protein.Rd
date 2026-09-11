@@ -28,3 +28,10 @@ filter_features_per_protein(
 For summarisation of PSM or peptide to protein, we need a
 minimum number of finite values per protein per sample.
 }
+\examples{
+# keep only features from proteins with at least 2 features
+psms <- tmt_qf[["psms_filtered_sn"]]
+
+c(before = nrow(psms),
+  after = nrow(filter_features_per_protein(psms, min_features = 2)))
+}

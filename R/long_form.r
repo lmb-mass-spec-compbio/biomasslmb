@@ -31,7 +31,15 @@
 #' \code{\link[methods]{isGeneric}},
 #' \code{\link[methods]{findMethods}}
 #'
-#' @keywords internal
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
+#'   quantCols = 36:45,
+#'   name = "psms_raw")
+#'
+#' # long format, one row per feature per sample, for plotting with ggplot2
+#' head(qfeatures_long(tmt_qf[["psms_raw"]]))
+#'
+#' @export
 qfeatures_long <- function(object, ...) {
 
   if (methods::isGeneric("longForm") &&

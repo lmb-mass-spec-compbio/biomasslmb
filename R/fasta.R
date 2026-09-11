@@ -1,10 +1,10 @@
-#' Extract the contaminants protein accessions from a cRAP fasta file
+#' Extract the contaminants protein accessions from a contaminants fasta file
 #'
 #' @param cont_fasta_inf `character` Filepath to the contaminants fasta
 #' @return Returns a `list` of contaminant IDs
 #' @export
-get_crap_fasta_accessions <- function(cont_fasta_inf){
-  # Load the cRAP FASTA used for the PD search
+get_contaminant_fasta_accessions <- function(cont_fasta_inf){
+  # Load the contaminants FASTA used for the PD search
   crap.fasta <- Biostrings::fasta.index(cont_fasta_inf, seqtype = "AA")
 
   # Define a base R version of stringr::str_extract_all()
@@ -22,6 +22,19 @@ get_crap_fasta_accessions <- function(cont_fasta_inf){
     unlist()
 
   return(crap.accessions)
+}
+
+#' Extract the contaminants protein accessions from a cRAP fasta file
+#'
+#' @description Renamed to `get_contaminant_fasta_accessions()`. Kept here,
+#' unchanged, for backwards compatibility.
+#'
+#' @param cont_fasta_inf `character` Filepath to the contaminants fasta
+#' @return Returns a `list` of contaminant IDs
+#' @export
+get_crap_fasta_accessions <- function(cont_fasta_inf){
+  message("get_crap_fasta_accessions() is deprecated, use get_contaminant_fasta_accessions() instead.")
+  get_contaminant_fasta_accessions(cont_fasta_inf)
 }
 
 #' Extract the contaminants protein accessions from a MaxQuant contaminants fasta file

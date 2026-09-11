@@ -19,3 +19,15 @@ It's useful to assess the retention time distribution as a quality control step.
 The peptides should be spread across the retention times, without any clear 'gaps' or very clear
 trend towards one end of the gradient.
 }
+\examples{
+lfq_inf <- system.file("extdata", "lfq_dda_pd_PeptideGroups.txt",
+                       package = "biomasslmb")
+
+lfq_qf_raw <- QFeatures::readQFeatures(
+  assayData = read.delim(lfq_inf),
+  quantCols = grep("^Abundance", colnames(read.delim(lfq_inf))),
+  name = "peptides")
+
+plot_rt_dist(lfq_qf_raw[["peptides"]],
+             rt_col = "PSM.RT.in.min.by.Search.Engine.CHIMERYS")
+}

@@ -8,7 +8,8 @@ filter_features_mq_dda(
   obj,
   master_protein_col = "Leading.razor.protein",
   protein_col = "Proteins",
-  unique_master = TRUE,
+  unique_master = FALSE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   filter_associated_contaminant = TRUE,
@@ -25,8 +26,12 @@ proteins.}
 \item{protein_col}{\code{string}. Name of column containing all protein
 matches.}
 
-\item{unique_master}{\code{logical}. Filter out features without a unique
-master protein.}
+\item{unique_master}{\code{logical}. Not available for MaxQuant output, where
+\code{Leading.razor.protein} always holds a single accession, so there is nothing
+to filter. \code{TRUE} raises an error pointing at \code{proteotypic}.}
+
+\item{proteotypic}{\code{logical}. Filter out features whose peptide sequence is
+found in more than one protein.}
 
 \item{filter_contaminant}{\code{logical}. Filter out features which match a contaminant
 protein.}
@@ -45,9 +50,9 @@ Returns a \code{SummarisedExperiment} with the filtered MaxQuant output.
 This function filters the output .txt files (peptide groups or PSMs) from
 Proteome Discoverer for DDA, based on various criteria:
 \enumerate{
+\item Remove hits to the decoy database
 \item Remove features without a master protein
-\item Remove features without a unique master protein  (i.e.
-Number.of.Protein.Groups == 1)
+\item Remove features which are not proteotypic (i.e. Unique..Proteins. is yes)
 \item Remove features matching a contaminant protein
 \item Remove features matching any protein associated with
 a contaminant protein (see below)
@@ -55,6 +60,12 @@ a contaminant protein (see below)
 }
 }
 \details{
+MaxQuant assigns every feature a single razor protein, so unlike
+the other search engines it never reports a tie between protein groups and
+there is nothing for \code{unique_master} to filter. The ambiguity is instead
+recorded per peptide, in \code{Unique..Proteins.}, and \code{proteotypic = TRUE}
+is the equivalent filter. See \code{vignette("gotcha_peptide_to_protein")}.
+
 \strong{Associated contaminant proteins} are proteins which have at least
 one feature shared with a contaminant protein. It has been observed that the contaminant
 fasta files often do not contain all possible contaminant proteins e.g. some features

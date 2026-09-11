@@ -9,6 +9,7 @@ filter_features_diann(
   master_protein_col = "Protein.Group",
   protein_col = "Protein.Ids",
   unique_master = TRUE,
+  proteotypic = FALSE,
   filter_contaminant = TRUE,
   contaminant_proteins = NULL,
   filter_associated_contaminant = TRUE,
@@ -26,8 +27,11 @@ proteins.}
 \item{protein_col}{\code{string}. Name of column containing all protein
 matches.}
 
-\item{unique_master}{\code{logical}. Filter out features without a unique
-master protein.}
+\item{unique_master}{\code{logical}. Filter out features where the master protein
+column does not resolve to a single protein accession.}
+
+\item{proteotypic}{\code{logical}. Filter out features whose peptide sequence is
+found in more than one protein.}
 
 \item{filter_contaminant}{\code{logical}. Filter out features which match a contaminant
 protein.}
@@ -49,7 +53,9 @@ This function filters the precursor .txt file from
 DIA-NN, based on various criteria:
 \enumerate{
 \item Remove features without a master protein (Protein.Group column)
-\item Remove features without a unique master protein
+\item Remove features without a unique master protein, i.e. where Protein.Group
+holds more than one accession
+\item Remove features which are not proteotypic (i.e. Proteotypic == 1)
 \item Remove features matching a contaminant protein
 \item Remove features matching any protein associated with
 a contaminant protein (see below)

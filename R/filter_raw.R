@@ -16,6 +16,26 @@ remove_non_unique_master_protein <- function(obj, master_protein_col){
 
 
 #' @noRd
+remove_non_proteotypic <- function(obj, master_protein_col, proteotypic_col, proteotypic_value){
+  # Remove features whose peptide sequence is found in more than one protein
+  if(!proteotypic_col %in% colnames(rowData(obj))){
+    stop(sprintf(paste0(
+      'proteotypic=TRUE requires the %s column, which is not present. ',
+      'Check the columns retained when the data was read in'), proteotypic_col))
+  }
+
+  # tolower() since search engines write the flag as True/TRUE/true depending
+  # on the engine and how the file was parsed
+  is_proteotypic <- tolower(as.character(rowData(obj)[[proteotypic_col]])) ==
+    tolower(as.character(proteotypic_value))
+
+  obj <- obj[which(is_proteotypic), ]
+  message_parse(rowData(obj), master_protein_col, "non-proteotypic features removed")
+  return(obj)
+}
+
+
+#' @noRd
 remove_no_master <- function(obj, master_protein_col){
   # remove features without a master protein
   missing_master_protein <- (is.na(rowData(obj)[[master_protein_col]]) |
@@ -101,12 +121,21 @@ remove_contaminant <- function(obj,
 #' 1. Remove features without a master protein
 #' 2. Remove features without a unique master protein  (i.e.
 #'    Number.of.Protein.Groups == 1)
-#' 3. Remove features matching a contaminant protein
-#' 4. Remove features matching any protein associated with
+#' 3. Remove features which are not proteotypic (i.e. Number.of.Proteins == 1)
+#' 4. Remove features matching a contaminant protein
+#' 5. Remove features matching any protein associated with
 #'    a contaminant protein (see below)
-#' 5. Remove features without quantification values
+#' 6. Remove features without quantification values
 #'
-#' @details **Associated contaminant proteins** are proteins which have at least
+#' @details `unique_master` and `proteotypic` are different filters.
+#' `unique_master` asks whether Proteome Discoverer resolved the feature to a
+#' single protein accession, so it removes features which are ambiguous between
+#' protein groups. `proteotypic` asks whether the peptide sequence occurs in
+#' only one protein in the database, so it also removes features whose protein
+#' group holds several indistinguishable proteins, even where a master was
+#' assigned. See `vignette("gotcha_peptide_to_protein")`.
+#'
+#' **Associated contaminant proteins** are proteins which have at least
 #' one feature shared with a contaminant protein. It has been observed that the contaminant
 #' fasta files often do not contain all possible contaminant proteins e.g. some features
 #' can be assigned to a keratin which is not in the provided contaminant database.
@@ -126,8 +155,10 @@ remove_contaminant <- function(obj,
 #' proteins.
 #' @param protein_col `string`. Name of column containing all protein
 #' matches.
-#' @param unique_master `logical`. Filter out features without a unique
-#' master protein.
+#' @param unique_master `logical`. Filter out features where the master protein
+#' column does not resolve to a single protein accession.
+#' @param proteotypic `logical`. Filter out features whose peptide sequence is
+#' found in more than one protein.
 #' @param filter_contaminant `logical`. Filter out features which match a contaminant
 #' protein.
 #' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
@@ -138,36 +169,36 @@ remove_contaminant <- function(obj,
 #' @param cont_string `string`. string to search for contaminants
 #' @return Returns a `SummarisedExperiment` with the filtered Proteome Discoverer output.
 #' @examples
-#' \dontrun{
+#' # load PD PSM-level output
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_clock,
+#'   colData = tmt_clock_design,
+#'   quantCols = rownames(tmt_clock_design),
+#'   name = "psms_raw")
 #'
-#' #### PSMs.txt example ####
-#' # load PD PSMs.txt output
-#' tmt_qf <- readQFeatures(assayData = psm_tmt_total,
-#'  quantCols = 36:45,
-#'  name = "psms_raw")
+#' # extract the accessions from the contaminant FASTA, in both the prefixed
+#' # and bare forms, since the search may not have renamed its entries
+#' contaminant_fasta <- system.file(
+#'   "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb")
 #'
-#' # extract the UniProt accessions from the contaminant FASTA headers
-#' contaminant_accessions <- get_crap_fasta_accessions(contaminant_fasta_inf)
+#' contaminant_accessions <- get_contaminant_fasta_accessions(contaminant_fasta)
+#' contaminant_accessions <- c(contaminant_accessions,
+#'                             sub("^Cont_", "", contaminant_accessions))
 #'
-#' # filter the PSMs
-#' psm2 <- filter_features_pd_dda(
-#'   obj = tmt_qf[['psms_raw']],
-#'   master_protein_col = "Master.Protein.Accessions",
-#'   protein_col = "Protein.Accessions",
-#'   unique_master = TRUE,
-#'   TMT = TRUE,
-#'   filter_contaminant = TRUE,
+#' # remove contaminants and PSMs without a unique master protein
+#' psms_filtered <- filter_features_pd_dda(
+#'   obj = tmt_qf[["psms_raw"]],
 #'   contaminant_proteins = contaminant_accessions,
-#'   filter_associated_contaminant = TRUE
-#' )
+#'   filter_contaminant = TRUE,
+#'   filter_associated_contaminant = TRUE,
+#'   unique_master = TRUE)
 #'
-#'
-#' }
+#' c(before = nrow(tmt_qf[["psms_raw"]]), after = nrow(psms_filtered))
 #' @export
 filter_features_pd_dda <- function(obj,
                                    master_protein_col = "Master.Protein.Accessions",
                                    protein_col = "Protein.Accessions",
                                    unique_master = TRUE,
+                                   proteotypic = FALSE,
                                    filter_contaminant = TRUE,
                                    contaminant_proteins = NULL,
                                    crap_proteins = NULL,
@@ -226,6 +257,11 @@ filter_features_pd_dda <- function(obj,
     obj <- remove_non_unique_master_protein(obj, master_protein_col)
   }
 
+  # remove features which could originate from more than one protein
+  if (proteotypic) {
+    obj <- remove_non_proteotypic(obj, master_protein_col, 'Number.of.Proteins', 1)
+  }
+
   # remove features with quantification warnings if necessary
   if (remove_no_quant) {
     obj <- remove_no_quant_assay(obj, master_protein_col)
@@ -242,11 +278,13 @@ filter_features_pd_dda <- function(obj,
 #' DIA-NN, based on various criteria:
 #'
 #' 1. Remove features without a master protein (Protein.Group column)
-#' 2. Remove features without a unique master protein
-#' 3. Remove features matching a contaminant protein
-#' 4. Remove features matching any protein associated with
+#' 2. Remove features without a unique master protein, i.e. where Protein.Group
+#'    holds more than one accession
+#' 3. Remove features which are not proteotypic (i.e. Proteotypic == 1)
+#' 4. Remove features matching a contaminant protein
+#' 5. Remove features matching any protein associated with
 #'    a contaminant protein (see below)
-#' 5. Remove features without quantification values
+#' 6. Remove features without quantification values
 #'
 #' @details **Associated contaminant proteins** are proteins which have at least
 #' one feature shared with a contaminant protein. It has been observed that the contaminant
@@ -268,8 +306,10 @@ filter_features_pd_dda <- function(obj,
 #' proteins.
 #' @param protein_col `string`. Name of column containing all protein
 #' matches.
-#' @param unique_master `logical`. Filter out features without a unique
-#' master protein.
+#' @param unique_master `logical`. Filter out features where the master protein
+#' column does not resolve to a single protein accession.
+#' @param proteotypic `logical`. Filter out features whose peptide sequence is
+#' found in more than one protein.
 #' @param filter_contaminant `logical`. Filter out features which match a contaminant
 #' protein.
 #' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
@@ -283,6 +323,7 @@ filter_features_diann <- function(obj,
                                  master_protein_col = "Protein.Group",
                                  protein_col = "Protein.Ids",
                                  unique_master = TRUE,
+                                 proteotypic = FALSE,
                                  filter_contaminant = TRUE,
                                  contaminant_proteins = NULL,
                                  filter_associated_contaminant = TRUE,
@@ -320,6 +361,11 @@ filter_features_diann <- function(obj,
     obj <- remove_non_unique_master_protein(obj, master_protein_col)
   }
 
+  # remove features which could originate from more than one protein
+  if (proteotypic) {
+    obj <- remove_non_proteotypic(obj, master_protein_col, 'Proteotypic', 1)
+  }
+
   # remove features with quantification warnings if necessary
   if (remove_no_quant) {
     obj <- remove_no_quant_assay(obj, master_protein_col)
@@ -336,16 +382,20 @@ filter_features_diann <- function(obj,
 #' Spectronaut, based on various criteria:
 #'
 #' 1. Remove features without a master protein (PG.ProteinAccessions column)
-#' 2. Remove features without a unique master protein
-#' 3. Remove features matching a contaminant protein
+#' 2. Remove features without a unique master protein, i.e. where
+#'    PG.ProteinAccessions holds more than one accession
+#' 3. Remove features which are not proteotypic (i.e. PEP.IsProteotypic is True)
+#' 4. Remove features matching a contaminant protein
 #' 5. Remove features without quantification values
 #'
 #' @param obj `SummarisedExperiment` containing output from Proteome Discoverer.
 #' Use \code{\link[QFeatures]{readQFeatures}} to read in .txt file
 #' @param master_protein_col `string`. Name of column containing master
 #' proteins.
-#' @param unique_master `logical`. Filter out features without a unique
-#' master protein.
+#' @param unique_master `logical`. Filter out features where the master protein
+#' column does not resolve to a single protein accession.
+#' @param proteotypic `logical`. Filter out features whose peptide sequence is
+#' found in more than one protein.
 #' @param filter_contaminant `logical`. Filter out features which match a contaminant
 #' protein.
 #' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
@@ -356,6 +406,7 @@ filter_features_diann <- function(obj,
 filter_features_sn <- function(obj,
                                  master_protein_col = "PG.ProteinAccessions",
                                  unique_master = TRUE,
+                                 proteotypic = FALSE,
                                  filter_contaminant = TRUE,
                                  contaminant_proteins = NULL,
                                  remove_no_quant = TRUE,
@@ -389,6 +440,11 @@ filter_features_sn <- function(obj,
       strsplit(rowData(obj)[[master_protein_col]], split=';'), length)
 
     obj <- remove_non_unique_master_protein(obj, master_protein_col)
+  }
+
+  # remove features which could originate from more than one protein
+  if (proteotypic) {
+    obj <- remove_non_proteotypic(obj, master_protein_col, 'PEP.IsProteotypic', 'True')
   }
 
   # remove features with quantification warnings if necessary
@@ -440,15 +496,21 @@ remove_contaminant_mq <- function (obj, contaminant_proteins, filter_associated_
 #' @description This function filters the output .txt files (peptide groups or PSMs) from
 #' Proteome Discoverer for DDA, based on various criteria:
 #'
-#' 1. Remove features without a master protein
-#' 2. Remove features without a unique master protein  (i.e.
-#'    Number.of.Protein.Groups == 1)
-#' 3. Remove features matching a contaminant protein
-#' 4. Remove features matching any protein associated with
+#' 1. Remove hits to the decoy database
+#' 2. Remove features without a master protein
+#' 3. Remove features which are not proteotypic (i.e. Unique..Proteins. is yes)
+#' 4. Remove features matching a contaminant protein
+#' 5. Remove features matching any protein associated with
 #'    a contaminant protein (see below)
-#' 5. Remove features without quantification values
+#' 6. Remove features without quantification values
 #'
-#' @details **Associated contaminant proteins** are proteins which have at least
+#' @details MaxQuant assigns every feature a single razor protein, so unlike
+#' the other search engines it never reports a tie between protein groups and
+#' there is nothing for `unique_master` to filter. The ambiguity is instead
+#' recorded per peptide, in `Unique..Proteins.`, and `proteotypic = TRUE`
+#' is the equivalent filter. See `vignette("gotcha_peptide_to_protein")`.
+#'
+#' **Associated contaminant proteins** are proteins which have at least
 #' one feature shared with a contaminant protein. It has been observed that the contaminant
 #' fasta files often do not contain all possible contaminant proteins e.g. some features
 #' can be assigned to a keratin which is not in the provided contaminant database.
@@ -468,8 +530,11 @@ remove_contaminant_mq <- function (obj, contaminant_proteins, filter_associated_
 #' proteins.
 #' @param protein_col `string`. Name of column containing all protein
 #' matches.
-#' @param unique_master `logical`. Filter out features without a unique
-#' master protein.
+#' @param unique_master `logical`. Not available for MaxQuant output, where
+#' `Leading.razor.protein` always holds a single accession, so there is nothing
+#' to filter. `TRUE` raises an error pointing at `proteotypic`.
+#' @param proteotypic `logical`. Filter out features whose peptide sequence is
+#' found in more than one protein.
 #' @param filter_contaminant `logical`. Filter out features which match a contaminant
 #' protein.
 #' @param contaminant_proteins `character vector`. The protein IDs form the contaminant proteins
@@ -482,7 +547,8 @@ remove_contaminant_mq <- function (obj, contaminant_proteins, filter_associated_
 filter_features_mq_dda <- function (obj,
                                     master_protein_col ='Leading.razor.protein',
                                     protein_col = "Proteins",
-                                    unique_master = TRUE,
+                                    unique_master = FALSE,
+                                    proteotypic = FALSE,
                                     filter_contaminant = TRUE,
                                     contaminant_proteins = NULL,
                                     filter_associated_contaminant = TRUE,
@@ -508,26 +574,18 @@ filter_features_mq_dda <- function (obj,
     }
   }
   obj <- remove_no_master(obj, master_protein_col)
+
   if (unique_master) {
-    if('Unique..Proteins.' %in% colnames(rowData(obj))){
+    stop(paste0(
+      'unique_master is not available for MaxQuant output. Every feature is ',
+      'assigned a single Leading.razor.protein, so there is nothing to filter. ',
+      'Use proteotypic=TRUE to retain only the features whose peptide matches ',
+      'a single protein'))
+  }
 
-      obj <- obj[rowData(obj)$Unique..Proteins.=='yes',]
-      message_parse(rowData(obj), master_protein_col, "features with non-unique master proteins removed")
-
-    } else if('Leading.proteins' %in% colnames(rowData(obj))){
-
-        rowData(obj)$Number.of.Protein.Groups <- sapply(
-          strsplit(rowData(obj)$Leading.proteins, split = ';'), length)
-        obj <- remove_non_unique_master_protein(obj, master_protein_col)
-
-    } else{
-
-      stop(paste0(
-        'Could not find a column to determine unique master proteins. ',
-        'Please check the column names in your MaxQuant output contain either ',
-        'Unique..Proteins. or Leading.proteins'))
-
-    }
+  # remove features which could originate from more than one protein
+  if (proteotypic) {
+    obj <- remove_non_proteotypic(obj, master_protein_col, 'Unique..Proteins.', 'yes')
   }
 
   if (remove_no_quant) {

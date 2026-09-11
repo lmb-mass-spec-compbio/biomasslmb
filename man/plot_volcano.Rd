@@ -35,3 +35,12 @@ are frequently displayed in a 'volcano' plot, where x = log fold-change
 and y = -log10(p-value). This function generates a volcano plot from a \code{data.frame}
 containing the statistical testing results
 }
+\examples{
+# plot_volcano takes a statistical testing results data.frame, such as
+# the output of limma::topTable(), with logFC and adj.P.Val columns
+results <- data.frame(
+  logFC = rnorm(500),
+  adj.P.Val = runif(500))
+
+plot_volcano(results)
+}

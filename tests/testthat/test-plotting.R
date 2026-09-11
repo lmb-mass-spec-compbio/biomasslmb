@@ -5,7 +5,7 @@
 suppressPackageStartupMessages(library(QFeatures))
 psm <- tmt_qf[["psms_raw"]]
 qf <- QFeatures(list(psms = psm))
-colData(qf)$condition <- rep(c("A", "B"), 5)
+colData(qf)$condition <- rep(c("A", "B"), length.out = ncol(qf))
 
 test_that("theme_biomasslmb returns a ggplot theme and toggles aspect ratio / border", {
   th <- theme_biomasslmb()
@@ -69,6 +69,17 @@ test_that("plot_missing_SN and plot_missing_SN_per_sample return ggplot objects"
 test_that("plot_missing_upset returns an upset plot", {
   p <- plot_missing_upset(qf, "psms")
   expect_s3_class(p, "upset")
+})
+
+test_that("plot_missing_upset passes ... on, including over its own defaults", {
+  # nintersects, sets and keep.order are supplied inside the function, so
+  # passing them at all depends on ... taking precedence over those defaults
+  expect_s3_class(plot_missing_upset(qf, "psms", nintersects = 5), "upset")
+
+  na_cols <- colnames(data.frame(assay(psm)))[colSums(is.na(assay(psm))) > 0]
+  wanted <- paste0(sort(na_cols)[1:2], "_NA")
+  p <- plot_missing_upset(qf, "psms", sets = wanted)
+  expect_equal(p$Set_names, wanted)
 })
 
 test_that("plot_cor_samples runs without error and returns the sample correlation matrix", {

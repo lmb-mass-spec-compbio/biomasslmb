@@ -8,6 +8,13 @@
 #' @param rowVars `character vector` row variables to group by, e.g 'Master.Protein.Accessions'
 #' @param rename_cols `named character vector` optional named list to rename the experiments. List values should be current experiment names and list names should be updated experiment names
 #' @return `data.frame` object.
+#' @examples
+#' rename_cols <- c("All PSMs" = "psms_raw", "Protein" = "protein")
+#'
+#' samples_present <- get_samples_present(
+#'   tmt_qf, rowVars = "Master.Protein.Accessions", rename_cols = rename_cols)
+#'
+#' head(samples_present)
 #' @export
 get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 
@@ -48,6 +55,13 @@ get_samples_present <- function(obj, rowVars, rename_cols=NULL){
 #' @param rowvars `character vector` row variables on which the tallying was grouped by
 #' @param breaks `numeric vector` breaks for the 'Samples' fill scale. If NULL (default), breaks are determined automatically
 #' @return `ggplot` object.
+#' @examples
+#' rename_cols <- c("All PSMs" = "psms_raw", "Protein" = "protein")
+#'
+#' samples_present <- get_samples_present(
+#'   tmt_qf, rowVars = "Master.Protein.Accessions", rename_cols = rename_cols)
+#'
+#' plot_samples_present(samples_present, rowvars = "Master.Protein.Accessions")
 #' @export
 plot_samples_present <- function(samples_present, rowvars, breaks=NULL){
 

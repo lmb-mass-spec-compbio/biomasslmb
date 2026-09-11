@@ -4,12 +4,16 @@
 \alias{plot_missing_upset}
 \title{Plot the most common missing value patterns}
 \usage{
-plot_missing_upset(obj, i)
+plot_missing_upset(obj, i, ...)
 }
 \arguments{
 \item{obj}{\code{QFeatures}. Proteomics dataset}
 
 \item{i}{\code{string}. Index for the SummarisedExperiment you wish to plot}
+
+\item{...}{additional arguments passed onto \code{naniar::gg_miss_upset}, and from
+there onto \code{UpSetR::upset}. Arguments given here override the defaults set by
+this function (\code{sets}, \code{keep.order} and \code{nintersects}).}
 }
 \value{
 Returns a \emph{ggplot} object.
@@ -17,22 +21,18 @@ Returns a \emph{ggplot} object.
 \description{
 The patterns in missing values can be informative with respect to
 whether the experiment has worked, or if particular samples are outliers. This
-function uses an 'upset' plot to show the top 50 most common missing value patterns
-across the samples
+function uses an 'upset' plot to show the most common missing value patterns
+across the samples, the top 50 by default
 }
 \examples{
-set.seed(11)
-library(ggplot2)
-
-df <- diamonds[sample(nrow(diamonds), 1000), ]
-
 tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
   quantCols = 36:45,
   name = "psms_raw")
 
+# which combinations of samples are missing together?
+plot_missing_upset(tmt_qf, "psms_raw")
 
-
-
-
+# just the ten most common patterns
+plot_missing_upset(tmt_qf, "psms_raw", nintersects = 10)
 
 }

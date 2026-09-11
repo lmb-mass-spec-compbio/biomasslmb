@@ -38,8 +38,33 @@ remove_x <- function(x) {
   gsub("^X", "", x)
 }
 
-#' @noRd
-message_parse <- function(x, column, message) {
+#' Report how many features and master proteins remain
+#'
+#' @description Prints the number of rows and the number of distinct master
+#' proteins in a feature-level annotation table, followed by a short note
+#' saying which step the count describes. The `filter_features_*` functions call this
+#' after each filter they apply, so the same message format can be used to
+#' report a count at a point where no filter function ran, such as after
+#' `filterNA()` or a manual subset.
+#'
+#' @param x `data.frame` or `DataFrame`. Feature-level annotations, normally
+#'   the output of `rowData()` on an assay.
+#' @param column `string`. Name of the column in `x` holding the master protein
+#'   accession, e.g. `"Master.Protein.Accessions"`.
+#' @param note `string`. Short description of the step being reported.
+#'
+#' @return Invisibly `NULL`; called for the message it prints.
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
+#'   quantCols = 36:45,
+#'   name = "psms_raw")
+#'
+#' message_parse(SummarizedExperiment::rowData(tmt_qf[["psms_raw"]]),
+#'               "Master.Protein.Accessions",
+#'               "Input")
+#'
+#' @export
+message_parse <- function(x, column, note) {
   message(sprintf("%s features found from %s master proteins => %s",
-                  nrow(x), length(unique(x[[column]])), message))
+                  nrow(x), length(unique(x[[column]])), note))
 }

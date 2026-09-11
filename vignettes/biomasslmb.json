@@ -787,5 +787,361 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "Frankenfield2022",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.2c00145",
+		"issue": "9",
+		"journalAbbreviation": "J Proteome Res",
+		"page": "2104-2113",
+		"title": "Protein Contaminants Matter: Building Universal Protein Contaminant Libraries for DDA and DIA Proteomics",
+		"volume": "21",
+		"author": [
+			{
+				"family": "Frankenfield",
+				"given": "Ashley M."
+			},
+			{
+				"family": "Ni",
+				"given": "Jiawei"
+			},
+			{
+				"family": "Ahmed",
+				"given": "Mustafa"
+			},
+			{
+				"family": "Hao",
+				"given": "Ling"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2022",
+					7,
+					6
+				]
+			]
+		}
+	},
+	{
+		"id": "Wang2022",
+		"type": "article-journal",
+		"container-title": "EMBO Molecular Medicine",
+		"DOI": "10.15252/emmm.202216643",
+		"issue": "11",
+		"page": "e16643",
+		"title": "The human host response to monkeypox infection: a proteomic case series study",
+		"volume": "14",
+		"author": [
+			{
+				"family": "Wang",
+				"given": "Ziyue"
+			},
+			{
+				"family": "Tober-Lau",
+				"given": "Pinkus"
+			},
+			{
+				"family": "Farztdinov",
+				"given": "Vadim"
+			},
+			{
+				"family": "Lemke",
+				"given": "Oliver"
+			},
+			{
+				"family": "Schwecke",
+				"given": "Torsten"
+			},
+			{
+				"family": "Steinbrecher",
+				"given": "Sarah"
+			},
+			{
+				"family": "Muenzner",
+				"given": "Julia"
+			},
+			{
+				"family": "Kriedemann",
+				"given": "Helene"
+			},
+			{
+				"family": "Sander",
+				"given": "Leif Erik"
+			},
+			{
+				"family": "Hartl",
+				"given": "Johannes"
+			},
+			{
+				"family": "Mülleder",
+				"given": "Michael"
+			},
+			{
+				"family": "Ralser",
+				"given": "Markus"
+			},
+			{
+				"family": "Kurth",
+				"given": "Florian"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2022",
+					11
+				]
+			]
+		}
+	},
+	{
+		"id": "schwanhausser2011",
+		"type": "article-journal",
+		"container-title": "Nature",
+		"DOI": "10.1038/nature10098",
+		"issue": "7347",
+		"page": "337-342",
+		"title": "Global quantification of mammalian gene expression control",
+		"volume": "473",
+		"author": [
+			{ "family": "Schwanhäusser", "given": "Björn" },
+			{ "family": "Busse", "given": "Dorothea" },
+			{ "family": "Li", "given": "Na" },
+			{ "family": "Dittmar", "given": "Gunnar" },
+			{ "family": "Schuchhardt", "given": "Johannes" },
+			{ "family": "Wolf", "given": "Jana" },
+			{ "family": "Chen", "given": "Wei" },
+			{ "family": "Selbach", "given": "Matthias" }
+		],
+		"issued": {
+			"date-parts": [
+				[ "2011" ]
+			]
+		}
+	},
+	{
+		"id": "li2021tmtpro18",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.1c00168",
+		"ISSN": "1535-3907",
+		"issue": "5",
+		"journalAbbreviation": "J Proteome Res",
+		"language": "eng",
+		"note": "PMID: 33900084",
+		"page": "2964-2972",
+		"source": "PubMed",
+		"title": "TMTpro-18plex: The Expanded and Complete Set of TMTpro Reagents for Sample Multiplexing",
+		"volume": "20",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Jiaming"
+			},
+			{
+				"family": "Cai",
+				"given": "Zhenying"
+			},
+			{
+				"family": "Bomgarden",
+				"given": "Ryan D."
+			},
+			{
+				"family": "Pike",
+				"given": "Ian"
+			},
+			{
+				"family": "Kuhn",
+				"given": "Karsten"
+			},
+			{
+				"family": "Rogers",
+				"given": "John C."
+			},
+			{
+				"family": "Roberts",
+				"given": "Thomas M."
+			},
+			{
+				"family": "Gygi",
+				"given": "Steven P."
+			},
+			{
+				"family": "Paulo",
+				"given": "Joao A."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2021", 4, 26 ]
+			]
+		}
+	},
+	{
+		"id": "zuniga2024tmt35",
+		"type": "article-journal",
+		"container-title": "Journal of Proteome Research",
+		"DOI": "10.1021/acs.jproteome.4c00668",
+		"ISSN": "1535-3907",
+		"issue": "11",
+		"journalAbbreviation": "J Proteome Res",
+		"language": "eng",
+		"note": "PMID: 39380184",
+		"page": "5153-5165",
+		"source": "PubMed",
+		"title": "Achieving a 35-Plex Tandem Mass Tag Reagent Set through Deuterium Incorporation",
+		"volume": "23",
+		"author": [
+			{
+				"family": "Zuniga",
+				"given": "Nathan R."
+			},
+			{
+				"family": "Frost",
+				"given": "Dustin C."
+			},
+			{
+				"family": "Kuhn",
+				"given": "Karsten"
+			},
+			{
+				"family": "Shin",
+				"given": "Myungsun"
+			},
+			{
+				"family": "Whitehouse",
+				"given": "Rebecca L."
+			},
+			{
+				"family": "Wei",
+				"given": "Ting-Yu"
+			},
+			{
+				"family": "He",
+				"given": "Yuchen"
+			},
+			{
+				"family": "Dawson",
+				"given": "Shane L."
+			},
+			{
+				"family": "Pike",
+				"given": "Ian"
+			},
+			{
+				"family": "Bomgarden",
+				"given": "Ryan D."
+			},
+			{
+				"family": "Gygi",
+				"given": "Steven P."
+			},
+			{
+				"family": "Paulo",
+				"given": "Joao A."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2024", 10, 9 ]
+			]
+		}
+	},
+	{
+		"id": "li2023dpc",
+		"type": "article-journal",
+		"title": "Neither random nor censored: estimating intensity-dependent probabilities for missing values in label-free proteomics",
+		"container-title": "Bioinformatics",
+		"volume": "39",
+		"issue": "5",
+		"page": "btad200",
+		"DOI": "10.1093/bioinformatics/btad200",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengbo"
+			},
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2023
+				]
+			]
+		}
+	},
+	{
+		"id": "li2025limpa",
+		"type": "article-journal",
+		"title": "Quantification and differential analysis of mass spectrometry proteomics data with probabilistic recovery of information from missing values",
+		"container-title": "bioRxiv",
+		"page": "2025.04.28.651125",
+		"DOI": "10.1101/2025.04.28.651125",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengbo"
+			},
+			{
+				"family": "Cobbold",
+				"given": "Simon A."
+			},
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2025
+				]
+			]
+		}
+	},
+	{
+		"id": "li2026missbayes",
+		"type": "article-journal",
+		"title": "Empirical-Bayes and Bayesian hierarchical modelling for missingness and differential expression in proteomics",
+		"container-title": "bioRxiv",
+		"page": "2026.01.15.699650",
+		"DOI": "10.64898/2026.01.15.699650",
+		"author": [
+			{
+				"family": "Li",
+				"given": "Mengchun"
+			},
+			{
+				"family": "Mallikarjun",
+				"given": "Venkatesh"
+			},
+			{
+				"family": "Frey",
+				"given": "Andrew"
+			},
+			{
+				"family": "Ogundimu",
+				"given": "Emmanuel"
+			},
+			{
+				"family": "Trost",
+				"given": "Matthias"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					2026
+				]
+			]
+		}
 	}
 ]

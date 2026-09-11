@@ -6,9 +6,10 @@ test_that("get_samples_present tallies how many samples each protein was detecte
 
   expect_true(is.data.frame(out))
   expect_setequal(colnames(out), c("Master.Protein.Accessions", "psms_raw", "psms_filtered"))
-  expect_true(all(out$psms_raw >= 1 & out$psms_raw <= 10))
+  n_samples <- ncol(sub_qf[["psms_raw"]])
+  expect_true(all(out$psms_raw >= 1 & out$psms_raw <= n_samples))
   # psms_filtered is NA for proteins entirely absent after filtering
-  expect_true(all(out$psms_filtered[!is.na(out$psms_filtered)] >= 1 & out$psms_filtered[!is.na(out$psms_filtered)] <= 10))
+  expect_true(all(out$psms_filtered[!is.na(out$psms_filtered)] >= 1 & out$psms_filtered[!is.na(out$psms_filtered)] <= n_samples))
   expect_true(any(is.na(out$psms_filtered)))
 
   # cross check one protein by hand against the raw assay

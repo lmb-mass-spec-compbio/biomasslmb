@@ -39,4 +39,12 @@ based on a separate file detailing the proteins passing the FDR confidence thres
 
 This function is used to filter peptides to retain only those from proteins
 passing the FDR threshold
+
+Note that peptides whose master protein has no row in
+\code{protein_fdr_filename} are also removed, since no FDR confidence can be
+established for them. This includes every peptide whose master protein is a
+group of several accessions, which cannot match a single-accession row in
+the protein-level output. Applying this function after filtering to unique
+master proteins (see \code{filter_features_pd_dda(unique_master = TRUE)}) keeps
+the two effects separate. Accessions listed in \code{retain_proteins} are exempt.
 }

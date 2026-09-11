@@ -11,6 +11,9 @@ An object of class \code{QFeatures} of length 6.
 lfq_qf
 }
 \description{
-Qfeature containing LFQ-DDA data processed in the \verb{LFQ-DDA QC Peptide-level quantification and summarisation to protein-level abundance} vignette
+\code{QFeatures} object holding the LFQ-DDA whole-proteome dataset
+(\code{lfq_dda_pd_PeptideGroups.txt}) processed through peptide QC, filtering and
+summarisation to protein level with \code{robustSummary}, as produced in the
+\verb{LFQ-DDA workflow: peptide QC and protein summarisation} vignette.
 }
 \keyword{datasets}

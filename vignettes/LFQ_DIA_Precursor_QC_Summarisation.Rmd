@@ -236,7 +236,7 @@ At this level of missingness, requiring complete precursors would discard most o
 dia_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
   dia_qf[['peptides_filtered_norm']], pNA = 0.75)
 
-biomasslmb:::message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
+message_parse(rowData(dia_qf[['peptides_filtered_missing']]),
                            'Protein.Group',
                            "Removing peptides with > 75% missing values")
 ```
@@ -252,7 +252,7 @@ min_peps <- 2
 dia_qf[['peptides_for_summarisation']] <- filter_features_per_protein(
   dia_qf[['peptides_filtered_missing']], min_features = min_peps, master_protein_col = 'Protein.Group')
 
-biomasslmb:::message_parse(rowData(dia_qf[['peptides_for_summarisation']]),
+message_parse(rowData(dia_qf[['peptides_for_summarisation']]),
                            'Protein.Group',
                            "Removing 'one-hit' wonders")
 ```

@@ -168,7 +168,7 @@ lfq_qf <- lfq_qf %>%
 filterFeatures(~ PSM.Search.Engine.Rank.by.Search.Engine.CHIMERYS == 1,
                i = "peptides_filtered")
 
-biomasslmb:::message_parse(rowData(lfq_qf[['peptides_filtered']]),
+message_parse(rowData(lfq_qf[['peptides_filtered']]),
                            'Master.Protein.Accessions',
                            "Removing peptides that are not rank 1")
 ```
@@ -238,7 +238,7 @@ Unstructured or not, there are far too many missing values to discard every pept
 lfq_qf[['peptides_filtered_missing']] <- QFeatures::filterNA(
   lfq_qf[['peptides_filtered_norm']], 4/6)
 
-biomasslmb:::message_parse(rowData(lfq_qf[['peptides_filtered_missing']]),
+message_parse(rowData(lfq_qf[['peptides_filtered_missing']]),
                            'Master.Protein.Accessions',
                            "Removing peptides with more than 4/6 missing values")
 ```
@@ -250,7 +250,7 @@ min_peps <- 2
 lfq_qf[['peptides_for_summarisation']] <- filter_features_per_protein(
   lfq_qf[['peptides_filtered_missing']], min_features = min_peps)
 
-biomasslmb:::message_parse(rowData(lfq_qf[['peptides_for_summarisation']]),
+message_parse(rowData(lfq_qf[['peptides_for_summarisation']]),
                            'Master.Protein.Accessions',
                            "Removing 'one-hit' wonders")
 ```

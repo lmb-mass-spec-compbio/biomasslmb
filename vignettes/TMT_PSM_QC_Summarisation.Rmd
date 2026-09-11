@@ -193,7 +193,7 @@ tmt_qf[['psms_filtered_rank']] <- tmt_qf[['psms_filtered_sn']]
 tmt_qf <- tmt_qf %>%
   filterFeatures(~ Rank == 1, i = 'psms_filtered_rank')
 
-biomasslmb:::message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
+message_parse(rowData(tmt_qf[['psms_filtered_rank']]),
                          'Master.Protein.Accessions',
                          "Removing peptides that are not rank 1")
 
@@ -525,6 +525,26 @@ tmt_qf_factorial <- tmt_mq[, , 'protein']
 
 usethis::use_data(tmt_qf_factorial, overwrite = TRUE)
 ```
+
+# Where to go next
+
+Both routes above end in the same place: protein-level abundances with the
+experimental design attached, summarised with `sum`.
+
+- [Data exploration and statistical testing](exploration_and_statistical_testing.html)
+  picks up from exactly that object — checking the experiment worked, deciding
+  which proteins can be tested, and testing them.
+- [Multiplexed TMT](TMT_multiplex.html) covers what changes once a design runs
+  to more than one plex. Summing complete PSMs is cheap here only because
+  within-plex missingness is low; between plexes it is not, and a bridge
+  channel rather than a summarisation choice is what makes the plexes
+  comparable.
+- [Comparing protein summarisation approaches](summarisation_methods.html)
+  measures `sum` against `robustSummary` on this dataset and on one where the
+  answer goes the other way.
+- The contaminant filtering above rests on three separate defences that do not
+  always agree; [contaminants and protein FDR](gotcha_contaminants_and_FDR.html)
+  shows what each one catches and how a silent failure looks.
 
 # Getting help
 

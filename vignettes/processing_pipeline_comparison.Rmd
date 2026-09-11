@@ -294,6 +294,22 @@ Note also that the disagreement counted here is only over the `r nrow(comparison
 
 The same reasoning applies to the DIA pipelines. The [LFQ-DIA precursor QC and summarisation](LFQ_DIA_Precursor_QC_Summarisation.html) vignette covers reading both DIA-NN and Spectronaut output, and a comparison between them would be built exactly as above: process both through the same steps, then compare the protein-level results.
 
+# Where to go next
+
+- [Peptides are not proteins](gotcha_peptide_to_protein.html) measures the other
+  half of the disagreement above. The two pipelines agree on every unshared
+  peptide and on well under half of the shared ones, so some of what looks like
+  a quantification difference here is an assignment difference.
+- [Comparing protein summarisation approaches](summarisation_methods.html)
+  isolates the summarisation step on its own, holding the search constant —
+  useful for telling which part of a pipeline difference came from which stage.
+- [LFQ-DDA peptide QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html)
+  covers reading both Proteome Discoverer and MaxQuant output in full, if what
+  you need is to run one of these pipelines rather than compare them.
+- `?tls` has the arguments for the orthogonal regression fitted above, which is
+  the line to use whenever both axes are noisy estimates and neither predicts
+  the other.
+
 # Getting help
 
 If your experiment does not fit what this article assumes, or a result looks

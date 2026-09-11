@@ -36,6 +36,8 @@ library(limma)
 
 `lfq_dda_techrep_peptides.txt.gz` is MaxQuant peptide-level output from a bait pulldown against a tag-only control. Three biological replicates of each, and every one of those six samples was acquired twice — twelve runs in total.
 
+The sample names carry that structure, and the rest of the article relies on it: `Condition_Replicate_Techrep`, so `IP_2_1` and `IP_2_2` are the two acquisitions of the same pulldown, while `IP_1_1` and `IP_2_1` are different pulldowns. The design table below is built by pulling those three fields back out of the column names.
+
 ```{r}
 pep_inf <- system.file("extdata", "lfq_dda_techrep_peptides.txt.gz",
                        package = "biomasslmb")
@@ -82,12 +84,15 @@ quant <- assay(qf[['peptides']])
 
 pair_spread <- function(a, b) sd(quant[, a] - quant[, b], na.rm = TRUE)
 
+# Technical pairs: same biological replicate r, its two acquisitions 1 and 2
 technical <- unlist(lapply(c('Control', 'IP'), function(cond) {
   sapply(1:3, function(r) {
     pair_spread(paste0(cond, '_', r, '_1'), paste0(cond, '_', r, '_2'))
   })
 }))
 
+# Biological pairs: different replicates, holding the acquisition t fixed so
+# that the two kinds of pair differ only in which factor is being varied
 biological <- unlist(lapply(c('Control', 'IP'), function(cond) {
   lapply(1:2, function(t) {
     combn(1:3, 2, function(p) {

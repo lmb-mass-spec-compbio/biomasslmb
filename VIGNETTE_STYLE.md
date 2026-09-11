@@ -151,25 +151,54 @@ against.
 A draft that is far outside the first column in more than one or two rows is
 usually in the old register rather than being unusual on purpose.
 
-Two rows depend on what kind of article it is rather than on register, and
-comparing against the aggregate will mislead. Second-person and bold density
-are high in the reference and cautionary articles, which address the reader
-directly and report findings, and low in the workflow articles, which walk
-through one route: `you` runs at 9-13 per 1000 words in the first group and
-0.7-2.9 in the second. Compare a draft against articles of its own kind.
+### Three rows depend on the kind of article, not on register
 
-## Files still in the old register
+Second person, obligation and bold density vary by what an article is *for*,
+and comparing any of the three against the aggregate will mislead. The three
+kinds below are the `_pkgdown.yml` groupings collapsed to where the numbers
+actually cluster. Compare a draft against articles of its own kind.
 
-Four vignettes were carried over from `main` and have only partly converged.
-Their sentence length and hedging already match; what lags is person, section
-openers, and emphasis.
+| Kind | Articles | `you` | obligation | bold |
+|---|---|---|---|---|
+| Orientation and reference | `biomasslmb`, `qfeatures_objects`, `protein_annotation` | 10-12 | 2.5-7 | 3.5-8.5 |
+| Workflow | the core workflow and specialised design articles | 1-6 | 1.7-4 | 1-4.5 |
+| Comparison and cautionary | the "choosing between options" and `gotcha_*` articles | 2.5-13 | 0.8-3.7 | 2.5-7 |
 
-- `LFQ_DDA_Peptide_QC_Summarisation.Rmd`
-- `LFQ_DIA_Precursor_QC_Summarisation.Rmd`
-- `TMT_PSM_QC_Summarisation.Rmd`
-- `summarisation_methods.Rmd`
+The pattern behind the table, which matters more than the ranges:
 
-`LFQ_DDA_Peptide_QC_Summarisation.Rmd` shows the seam clearly: new framing
-paragraphs sit on top of inherited body text, and the person switches between
-them. Rules 1, 2, 5 and 6 are what these four need; the analysis they contain
-is sound and should not be rewritten to suit the prose.
+- **Workflow articles are expected to carry fewer findings and more
+  obligation.** They walk one route, so most paragraphs report what a step does
+  rather than what a measurement showed, and telling the reader the order to do
+  things in is the job. Low bold density there is correct, not a defect. A
+  workflow article at 1.2 bold spans per 1000 words is doing what it should;
+  what would be wrong is **zero**, which means no claim in the article is
+  stated as a claim.
+- **Cautionary articles invert it.** They exist to report a finding, so bold
+  runs high and obligation runs low — the lowest obligation figures in the
+  package are the `gotcha_*` articles, because they state a cost and leave the
+  decision alone.
+- **Orientation articles address the reader constantly**, so `you` at 10-12 is
+  normal there and would be a sign of drift anywhere else.
+
+Rules 1, 2 and 11 are not type-dependent. First person, "Here, we…" openers and
+references to previous versions are wrong in every kind of article, and those
+three rows have no acceptable range other than zero.
+
+## What still lags
+
+Four vignettes were carried over from `main`: the two LFQ QC articles,
+`TMT_PSM_QC_Summarisation.Rmd` and `summarisation_methods.Rmd`. They have
+converged on person and on openers, and the analysis they contain is sound and
+should not be rewritten to suit the prose. Two things are still worth a pass
+when one of them is next opened for another reason:
+
+- **`summarisation_methods.Rmd` barely addresses the reader** — second person
+  runs an order of magnitude below the other comparison articles. It reads as a
+  description of an experiment rather than as a decision being put to someone.
+- **`TMT_multiplex.Rmd` has no bold spans at all.** It is a workflow article,
+  so a low count is expected, but zero means none of its claims — that the
+  plexes are not comparable until corrected, that a bridge channel is what makes
+  them so — is stated as a claim rather than as a step.
+
+Check this section against the numbers before trusting it; it is a snapshot,
+and the register table above is the authority.

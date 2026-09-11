@@ -36,7 +36,7 @@ tmt_qf_factorial <- biomasslmb::tmt_qf_factorial
 
 # Part A: LFQ-DIA whole-proteome comparison
 
-`dia_qf` is the blood plasma dataset from the [LFQ-DIA QC](LFQ_DIA_Precursor_QC_Summarisation.html) vignette [@Wang2022]: a case series comparing MPXV infection, COVID-19 and healthy controls, summarised to protein level with `robustSummary`. The clinical group of each sample is in the `group` column. Here we focus on the MPXV-vs-control comparison, so we restrict to those samples up front.
+`dia_qf` is the blood plasma dataset from the [LFQ-DIA QC](LFQ_DIA_Precursor_QC_Summarisation.html) vignette [@Wang2022]: a case series comparing MPXV infection, COVID-19 and healthy controls, summarised to protein level with `robustSummary`. The clinical group of each sample is in the `group` column. The MPXV-vs-control comparison is the one worked through here, so the object is restricted to those samples up front.
 
 ```{r}
 names(dia_qf)
@@ -49,7 +49,7 @@ dia_prot <- dia_qf[, colData(dia_qf)$group %in% c('control', 'MPXV')]
 
 ## Sample correlation
 
-A pairwise correlation heatmap is a quick way to check that replicates agree with each other more than they agree with samples from the other condition. `plot_cor_samples` computes the Spearman correlation between samples for a given assay and plots it as a heatmap. Somewhat confusingly, we provide the `is.corr=FALSE` argument below despite the fact that the input is a correlation matrix: `plot_cor_samples` passes the input to `corrplot::corrplot`, which automatically sets the legend limits to -1 to 1 for correlations, which we don't want here. We pass `order='hclust'` to cluster the samples by correlation, which is often more informative than the original order.
+A pairwise correlation heatmap is a quick way to check that replicates agree with each other more than they agree with samples from the other condition. `plot_cor_samples` computes the Spearman correlation between samples for a given assay and plots it as a heatmap. Somewhat confusingly, the `is.corr=FALSE` argument below is needed despite the input being a correlation matrix: `plot_cor_samples` passes the input to `corrplot::corrplot`, which automatically sets the legend limits to -1 to 1 for correlations, compressing the range the samples actually occupy. `order='hclust'` clusters the samples by correlation, which is often more informative than the original order.
 
 ```{r, fig.height=5, fig.width=5}
 plot_cor_samples(dia_prot, 'protein', is.corr=FALSE, order = 'hclust')
@@ -59,7 +59,7 @@ plot_cor_samples(dia_prot, 'protein', is.corr=FALSE, order = 'hclust')
 
 ## Principal component analysis
 
-`plot_pca` performs a PCA on a given assay and plots two of the components, optionally colouring points by a `colData` column. `robustSummary` doesn't require complete peptides, so `dia_qf[['protein']]` retains some missing values (`r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)` % of the matrix). `stats::prcomp` can't handle missing values, so instead of the default `allowing_missing=FALSE` (which would silently drop every protein with any missing value via `filterNA`), we set `allowing_missing=TRUE`, which uses `pcaMethods::pca` instead. Note that `scale`/`center` are passed on to whichever underlying PCA function is used, so with `pcaMethods::pca` `scale` takes a scaling method name (`'uv'`, unit-variance, is the equivalent of `scale=TRUE` in `stats::prcomp`) rather than `TRUE`/`FALSE`.
+`plot_pca` performs a PCA on a given assay and plots two of the components, optionally colouring points by a `colData` column. `robustSummary` doesn't require complete peptides, so `dia_qf[['protein']]` retains some missing values (`r round(100*mean(is.na(assay(dia_qf[['protein']]))), 1)` % of the matrix). `stats::prcomp` can't handle missing values, so the default `allowing_missing=FALSE` would silently drop every protein with any missing value via `filterNA`. Setting `allowing_missing=TRUE` runs the PCA with `pcaMethods::pca` instead. Note that `scale`/`center` are passed on to whichever underlying PCA function is used, so with `pcaMethods::pca` `scale` takes a scaling method name (`'uv'`, unit-variance, is the equivalent of `scale=TRUE` in `stats::prcomp`) rather than `TRUE`/`FALSE`.
 
 ```{r, fig.height=4, fig.width=5, out.width='60%'}
 plot_pca(dia_prot, 'protein', colour_by='group', scale='uv', center=TRUE, allowing_missing=TRUE) +
@@ -70,7 +70,7 @@ MPXV and control plasma separate along the first principal component, consistent
 
 ## Missingness and experimental condition
 
-We're about to test protein-level abundances that contain missing values, so it's worth checking whether that missingness is random or structured by group. Missingness concentrated in one group — a protein consistently absent from the controls, say — both distorts the linear model and can be biologically meaningful in its own right, so it shouldn't be ignored.
+The protein-level abundances about to be tested contain missing values, so it is worth checking whether that missingness is random or structured by group. Missingness concentrated in one group — a protein consistently absent from the controls, say — both distorts the linear model and can be biologically meaningful in its own right, so it shouldn't be ignored.
 
 `condition_miss_score` fits a per-protein logistic regression of missingness against group and returns Tjur's R² per protein: values near 1 mean a protein's missingness is well explained by group, values near 0 mean it looks unrelated to group. `condition_miss_index` summarises this into a single dataset-level value.
 
@@ -79,13 +79,13 @@ miss_res <- condition_miss_score(dia_qf, i = 'protein', group_cols = 'group')
 condition_miss_index(miss_res$summary)$index
 ```
 
-The index is close to zero: for this whole-proteome comparison, protein-level missingness looks unrelated to group — in contrast to the enrichment experiment in Part B, where absence from the control pulldown is exactly the signal of interest. We therefore test the protein-level abundances directly, letting `limma` fit each protein on whichever samples it was quantified in, rather than imputing.
+The index is close to zero: for this whole-proteome comparison, protein-level missingness looks unrelated to group — in contrast to the enrichment experiment in Part B, where absence from the control pulldown is exactly the signal of interest. The protein-level abundances are therefore tested directly, letting `limma` fit each protein on whichever samples it was quantified in, rather than imputing.
 
 ## Which proteins can be tested?
 
 `limma` fits a linear model per protein, so each protein needs enough genuinely quantified values for its group means and its within-group variance to be estimable. A protein that fails this is not "not significant" — it is untested, and the two must not be reported as if they were the same thing.
 
-We therefore require at least 2 quantified values in *both* conditions, and count the quantified values per condition so we can apply that rule and report it alongside the results.
+The rule applied here is at least 2 quantified values in *both* conditions, counting the quantified values per condition so that the rule can be applied and reported alongside the results.
 
 This count treats every column as an independent replicate. Where a sample has been acquired more than once, that is not true, and counting the acquisitions rather than the samples inflates the apparent replication while pulling the variance estimate towards technical rather than biological noise. [Technical replicates are not biological replicates](gotcha_technical_replicates.html) measures what that does to a result, and what to do with the repeat acquisitions instead.
 
@@ -108,7 +108,7 @@ The remaining excluded proteins were quantified in one or both conditions, but o
 
 When imputed values are being tested, this becomes two filters rather than one, because "quantified" and "has a value" stop being the same thing: at least 2 *genuinely quantified* values in at least one condition, checked against the unimputed assay, so that no result rests entirely on imputed values; and at least 2 values in *both* conditions, checked against the imputed assay that is actually being fitted, so that the model can be fitted. Here nothing is imputed, so both reduce to the single rule applied above.
 
-For reporting, we keep the per-condition counts as columns so that a reader of the results table can see how much of each fold-change is supported by measurements.
+For reporting, the per-condition counts are kept as columns so that a reader of the results table can see how much of each fold-change is supported by measurements.
 
 ```{r}
 n_quant_cols <- n_quant %>%
@@ -119,11 +119,11 @@ n_quant_cols <- n_quant %>%
 
 ## Differential abundance testing with limma
 
-We use `limma` for differential abundance testing between `control` and `MPXV`. `limma` fits a linear model per protein, then applies an empirical Bayes step which borrows information across all proteins to stabilise the variance estimate — important here since the 6 MPXV replicates give fairly noisy per-protein variance estimates on their own.
+`limma` performs the differential abundance testing between `control` and `MPXV`. `limma` fits a linear model per protein, then applies an empirical Bayes step which borrows information across all proteins to stabilise the variance estimate — important here since the 6 MPXV replicates give fairly noisy per-protein variance estimates on their own.
 
-We use `treat` rather than plain `eBayes`. `treat` tests the null hypothesis that the absolute fold-change is *below* a threshold (here 1.2-fold), rather than the standard null of exactly no difference — this avoids flagging changes that are statistically detectable but too small to be biologically interesting. `trend=TRUE` lets the variance prior depend on mean abundance; `robust=TRUE` down-weights proteins with unusually extreme variance so they don't distort the shared prior.
+`treat` is used rather than plain `eBayes`. `treat` tests the null hypothesis that the absolute fold-change is *below* a threshold (here 1.2-fold), rather than the standard null of exactly no difference — this avoids flagging changes that are statistically detectable but too small to be biologically interesting. `trend=TRUE` lets the variance prior depend on mean abundance; `robust=TRUE` down-weights proteins with unusually extreme variance so they don't distort the shared prior.
 
-We attach gene symbols from the `protein` assay's `rowData` to the results, since they read more clearly than accessions on the volcano plot.
+Gene symbols from the `protein` assay's `rowData` are attached to the results, since they read more clearly than accessions on the volcano plot.
 
 ```{r, fig.show='hide'}
 design <- model.matrix(~group)
@@ -203,7 +203,7 @@ plot_cor_samples(tmt_qf_mq, 'protein', is.corr=FALSE, order = 'hclust')
 
 ## Principal component analysis
 
-As in Part A, `tmt_qf_mq[['protein']]` retains missing values (`r round(100*mean(is.na(assay(tmt_qf_mq[['protein']]))), 1)` % of the matrix), so we set `allowing_missing=TRUE` and the PCA runs via `pcaMethods::pca`. Most of that missingness is contributed by the proteins the QC vignette masked for resting on a single PSM per channel.
+As in Part A, `tmt_qf_mq[['protein']]` retains missing values (`r round(100*mean(is.na(assay(tmt_qf_mq[['protein']]))), 1)` % of the matrix), so `allowing_missing=TRUE` is set and the PCA runs via `pcaMethods::pca`. Most of that missingness is contributed by the proteins the QC vignette masked for resting on a single PSM per channel.
 
 ```{r, fig.height=4, fig.width=5, out.width='60%'}
 plot_pca(tmt_qf_mq, 'protein', colour_by='Condition', scale='uv', center=TRUE, allowing_missing=TRUE) +
@@ -236,7 +236,7 @@ That is the usual position for a single-plex TMT experiment, and the QC vignette
 
 ## Differential abundance testing with limma
 
-The statistical model itself is the same as Part A, but the biological question is different, and that changes what fold-change threshold is appropriate. In Part A, we were looking for shifts in a whole-proteome comparison, so a modest 1.2-fold `treat` threshold made sense. Here, we're trying to identify bona fide interactors of the bait protein: a real interactor should be substantially enriched in the IP relative to the control, not just detectably different. We therefore use a stricter 2-fold threshold.
+The statistical model itself is the same as Part A, but the biological question is different, and that changes what fold-change threshold is appropriate. Part A looked for shifts in a whole-proteome comparison, where a modest 1.2-fold `treat` threshold is appropriate. Part B identifies bona fide interactors of the bait protein, and a real interactor is substantially enriched in the IP relative to the control rather than just detectably different, so the threshold here is a stricter 2-fold.
 
 ```{r, fig.show='hide'}
 design_mq <- model.matrix(~condition_mq)
@@ -252,9 +252,9 @@ table(direction = ifelse(limma_results_mq$logFC < 0, 'Dec.', 'Inc.'),
       sig = limma_results_mq$adj.P.Val < 0.05)
 ```
 
-Both enriched and depleted proteins can be statistically significant here, but for identifying interactors we care specifically about enrichment in the IP: a depleted protein doesn't indicate an interaction with the bait, so below we restrict to the significantly *enriched* proteins as our candidate interactors.
+Both enriched and depleted proteins can be statistically significant here, but identifying interactors turns specifically on enrichment in the IP: a depleted protein does not indicate an interaction with the bait, so the candidate interactors below are the significantly *enriched* proteins only.
 
-Filtering the results this way is not the same as testing one-sidedly. The p-values above were computed against a two-sided null, so half of each one covers a direction we have just discarded, and the multiple-testing correction was applied across both directions. A one-sided test spends that power on the direction of interest instead; the [enrichment designs](interactome_designs.html) vignette shows how, and what it does and does not buy.
+Filtering the results this way is not the same as testing one-sidedly. The p-values above were computed against a two-sided null, so half of each one covers the direction just discarded, and the multiple-testing correction was applied across both directions. A one-sided test spends that power on the direction of interest instead; the [enrichment designs](interactome_designs.html) vignette shows how, and what it does and does not buy.
 
 ```{r}
 sig_hits_mq <- limma_results_mq %>%
@@ -266,7 +266,7 @@ length(sig_hits_mq)
 
 ## Volcano plot
 
-With `r length(sig_hits_mq)` candidate interactors, labelling every point would make the plot unreadable, so we label only the 10 most significant.
+With `r length(sig_hits_mq)` candidate interactors, labelling every point would make the plot unreadable, so only the 10 most significant are labelled.
 
 ```{r, fig.width=6, fig.height=6}
 top_hits_mq <- head(sig_hits_mq, 10)
@@ -282,7 +282,7 @@ plot_volcano(limma_results_mq, sig_col = NULL) +
 
 ## Inspecting proteins of interest
 
-As in Part A, we inspect the feature-to-protein trend behind the top candidate interactor, here working from PSMs rather than precursors: `psms_raw` and `psms_filtered_interference` in place of `precursors` and `peptides_filtered_norm`, and `Leading.razor.protein` in place of `Protein.Group`.
+As in Part A, the feature-to-protein trend behind the top candidate interactor is worth inspecting, here working from PSMs rather than precursors: `psms_raw` and `psms_filtered_interference` in place of `precursors` and `peptides_filtered_norm`, and `Leading.razor.protein` in place of `Protein.Group`.
 
 ```{r, fig.height=6, fig.width=8, warning=FALSE, message=FALSE}
 top_hit_mq <- head(sig_hits_mq, 1)
@@ -446,6 +446,9 @@ contrast that puts it back together explicitly.
 contrast <- rep(0, ncol(interaction_design))
 names(contrast) <- colnames(interaction_design)
 contrast['treatmentTreated'] <- 1
+
+# The treatment effect in the other two lines is treatmentTreated plus that
+# line's interaction term, so weighting all three lines equally means 1/3 each
 contrast[interaction_terms] <- 1/3
 
 averaged <- eBayes(contrasts.fit(lmFit(factorial_prot, interaction_design), contrast),
@@ -486,7 +489,7 @@ series is not right for a cell line treated for a few hours.
 
 # Reporting the result
 
-A volcano plot is a summary, not the end goal. What we will actually use downstream is a table, and what makes it usable is the columns that let a reader judge each row without re-running the analysis.
+A volcano plot is a summary, not the end goal. What gets used downstream is a table, and what makes it usable is the columns that let a reader judge each row without re-running the analysis.
 
 ## The results table
 
@@ -566,7 +569,7 @@ The numbers a reader needs to judge the analysis are all produced above, but the
 
 # Summary
 
-Here, we have, for both a whole-proteome comparison (Part A) and an immunoprecipitation (Part B):
+For both a whole-proteome comparison (Part A) and an immunoprecipitation (Part B), this vignette has:
 
 -   Checked that replicate samples correlate more strongly with each other than with the other condition, and that PCA separates the conditions — using `allowing_missing=TRUE` in both parts, since `robustSummary` retains some missing values
 -   Checked whether protein-level missingness was structured by experimental condition: unrelated to group in the whole-proteome comparison (Part A), and in the single-plex immunoprecipitation (Part B) not present in the on/off form an enrichment design predicts, because all channels are quantified from one spectrum

@@ -96,6 +96,8 @@ To compare against a single signed GSEA statistic, we reduce each term to its be
 ```{r}
 ora_best <- ora %>%
   group_by(category) %>%
+  # with_ties = FALSE guarantees one row per term even where a term is called
+  # equally strongly in both directions, so the join against GSEA stays 1:1
   slice_min(padj_if, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
   mutate(ora_score = ifelse(direction == 'Increased',

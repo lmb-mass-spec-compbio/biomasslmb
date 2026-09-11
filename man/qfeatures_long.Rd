@@ -37,10 +37,18 @@ whether there is a registered method for the input object class.
 If so, it calls \code{longForm()}. Otherwise, it falls back to the legacy
 \code{longFormat()} function. An error is thrown if neither is available.
 }
+\examples{
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
+  quantCols = 36:45,
+  name = "psms_raw")
+
+# long format, one row per feature per sample, for plotting with ggplot2
+head(qfeatures_long(tmt_qf[["psms_raw"]]))
+
+}
 \seealso{
 \code{\link[QFeatures]{longFormat}},
 \code{\link[QFeatures]{longForm}},
 \code{\link[methods]{isGeneric}},
 \code{\link[methods]{findMethods}}
 }
-\keyword{internal}

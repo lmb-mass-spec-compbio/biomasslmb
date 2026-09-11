@@ -75,9 +75,18 @@ qf <- sync_coldata(qf, 'peptides_raw')
 
 The filtering is the LFQ-DDA sequence from the [LFQ-DDA QC and summarisation](LFQ_DDA_Peptide_QC_Summarisation.html) vignette with one deliberate difference: `unique_master = TRUE` and `proteotypic = TRUE`, which together keep only the peptides that were resolved to a single protein group and whose sequence occurs in just one protein. A peptide shared between two proteins would otherwise contribute its full intensity to whichever one the search engine assigned it to, inflating that protein's total by signal that did not come from it. For relative quantification that error is roughly constant across samples and largely cancels; for an absolute estimate it does not. See [peptides are not proteins](gotcha_peptide_to_protein.html) for how often this arises.
 
+The accession list needs one adjustment before it can match. The contaminant
+FASTA prefixes every entry with `Cont_`, and whether that prefix survives into
+the search output depends on how the database was built, so the list below
+holds both forms. Matching on only one of them removes nothing and reports no
+error — [contaminants and protein FDR](gotcha_contaminants_and_FDR.html) shows
+what that silent failure looks like.
+
 ```{r, message=FALSE, warning=FALSE}
 contaminant_accessions <- get_contaminant_fasta_accessions(system.file(
   "extdata", "0602_Universal_Contaminants.fasta.gz", package = "biomasslmb"))
+
+# Match both the prefixed and unprefixed form of every accession
 contaminant_accessions <- c(contaminant_accessions,
                             sub('^Cont_', '', contaminant_accessions))
 
@@ -90,7 +99,10 @@ qf[['peptides']] <- filter_features_pd_dda(
   proteotypic = TRUE,
   remove_no_quant = TRUE)
 
+# pNA is the most missingness a peptide may carry: at most 4 of the 6 samples
 qf[['peptides_filtered']] <- filterNA(qf[['peptides']], 4/6)
+
+# A single peptide gives a protein total with nothing to check it against
 qf[['peptides_filtered']] <- filter_features_per_protein(
   qf[['peptides_filtered']], min_features = 2)
 

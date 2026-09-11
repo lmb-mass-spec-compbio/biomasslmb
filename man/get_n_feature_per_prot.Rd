@@ -18,3 +18,11 @@ get_n_feature_per_prot(obj, master_protein_col = "Master.Protein.Accessions")
 For summarisation of PSM or peptide to protein, we need a
 minimum number of finite values per protein per sample. This function simply tallies how many we have.
 }
+\examples{
+tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
+  quantCols = 36:45,
+  name = "psms_raw")
+
+head(get_n_feature_per_prot(tmt_qf[["psms_raw"]]))
+
+}

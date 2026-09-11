@@ -9,6 +9,14 @@
 #' @param master_protein_col `character` Column name for master protein
 #'
 #' @return `data.frame` detailing how many features are present for each protein in each sample
+#' @examples
+#' tmt_qf <- QFeatures::readQFeatures(assayData = psm_tmt_total,
+#'   quantCols = 36:45,
+#'   name = "psms_raw")
+#'
+#' head(get_n_feature_per_prot(tmt_qf[["psms_raw"]]))
+#'
+#' @export
 get_n_feature_per_prot <- function(obj,
                                    master_protein_col = "Master.Protein.Accessions") {
   feature2protein <- rowData(obj) %>%

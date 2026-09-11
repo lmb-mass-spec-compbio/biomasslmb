@@ -157,7 +157,7 @@ tmt_qf_mq[['psms_filtered_interference']] <- QFeatures::logTransform(
 tmt_qf_mq[['psms_filtered_forSummary']] <- QFeatures::filterNA(
   tmt_qf_mq[['psms_filtered_interference']], 8/12)
 
-biomasslmb:::message_parse(rowData(tmt_qf_mq[['psms_filtered_forSummary']]),
+message_parse(rowData(tmt_qf_mq[['psms_filtered_forSummary']]),
                            'Leading.razor.protein',
                            "Removing PSMs with excessive missing values")
 ```

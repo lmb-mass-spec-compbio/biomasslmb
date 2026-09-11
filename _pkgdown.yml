@@ -69,7 +69,9 @@ reference:
   desc: >
     Getting features out of Proteome Discoverer, MaxQuant, DIA-NN or
     Spectronaut output and removing the ones that should not be quantified.
-    One function per search engine, plus the filters common to all of them.
+    One function per search engine, plus the filters common to all of them and
+    the helper that reports how many features and master proteins survive a
+    step.
   contents:
   - filter_features_pd_dda
   - filter_features_mq_dda
@@ -83,6 +85,7 @@ reference:
   - remove_redundant_psm_quant
   - update_peptide_assignments
   - update_average_sn
+  - message_parse
 
 - title: Contaminants
   desc: >

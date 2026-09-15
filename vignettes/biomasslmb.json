@@ -1143,5 +1143,51 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "smyth2026limpaforum",
+		"type": "post",
+		"title": "limpa analysis advice",
+		"container-title": "Bioconductor Support Forum",
+		"URL": "https://support.bioconductor.org/p/9163035/",
+		"author": [
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2026", 1, 16 ]
+			]
+		},
+		"accessed": {
+			"date-parts": [
+				[ "2026", 9, 15 ]
+			]
+		}
+	},
+	{
+		"id": "smyth2026limpaipms",
+		"type": "post",
+		"title": "limpa-blank normalization and Spectronaut's PTM stoichiometry",
+		"container-title": "Bioconductor Support Forum",
+		"URL": "https://support.bioconductor.org/p/9163020/",
+		"author": [
+			{
+				"family": "Smyth",
+				"given": "Gordon K."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[ "2026", 1, 14 ]
+			]
+		},
+		"accessed": {
+			"date-parts": [
+				[ "2026", 9, 15 ]
+			]
+		}
 	}
 ]

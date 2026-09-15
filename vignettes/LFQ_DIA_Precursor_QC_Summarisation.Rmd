@@ -130,7 +130,7 @@ rbindRowData(dia_qf, i = names(dia_qf)) %>%
 
 # Filter precursors
 
-DIA-NN assigns a Q-value to each precursor and protein group identification, representing the local false discovery rate (FDR) at that score threshold. This data was processed with match-between-runs enabled, which is why both the run-level and library-level Q-values are filtered (`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value` respectively), at a standard 1% FDR threshold. Filtering only the run-level pair would accept identifications that MBR transferred on weak library-level evidence. Passing no `i` argument to `filterFeatures` applies the filter to every per-run set at once.
+DIA-NN assigns a Q-value to each precursor and protein group identification, representing the minimum FDR at which that identification is still accepted at that score threshold. This data was processed with match-between-runs enabled, which is why both the run-level and library-level Q-values are filtered (`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value` respectively), at a standard 1% FDR threshold. Filtering only the run-level pair would accept identifications that MBR transferred on weak library-level evidence. Passing no `i` argument to `filterFeatures` applies the filter to every per-run set at once.
 
 ```{r}
 dia_qf <- dia_qf %>%

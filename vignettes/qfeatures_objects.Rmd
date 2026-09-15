@@ -209,7 +209,7 @@ tmt_qf[['protein']] <- logTransform(tmt_qf[['protein']], base = 2)
 tmt_qf[['peptides_norm']] <- normalize(tmt_qf[['peptides']], method = 'diff.median')
 ```
 
-`normalize()` expects log-scale values. Where a later step needs the original scale — summing PSMs, for instance — the vignettes exponentiate back with `assay(x) <- 2^assay(x)`.
+The `diff.median` method used here expects log-scale values; not every method `normalize()` offers does. Where a later step needs the original scale — summing PSMs, for instance — the vignettes exponentiate back with `assay(x) <- 2^assay(x)`.
 
 # Joining assays
 

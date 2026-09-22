@@ -425,7 +425,7 @@ sessionInfo()
 #>  [93] backports_1.5.1             png_0.1-9                  
 #>  [95] memoise_2.0.1               bslib_0.12.0               
 #>  [97] Rcpp_1.1.2                  checkmate_2.3.4            
-#>  [99] SparseArray_1.10.10         xfun_0.60                  
+#>  [99] SparseArray_1.10.10         xfun_0.61                  
 #> [101] MsCoreUtils_1.22.1          fs_2.1.0                   
 #> [103] MatrixGenerics_1.22.0       pkgconfig_2.0.3
 ```

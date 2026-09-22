@@ -477,7 +477,7 @@
       </dl></div><div class="section level2">
       <h2 id="post-translational-modifications">Post-translational modifications<a class="anchor" aria-label="anchor" href="#post-translational-modifications"></a></h2>
 
-      <div class="section-desc"><p>Localising a modification to a residue, placing it within the protein and summarising to sites. Worked through in <a href="articles/PTM_site_quantification.html">PTM site quantification</a>.</p></div>
+      <div class="section-desc"><p>Localising a modification to a residue, placing it within the protein and summarising to sites, and pooling the peptides that cannot be localised rather than discarding them. Worked through in <a href="articles/PTM_site_quantification.html">PTM site quantification</a>.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -525,6 +525,34 @@
 
         </dt>
         <dd>Add a column with amino acid sequence around a PTM</dd>
+
+        <dt>
+
+          <code><a href="parse_ptm_candidates_mq.html">parse_ptm_candidates_mq()</a></code>
+
+        </dt>
+        <dd>Parse MaxQuant PTM localisation probabilities into candidate residues</dd>
+
+        <dt>
+
+          <code><a href="parse_ptm_candidates_pd.html">parse_ptm_candidates_pd()</a></code>
+
+        </dt>
+        <dd>Parse Proteome Discoverer ptmRS site probabilities into candidate residues</dd>
+
+        <dt>
+
+          <code><a href="add_ambiguous_ptm_group_rowdata.html">add_ambiguous_ptm_group_rowdata()</a></code>
+
+        </dt>
+        <dd>Group ambiguously localised PTM sites by candidate residue overlap</dd>
+
+        <dt>
+
+          <code><a href="summarise_ptm_groups.html">summarise_ptm_groups()</a></code>
+
+        </dt>
+        <dd>Summarise the PTM groups formed at a given min_candidate_prob</dd>
       </dl></div><div class="section level2">
       <h2 id="peptides-sequences-and-fasta-files">Peptides, sequences and FASTA files<a class="anchor" aria-label="anchor" href="#peptides-sequences-and-fasta-files"></a></h2>
 
@@ -836,6 +864,13 @@
 
         </dt>
         <dd>Experimental design for <code>psm_tmt_phospho</code> and <code>psm_tmt_phospho_total</code></dd>
+
+        <dt>
+
+          <code><a href="psm_tmt_phospho_mq.html">psm_tmt_phospho_mq</a></code>
+
+        </dt>
+        <dd>PSM-level MaxQuant output for a phospho-enriched TMT18plex fraction</dd>
 
         <dt>
 

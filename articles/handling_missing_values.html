@@ -87,9 +87,9 @@
       <h1>Handling missing values</h1>
                         <h4 data-toc-skip class="author">Tom Smith</h4>
             
-            <h4 data-toc-skip class="date">2026-09-11</h4>
+            <h4 data-toc-skip class="date">2026-09-22</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/v0.1.0/vignettes/handling_missing_values.Rmd" class="external-link"><code>vignettes/handling_missing_values.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/main/vignettes/handling_missing_values.Rmd" class="external-link"><code>vignettes/handling_missing_values.Rmd</code></a></small>
       <div class="d-none name"><code>handling_missing_values.Rmd</code></div>
     </div>
 
@@ -747,11 +747,15 @@ probability <code>plogis(b0 + b1 * y)</code> <span class="citation">(Li
 and Smyth 2023)</span>. The slope <code>b1</code> says how strongly
 detection depends on abundance: zero would be missing completely at
 random, and a very large slope would be hard censoring at a threshold.
-Slopes of 0.7–0.9 are typical of DIA data searched with
-match-between-runs. The curve is a function of the intensities that were
-<em>not</em> measured, so it is estimated from the observed ones by an
-exponential tilting argument. That makes it hard to estimate, and makes
-the slope too low when precursors vary strongly between samples.</p>
+Slopes of 0.7–0.8 are typical of DIA-NN data, per the package author’s
+guidance <span class="citation">(Smyth 2026a)</span>. The curve is a
+function of the intensities that were <em>not</em> measured, so it is
+estimated from the observed ones by an exponential tilting argument
+<span class="citation">(Li and Smyth 2023)</span>. That makes it
+inherently hard to estimate, and datasets with substantial differential
+expression or outlier samples make it especially difficult to pin down;
+<code><a href="https://rdrr.io/pkg/limpa/man/dpcCN.html" class="external-link">dpcCN()</a></code> is more robust to such outliers than
+<code><a href="https://rdrr.io/pkg/limpa/man/dpc.html" class="external-link">dpc()</a></code> <span class="citation">(Smyth 2026a)</span>.</p>
 <p><strong>Quantification is a model fit, not a summary.</strong> For
 each protein, limpa fits an additive model across its precursors and
 samples, <code>mu = gamma[i] + delta[j]</code>, and reports the sample
@@ -764,9 +768,9 @@ statement <em>this was not detected</em>, weighted by the DPC.</p>
 third part penalises how far each sample’s estimate strays from that
 protein’s own mean across samples, on a scale limpa calls
 <code>prior.logFC</code>. It is a single number for the whole dataset:
-the 90th percentile of between-sample variance across all precursors. It
-is what allows limpa to return a value for a sample in which nothing was
-detected, and it is the part to keep in view.</p>
+the 90th percentile, across precursors, of each precursor’s own variance
+across samples. It is what allows limpa to return a value for a sample
+in which nothing was detected, and it is the part to keep in view.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/SmythLab/limpa" class="external-link">limpa</a></span><span class="op">)</span></span>
 <span></span>
@@ -875,11 +879,11 @@ shows the effect plainly.</p>
 <span><span class="fu"><a href="https://rdrr.io/pkg/limpa/man/plotDPC.html" class="external-link">plotDPC</a></span><span class="op">(</span><span class="va">dpc_turbo</span><span class="op">)</span></span></code></pre></div>
 <p><img src="handling_missing_values_files/figure-html/unnamed-chunk-26-1.png" class="r-plt" alt="" width="60%"></p>
 <p>The slope is 0.28 against 0.60 for the DIA data. Part of that gap is
-the design rather than the missingness: the slope is under-estimated
-when precursors vary strongly between samples, and an enrichment
-experiment makes them do exactly that. Either way the consequence is the
-same — a shallow slope means the missing values carry little
-information, so the prior carries more of the estimate.</p>
+plausibly the design rather than the missingness: slope estimation is
+especially difficult when precursors vary strongly between samples <span class="citation">(Smyth 2026a)</span>, and an enrichment experiment
+makes them do exactly that. Either way the consequence is the same — a
+shallow slope means the missing values carry little information, so the
+prior carries more of the estimate.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">y_turbo_prot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limpa/man/dpcQuant.html" class="external-link">dpcQuant</a></span><span class="op">(</span><span class="va">y_turbo</span>, protein.id <span class="op">=</span> <span class="st">'Master.Protein.Accessions'</span>,</span>
 <span>                         dpc <span class="op">=</span> <span class="va">dpc_turbo</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -981,8 +985,9 @@ on two faint precursors and never in a control gets a small fold change,
 because there was never enough evidence to push its control estimate
 away from the prior.</p>
 <p>None of this is an argument against using limpa here — its authors
-apply the same machinery to IP-MS data, and limpa records the
-uncertainty honestly rather than hiding it:</p>
+apply the same machinery to IP-MS data <span class="citation">(Smyth
+2026b)</span>, and limpa records the uncertainty honestly rather than
+hiding it:</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>unobserved_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span></span>
 <span>    <span class="va">y_turbo_prot</span><span class="op">$</span><span class="va">other</span><span class="op">$</span><span class="va">standard.error</span><span class="op">[</span><span class="va">bait_only</span>, <span class="op">!</span><span class="va">turbo_bait</span><span class="op">]</span><span class="op">)</span>,</span>
@@ -1042,7 +1047,9 @@ that band, and they sum to 100. <code>HDI_Low</code> and
 <code>Median</code> gives its centre, and a protein is declared changed
 when the relevant tail probability passes a cutoff — 95% in the
 manuscript, where <code>1 - pGtROPE</code> is read as a local false
-discovery rate.</p>
+discovery rate, though the manuscript’s own evaluation found this can
+understate the true FDR when the ROPE is narrow, as it is here by
+default <span class="citation">(Li et al. 2026)</span>.</p>
 <p><code>missBayes</code> is not a dependency of this package and needs
 a working JAGS installation, so the chunks below are shown rather than
 run.</p>
@@ -1100,11 +1107,11 @@ pulled toward anything; it is held below <code>cp</code>, the faintest
 intensity that protein reached in the bait samples. That bound is a
 statement about this protein, taken from its own data. limpa’s
 counterweight is <code>prior.logFC</code>, one number for the whole
-dataset — 2.03 here — estimated as a high quantile of between-sample
-variance. In a whole-cell experiment, where few proteins change, that
-quantile describes technical variation. In an enrichment experiment,
-where most of the matrix is genuinely enriched, it is inflated by the
-signal it is meant to be a null for.</p>
+dataset — 2.03 here — estimated as a high quantile of each precursor’s
+own variance across samples. In a whole-cell experiment, where few
+proteins change, that quantile describes technical variation. In an
+enrichment experiment, where most of the matrix is genuinely enriched,
+it is inflated by the signal it is meant to be a null for.</p>
 <p>Running the code above and comparing against the limpa fit from the
 previous section, on the 48 proteins both quantify:</p>
 <table class="table">
@@ -1371,7 +1378,7 @@ out which article applies to which experiment.</p>
 <span><span class="co">#&gt;  [19] backports_1.5.1         XVector_0.50.0          labeling_0.4.3         </span></span>
 <span><span class="co">#&gt;  [22] rmarkdown_2.32          UpSetR_1.4.1            visdat_0.6.0           </span></span>
 <span><span class="co">#&gt;  [25] ragg_1.5.2              purrr_1.2.2             bit_4.6.0              </span></span>
-<span><span class="co">#&gt;  [28] xfun_0.60               cachem_1.1.0            jsonlite_2.0.0         </span></span>
+<span><span class="co">#&gt;  [28] xfun_0.61               cachem_1.1.0            jsonlite_2.0.0         </span></span>
 <span><span class="co">#&gt;  [31] gmm_1.9-1               blob_1.3.0              DelayedArray_0.36.1    </span></span>
 <span><span class="co">#&gt;  [34] cluster_2.1.8.2         R6_2.6.1                bslib_0.12.0           </span></span>
 <span><span class="co">#&gt;  [37] stringi_1.8.9           RColorBrewer_1.1-3      genefilter_1.92.0      </span></span>
@@ -1418,6 +1425,15 @@ Li, Mengchun, Venkatesh Mallikarjun, Andrew Frey, Emmanuel Ogundimu, and
 Matthias Trost. 2026. <span>“Empirical-Bayes and Bayesian Hierarchical
 Modelling for Missingness and Differential Expression in
 Proteomics.”</span> <em>bioRxiv</em>, 2026.01.15.699650. <a href="https://doi.org/10.64898/2026.01.15.699650" class="external-link">https://doi.org/10.64898/2026.01.15.699650</a>.
+</div>
+<div id="ref-smyth2026limpaforum" class="csl-entry">
+Smyth, Gordon K. 2026a. <span>“limpa analysis advice.”</span>
+Bioconductor Support Forum, January 16. <a href="https://support.bioconductor.org/p/9163035/" class="external-link">https://support.bioconductor.org/p/9163035/</a>.
+</div>
+<div id="ref-smyth2026limpaipms" class="csl-entry">
+Smyth, Gordon K. 2026b. <span>“limpa-blank normalization and
+Spectronaut’s PTM stoichiometry.”</span> Bioconductor Support Forum,
+January 14. <a href="https://support.bioconductor.org/p/9163020/" class="external-link">https://support.bioconductor.org/p/9163020/</a>.
 </div>
 </div>
 </div>

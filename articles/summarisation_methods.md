@@ -476,9 +476,8 @@ measurements of the same quantity cancels part of the error in each, so
 the more PSMs a protein has, the better those two estimates get. Taking
 the middle value does not average anything, so the protein estimate
 carries a single PSM’s worth of noise however many PSMs were available.
-Even when everything is well behaved this costs about a fifth more
-variability — the standard penalty for using a median in place of a
-mean.
+Even when everything is well behaved this costs measurably more
+variability, about a fifth in this data.
 
 The bigger cost is that rank position says nothing about how well a PSM
 was measured, so `median` has no protection against landing on a badly
@@ -1152,6 +1151,6 @@ sessionInfo()
 #> [79] evaluate_1.0.5          lattice_0.22-9          backports_1.5.1        
 #> [82] png_0.1-9               memoise_2.0.1           bslib_0.12.0           
 #> [85] Rcpp_1.1.2              checkmate_2.3.4         SparseArray_1.10.10    
-#> [88] xfun_0.60               MsCoreUtils_1.22.1      fs_2.1.0               
+#> [88] xfun_0.61               MsCoreUtils_1.22.1      fs_2.1.0               
 #> [91] pkgconfig_2.0.3
 ```

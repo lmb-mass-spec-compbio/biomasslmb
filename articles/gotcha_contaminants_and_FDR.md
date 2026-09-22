@@ -443,6 +443,6 @@ sessionInfo()
 #> [79] evaluate_1.0.5          lattice_0.22-9          backports_1.5.1        
 #> [82] png_0.1-9               memoise_2.0.1           bslib_0.12.0           
 #> [85] Rcpp_1.1.2              checkmate_2.3.4         SparseArray_1.10.10    
-#> [88] xfun_0.60               MsCoreUtils_1.22.1      fs_2.1.0               
+#> [88] xfun_0.61               MsCoreUtils_1.22.1      fs_2.1.0               
 #> [91] pkgconfig_2.0.3
 ```

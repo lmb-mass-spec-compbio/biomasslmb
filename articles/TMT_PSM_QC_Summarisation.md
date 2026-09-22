@@ -30,8 +30,10 @@ summarised features such as proteins.
 
 However, TMT does suffer from ratio compression, caused by co-isolation
 of contaminating precursor ions that get fragmented alongside the target
-peptide and inflate the reporter ion signal. This should be avoided by
-performing quantification with SPS MS3 (McAlister et al. 2014).
+peptide and inflate the reporter ion signal. This is substantially
+reduced by performing quantification with SPS MS3, though co-isolation
+among the SPS-selected fragment ions themselves means it is not
+eliminated entirely (McAlister et al. 2014).
 
 This vignette works through one typical experiment from end to end: a
 whole-proteome comparison between two conditions, labelled in a single
@@ -938,7 +940,7 @@ sessionInfo()
 #>  [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #>  [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         
 #>  [22] UpSetR_1.4.1            visdat_0.6.0            ragg_1.5.2             
-#>  [25] purrr_1.2.2             bit_4.6.0               xfun_0.60              
+#>  [25] purrr_1.2.2             bit_4.6.0               xfun_0.61              
 #>  [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
 #>  [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               
 #>  [34] bslib_0.12.0            stringi_1.8.9           RColorBrewer_1.1-3     

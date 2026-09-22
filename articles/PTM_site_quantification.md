@@ -67,7 +67,9 @@ and
 [`add_filter_ptm_pos_rowdata_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_filter_ptm_pos_rowdata_mq.md),
 which take the same role as
 [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
-below.
+below, and [peptides that cannot be
+localised](#peptides-that-cannot-be-localised) works the same data
+through both engines side by side.
 
 Everything up to the localisation step is the routine PSM processing
 covered in [TMT QC and
@@ -209,7 +211,10 @@ reads those scores out of the `ptmRS.Best.Site.Probabilities` column.
 `threshold` sets the minimum score a site needs. If any site on a
 peptide falls below it, the modifications on that peptide are all
 discarded rather than partially kept — a peptide whose phosphate could
-be on either of two residues tells you nothing about either.
+be on either of two residues cannot be assigned to either. It is not
+silent about the region, though, and [peptides that cannot be
+localised](#peptides-that-cannot-be-localised) below recovers what it
+does say.
 
 ``` r
 
@@ -339,6 +344,477 @@ phospho[['psm_sites']] <- phospho[['psm_localised']][
   !is.na(site_positions$start) & !grepl(';', site_positions$start), ]
 ```
 
+## Peptides that cannot be localised
+
+The localisation filter is the only step in this workflow that discards
+data on the strength of a probability rather than a measurement, and it
+is the most expensive one. Applied to the quality-filtered PSMs of this
+dataset at a threshold of 75, it removes a little under a quarter of
+them.
+
+``` r
+
+psm_all_ptms <- phospho[['psm_quality']]
+candidates <- parse_ptm_candidates_pd(psm_all_ptms)
+
+resolution <- candidates %>%
+  group_by(row, n_ptms) %>%
+  summarise(n_localised = sum(prob >= 0.75), .groups = 'drop') %>%
+  mutate(resolved = n_localised == n_ptms)
+
+c(PSMs = nrow(resolution),
+  discarded = sum(!resolution$resolved),
+  percent = round(100 * mean(!resolution$resolved), 1))
+#>      PSMs discarded   percent 
+#>    6554.0    1498.0      22.9
+```
+
+**A peptide whose phosphate is tied between two serines is not an
+uninformative peptide.** It establishes that the region is
+phosphorylated and by how much, and leaves open only which of the two
+residues carries the phosphate. The filter throws away the
+quantification along with the ambiguity, and what it throws away is not
+a random subset: serine-rich and threonine-rich regions are exactly the
+ones a spectrum struggles to resolve, so the sites that go missing are
+concentrated in the sequences most worth looking at.
+
+The alternative is to keep those peptides by pooling them. Peptides
+whose sites all reach the threshold are untouched and keep their own
+single-residue identity. Peptides that do not resolve contribute every
+candidate residue that is still plausible, and candidate sets that
+overlap are merged into one group, which is quantified as a unit. The
+cost is stated plainly at the end of this section: a pooled group names
+a region rather than a residue, and several things you would want to do
+with a site cannot be done with one.
+
+### Reading every candidate residue
+
+[`parse_ptm_candidates_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_pd.md)
+reads `ptmRS.Phospho.Site.Probabilities`, **not** the
+`ptmRS.Best.Site.Probabilities` column that
+[`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
+uses. The distinction is easy to miss and fails silently. Best Site
+reports only the winning isoform’s sites, so the alternatives a group
+would be built from are absent from it, and pointing the parser at that
+column yields groups containing only the sites ptmRS already preferred.
+
+``` r
+
+example_row <- resolution$row[!resolution$resolved][1]
+
+rowData(psm_all_ptms)[example_row, c('ptmRS.Best.Site.Probabilities',
+                                     'ptmRS.Phospho.Site.Probabilities')] %>%
+  data.frame() %>%
+  t()
+#>                                  17                                                                           
+#> ptmRS.Best.Site.Probabilities    "S3(Phospho): 46.88; S5(Phospho): 46.88; S9(Phospho): 100; S11(Phospho): 100"
+#> ptmRS.Phospho.Site.Probabilities "S(1): 6.2; S(3): 46.9; S(5): 46.9; S(9): 100.0; S(11): 100.0"
+```
+
+The parser returns one row per candidate residue, with the position
+within the peptide, the residue, the probability and the number of
+modifications on the peptide.
+[`parse_ptm_candidates_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_mq.md)
+returns the same table from MaxQuant’s `Phospho..STY..Probabilities`
+column, and everything after this point is shared between the two.
+
+``` r
+
+head(candidates, 4)
+#>   row pep_pos residue prob n_ptms
+#> 1   1       1       S    0      2
+#> 2   1       3       S    0      2
+#> 3   1       4       S    0      2
+#> 4   1       5       S    0      2
+```
+
+Probabilities are on a 0 to 1 scale in both parsers, so a threshold
+means the same thing whichever search engine produced the data. ptmRS
+reports percentages and
+[`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
+takes its `threshold` as one — 75 above, 0.75 below — which is the one
+place in this workflow where the same quantity is expressed two ways.
+
+### The probabilities are a budget, not a score
+
+Each modification has to sit on some residue, so the probabilities
+reported for a peptide sum to the number of modifications on it. That
+holds in this dataset to within the rounding ptmRS applies.
+
+``` r
+
+candidates %>%
+  group_by(row, n_ptms) %>%
+  summarise(total = sum(prob), .groups = 'drop') %>%
+  summarise(min = round(min(total / n_ptms), 3),
+            max = round(max(total / n_ptms), 3))
+#> # A tibble: 1 × 2
+#>     min   max
+#>   <dbl> <dbl>
+#> 1 0.997  1.00
+```
+
+**This is what makes the pooling quantitative rather than cosmetic.** A
+candidate’s probability is its share of one modification, so the summed
+probability of a set of candidates is the chance that the set contains
+the true site, and the probability left outside the set is the chance
+that it does not. A group is therefore not a vague claim about a region;
+it is a statement with a coverage figure attached.
+
+### Grouping the candidates
+
+Grouping happens in protein coordinates, so the peptides need placing
+first, as in the previous section — this time before the localisation
+filter has been applied rather than after.
+
+``` r
+
+psm_all_ptms <- add_peptide_positions_from_cleavage(
+  psm_all_ptms, proteome_fasta, master_protein_col = 'Master.Protein.Accessions')
+
+psm_all_ptms <- add_ambiguous_ptm_group_rowdata(
+  psm_all_ptms, candidates,
+  master_protein_col = 'Master.Protein.Accessions',
+  min_prob = 0.75)
+```
+
+Candidate residues are nodes, and two residues are joined when they are
+candidates on the same peptide. The groups are the connected components
+of that graph, so a “S32 or S33” peptide and a “S33 or S37” peptide
+share a node and become one group over all three residues. The graph is
+built separately for each protein and each modification count, which
+stops a singly phosphorylated peptide from merging with a doubly
+phosphorylated one covering the same residues: they overlap in sequence
+but are different molecular species.
+
+``` r
+
+grouped <- data.frame(rowData(psm_all_ptms))
+
+c(resolved_PSMs = sum(grouped$ptm_group_resolved, na.rm = TRUE),
+  pooled_PSMs = sum(!grouped$ptm_group_resolved %in% TRUE &
+                      !is.na(grouped$ptm_group_id)),
+  unassigned = sum(is.na(grouped$ptm_group_id)))
+#> resolved_PSMs   pooled_PSMs    unassigned 
+#>          5054          1498           205
+```
+
+The PSMs the filter would have kept are unchanged — each still reports
+its own residue — and the PSMs it would have discarded are now
+distributed over a much smaller number of quantifiable groups.
+
+``` r
+
+grouped %>%
+  filter(!is.na(ptm_group_id)) %>%
+  group_by(pooled = !ptm_group_resolved) %>%
+  summarise(PSMs = n(), features = n_distinct(ptm_group_id))
+#> # A tibble: 2 × 3
+#>   pooled  PSMs features
+#>   <lgl>  <int>    <int>
+#> 1 FALSE   5054     1351
+#> 2 TRUE    1498      535
+```
+
+A pooled group’s size is set by how much genuine ambiguity there is, not
+by how many PSMs fell into it.
+
+``` r
+
+grouped %>%
+  filter(!ptm_group_resolved %in% TRUE, !is.na(ptm_group_id)) %>%
+  distinct(ptm_group_id, ptm_group_n_candidates) %>%
+  pull(ptm_group_n_candidates) %>%
+  table()
+#> .
+#>   2   3   4   5   6   7   8   9  10  11 
+#> 142 148 117  51  31  17  15   9   3   2
+```
+
+### The same grouping from MaxQuant output
+
+Everything from
+[`add_ambiguous_ptm_group_rowdata()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ambiguous_ptm_group_rowdata.md)
+onwards is the same for either search engine, because the parser has
+already reduced the output to one candidate table. Only the step that
+produces that table differs, and `psm_tmt_phospho_mq` — the
+phospho-enriched fraction of the TMT18plex whose total fraction is
+`psm_tmt_factorial` — is the MaxQuant equivalent of the data used above.
+
+The PSM filtering is the MaxQuant workflow’s, covered in [TMT QC and
+summarisation](https://lmb-mass-spec-compbio.github.io/biomasslmb/articles/TMT_PSM_QC_Summarisation.md):
+reporter intensities of exactly zero become `NA`, contaminant accessions
+come from
+[`get_maxquant_cont_accessions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/get_maxquant_cont_accessions.md),
+and the decoy hits MaxQuant leaves in the export are removed.
+
+``` r
+
+mq_qf <- QFeatures::readQFeatures(assayData = psm_tmt_phospho_mq,
+                               colData = tmt_factorial_design,
+                               quantCols = rownames(tmt_factorial_design),
+                               name = 'psm_raw')
+mq_qf <- sync_coldata(mq_qf, 'psm_raw')
+mq_qf[['psm_raw']] <- QFeatures::zeroIsNA(mq_qf[['psm_raw']])
+
+mq_qf[['psm_quality']] <- filter_features_mq_dda(
+  mq_qf[['psm_raw']],
+  contaminant_proteins = get_maxquant_cont_accessions(),
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE)
+
+mq_psms <- mq_qf[['psm_quality']][
+  rowData(mq_qf[['psm_quality']])$Phospho..STY..Probabilities != '', ]
+```
+
+MaxQuant writes the probabilities inline in the peptide sequence rather
+than as a separate list, so a residue’s position is implied by how much
+sequence precedes its value.
+[`parse_ptm_candidates_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_mq.md)
+reads that format and returns the identical five columns.
+
+``` r
+
+rowData(mq_psms)$Phospho..STY..Probabilities[1]
+#> [1] "AAAAAAS(0.003)AGS(0.144)S(0.814)AS(0.039)SGNQPPQELGLGELLEEFSR"
+
+mq_candidates <- parse_ptm_candidates_mq(mq_psms)
+head(mq_candidates, 3)
+#>   row pep_pos residue  prob n_ptms
+#> 1   1       7       S 0.003      1
+#> 2   1      10       S 0.144      1
+#> 3   1      11       S 0.814      1
+```
+
+The probabilities are already on a 0 to 1 scale here, and they obey the
+same budget — MaxQuant’s rounding is finer than ptmRS’s, so the totals
+sit closer to one.
+
+``` r
+
+mq_proteome_fasta <- system.file(
+  "extdata", "tmt_phospho_mq_proteome.fasta.gz", package = "biomasslmb")
+
+mq_psms <- add_peptide_positions_from_cleavage(mq_psms, mq_proteome_fasta)
+
+mq_psms <- add_ambiguous_ptm_group_rowdata(mq_psms, mq_candidates, min_prob = 0.75)
+```
+
+That call is identical to the Proteome Discoverer one except for
+`master_protein_col`, which defaults to MaxQuant’s
+`Leading.razor.protein`. Supporting a third search engine would mean
+writing a third parser and changing nothing else.
+
+**The two engines disagree about how much is ambiguous, not about what
+to do with it.** Compared at the same threshold, ptmRS leaves a larger
+share of PSMs unlocalised and spreads each one over roughly twice as
+many candidate residues, so it produces fewer but not smaller groups
+from a similar number of PSMs.
+
+``` r
+
+engine_summary <- function(candidates, engine, min_prob = 0.75) {
+  unresolved <- candidates %>%
+    group_by(row, n_ptms) %>%
+    summarise(resolved = sum(prob >= min_prob) == n_ptms[1], .groups = 'drop')
+
+  data.frame(
+    engine = engine,
+    PSMs = nrow(unresolved),
+    pc_unresolved = round(100 * mean(!unresolved$resolved), 1),
+    candidates_per_PSM = round(nrow(candidates) / n_distinct(candidates$row), 2),
+    pc_candidates_at_zero = round(100 * mean(candidates$prob == 0), 1),
+    lowest_prob = min(candidates$prob))
+}
+
+rbind(engine_summary(mq_candidates, 'MaxQuant'),
+      engine_summary(candidates, 'ptmRS'))
+#>     engine PSMs pc_unresolved candidates_per_PSM pc_candidates_at_zero
+#> 1 MaxQuant 6790          18.3               2.14                   0.0
+#> 2    ptmRS 6554          22.9               4.16                  34.7
+#>   lowest_prob
+#> 1       0.001
+#> 2       0.000
+```
+
+The last two columns are the practical difference, and they change what
+`min_candidate_prob` does. MaxQuant never writes a probability below
+0.001, so its lowest values are a reporting floor and a threshold of
+0.02 sits an order of magnitude above it. ptmRS writes exact zeros and
+writes a great many of them — a third of all its candidates here — so on
+Proteome Discoverer data any threshold above zero clears that block out
+before the particular value chosen starts to matter.
+
+A threshold of 0.75 is used above so that the two engines are compared
+on equal terms. MaxQuant pipelines commonly use 0.501 instead, which is
+the `min_prob` default, and on this dataset it halves the share of PSMs
+that fail to localise, from 18.3% to 9.2%.
+
+### Choosing min_candidate_prob
+
+`min_candidate_prob` is the probability below which a residue on an
+unresolved peptide is treated as ruled out rather than kept as a
+candidate. Because the probabilities are a budget, it is a coverage
+guarantee: the mass it discards is the chance the resulting group
+excludes the real site.
+[`summarise_ptm_groups()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/summarise_ptm_groups.md)
+reports both sides of that trade at a given value.
+
+``` r
+
+lapply(c(0.01, 0.02, 0.05, 0.1, 0.2), function(threshold) {
+  summarise_ptm_groups(psm_all_ptms, candidates, threshold, min_prob = 0.75,
+                       master_protein_col = 'Master.Protein.Accessions')
+}) %>%
+  bind_rows() %>%
+  select(min_candidate_prob, pooled_groups, median_size, pc_size_5_plus,
+         p95_span, pc_miss_over_5)
+#>   min_candidate_prob pooled_groups median_size pc_size_5_plus p95_span
+#> 1               0.01           535           3           23.9       18
+#> 2               0.02           535           3           23.9       18
+#> 3               0.05           535           3           23.9       18
+#> 4               0.10           535           3           23.9       18
+#> 5               0.20           535           3           23.9       18
+#>   pc_miss_over_5
+#> 1           0.00
+#> 2           0.33
+#> 3           4.54
+#> 4          18.29
+#> 5          29.91
+```
+
+**Raising the threshold buys very little resolution and pays for it
+steeply in coverage.** The number of groups barely moves, because the
+same peptides are pooled either way and only the size of the group they
+land in changes; the median group holds three candidates at every value
+in the table. What does move is the miss rate, which is the argument for
+keeping the threshold low.
+
+The default of `min_candidate_prob = 0.02` is not taken from this
+subset, which is too small to settle it — 410 proteins, and the sweep
+above rests on 1498 pooled PSMs. It comes from applying the same
+criterion to two complete datasets: the largest threshold at which under
+1% of pooled peptides have more than a 5% chance of excluding the true
+site. That gives 0.03 on a whole-proteome MaxQuant phosphoproteome and
+0.02 on a complete Proteome Discoverer one, and the stricter of the two
+is the default. At 0.02, 0.10% and 0.62% of pooled peptides respectively
+exceed a 5% miss rate.
+
+### The span guard
+
+`max_group_span` caps how far apart the first and last candidate in a
+group may be. It is a distance in residues, not a count of sites, and it
+exists to stop a chain of overlapping missed-cleavage peptides fusing
+genuinely unrelated regions of a protein into one group.
+
+``` r
+
+grouped %>%
+  filter(!ptm_group_resolved %in% TRUE, !is.na(ptm_group_id)) %>%
+  distinct(ptm_group_id, ptm_group_members) %>%
+  pull(ptm_group_members) %>%
+  strsplit(';') %>%
+  sapply(function(pos) diff(range(as.numeric(pos)))) %>%
+  max()
+#> [1] 33
+```
+
+The default of 50 is insurance rather than a tuning parameter. The
+widest group that forms unaided covers 33 residues here, 39 in the
+complete MaxQuant dataset and 43 in the complete Proteome Discoverer
+one, so on all three it never acts. Lowering it to 30 or below starts to
+cut groups, and a peptide whose candidates end up on both sides of a cut
+has no single group and is left unassigned rather than being forced into
+one.
+
+### What a pooled group cannot do
+
+A pooled group is a feature you can quantify and test, and
+`ptm_group_id` is usable directly as an `fcol` for
+[`aggregateFeatures()`](https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html)
+in place of the `site` identifier built earlier. Four things do not
+carry over.
+
+A pooled group has no single residue, so it has no surrounding sequence.
+[`add_site_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_site_sequence.md)
+and the `site_seq` column it produces are undefined for one, and kinase
+and motif enrichment cannot consume pooled groups as they stand.
+
+A pooled group must never be labelled as though it were a residue.
+`ptm_group_id` keeps the candidates visible, and
+`ptm_group_n_candidates` is the column to carry through to any label
+drawn elsewhere — a group reported as `S32` when it is one of four
+candidates is a claim the data does not support.
+
+``` r
+
+group_labels <- grouped %>%
+  filter(!is.na(ptm_group_id)) %>%
+  distinct(ptm_group_id, ptm_group_members, ptm_group_n_candidates)
+
+rbind(head(filter(group_labels, ptm_group_n_candidates == 1), 1),
+      head(filter(group_labels, ptm_group_n_candidates > 1), 1))
+#>                     ptm_group_id   ptm_group_members ptm_group_n_candidates
+#> 2              Q8BTI8_n2_911;913             911;913                      1
+#> 17 Q8BL97_n3_252;254;256;260;262 252;254;256;260;262                      5
+```
+
+`ptm_group_n_candidates` counts possible assignments rather than
+residues, which is why the localised peptide above reports two positions
+and a count of 1: it carries two phosphates, both placed, and there is
+one way to assign them. A count above 1 marks a pooled group, and its
+members are alternatives to one another rather than sites that co-occur.
+The distinction is the whole content of the column, and it is what any
+downstream label has to preserve.
+
+Pooling sums intensity across residues, so a group containing two sites
+that move in opposite directions reports their average, which may be no
+change at all. The filter’s answer to this case is to report nothing;
+pooling’s is to report something attenuated, and neither is the
+site-level answer.
+
+And the residues in a pooled group may also be quantified as resolved
+sites in their own right, from peptides that did localise. The same
+modification event then contributes to two features, which matters for
+multiple testing and for any enrichment analysis that treats features as
+independent.
+
+``` r
+
+resolved_sites <- grouped %>%
+  filter(ptm_group_resolved %in% TRUE) %>%
+  pull(ptm_group_members) %>%
+  unique()
+
+pooled_members <- grouped %>%
+  filter(!ptm_group_resolved %in% TRUE, !is.na(ptm_group_id)) %>%
+  distinct(ptm_group_id, ptm_group_members)
+
+c(pooled_groups = nrow(pooled_members),
+  overlapping_a_resolved_site = sum(sapply(
+    strsplit(pooled_members$ptm_group_members, ';'),
+    function(pos) any(pos %in% resolved_sites))))
+#>               pooled_groups overlapping_a_resolved_site 
+#>                         535                         484
+```
+
+**That overlap is the rule rather than the exception.** Nearly every
+pooled group in this dataset contains at least one residue that is also
+measured as a localised site, which is unsurprising — a region gets
+pooled because some spectra could not place the modification there, not
+because none ever could. The consequence is that pooled and localised
+features are not two disjoint sets of measurements, and the number of
+independent tests is smaller than the number of features. How much
+smaller is not quantified: the overlap is easy to count, as above, but
+its effect on FDR depends on the test applied downstream, and this
+vignette does not attempt a correction for it.
+
+Whether to group at all follows from the question. An analysis that
+rests on individual residues — a motif, a kinase substrate, a site to
+mutate — needs the localised sites and nothing else. An analysis asking
+which proteins and which regions respond to a treatment is the one that
+pays most for the filter, and it is the one grouping is for.
+
 Finally, the identifier the PSMs will be summarised over. A site is only
 meaningful with its protein attached — `S614` names a residue in some
 protein, not a measurable thing — so the accession and the site name are
@@ -454,9 +930,9 @@ plot_quant(phospho[['site']], log2transform = FALSE, method = 'density') +
 ```
 
 ![Site-level abundance distributions, before and after
-normalisation](PTM_site_quantification_files/figure-html/unnamed-chunk-17-1.png)![Site-level
+normalisation](PTM_site_quantification_files/figure-html/unnamed-chunk-33-1.png)![Site-level
 abundance distributions, before and after
-normalisation](PTM_site_quantification_files/figure-html/unnamed-chunk-17-2.png)
+normalisation](PTM_site_quantification_files/figure-html/unnamed-chunk-33-2.png)
 
 Site-level abundance distributions, before and after normalisation
 
@@ -593,7 +1069,7 @@ ggplot(comparison, aes(site_logFC, occupancy_logFC)) +
 
 ![Site-level against occupancy-level fold change. Points off the
 diagonal are sites whose protein also
-moved.](PTM_site_quantification_files/figure-html/unnamed-chunk-22-1.png)
+moved.](PTM_site_quantification_files/figure-html/unnamed-chunk-38-1.png)
 
 Site-level against occupancy-level fold change. Points off the diagonal
 are sites whose protein also moved.
@@ -763,7 +1239,14 @@ each of them is a place to get the answer wrong:
   coordinates to protein coordinates with
   [`add_ptm_positions()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ptm_positions.md),
   dropping the peptides that occur at more than one position in their
-  protein.
+  protein. Discarding is not the only option:
+  [`parse_ptm_candidates_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_pd.md)
+  and
+  [`add_ambiguous_ptm_group_rowdata()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ambiguous_ptm_group_rowdata.md)
+  keep the unlocalised peptides by pooling their candidate residues into
+  a group with a stated chance of containing the true site, which buys
+  back a quarter of the PSMs here at the price of a feature that names a
+  region rather than a residue.
 - **Normalisation.** The enriched fraction’s own median is not a valid
   reference, because a global change in modification is signal rather
   than a loading artefact.
@@ -845,7 +1328,7 @@ sessionInfo()
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         
 #> [22] visdat_0.6.0            ragg_1.5.2              purrr_1.2.2            
-#> [25] bit_4.6.0               xfun_0.60               cachem_1.1.0           
+#> [25] bit_4.6.0               xfun_0.61               cachem_1.1.0           
 #> [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.1    
 #> [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.12.0           
 #> [34] stringi_1.8.9           RColorBrewer_1.1-3      genefilter_1.92.0      

@@ -17,12 +17,12 @@ quantified in each sample and the peptide intensities may not be
 directly comparable between samples. The common solution to the higher
 burden of missing values is to use the ‘match-between-runs’ (Cox et al.
 2014), or the functionally equivalent ‘Minora’ algorithm employed by
-Proteome Discoverer (PD). These algorithms use the observed retention
-times of MS1 ions which were successfully spectrum matched in one sample
-to identify the likely peptide sequence of MS1 ions that could not be
-spectrum matched in another sample. However, even with these algorithms
-enabled, DDA LFQ will still typically have many more missing values than
-labelled proteomics, e.g TMT.
+Proteome Discoverer (PD). These algorithms use the accurate mass and
+aligned retention time of MS1 ions which were successfully spectrum
+matched in one sample to identify the likely peptide sequence of MS1
+ions that could not be spectrum matched in another sample. However, even
+with these algorithms enabled, DDA LFQ will still typically have many
+more missing values than labelled proteomics, e.g TMT.
 
 The analysis is straightforward in outline. Three of its steps carry
 most of the risk — normalisation, the missing value threshold, and the
@@ -773,7 +773,7 @@ sessionInfo()
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         
 #> [22] visdat_0.6.0            ragg_1.5.2              UpSetR_1.4.1           
-#> [25] purrr_1.2.2             bit_4.6.0               xfun_0.60              
+#> [25] purrr_1.2.2             bit_4.6.0               xfun_0.61              
 #> [28] cachem_1.1.0            jsonlite_2.0.0          blob_1.3.0             
 #> [31] DelayedArray_0.36.1     cluster_2.1.8.2         R6_2.6.1               
 #> [34] bslib_0.12.0            stringi_1.8.9           RColorBrewer_1.1-3     

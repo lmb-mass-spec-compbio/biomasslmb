@@ -87,9 +87,9 @@
       <h1>PTM designs: site-level quantification and normalisation</h1>
                         <h4 data-toc-skip class="author">Tom Smith</h4>
             
-            <h4 data-toc-skip class="date">2026-09-11</h4>
+            <h4 data-toc-skip class="date">2026-09-22</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/v0.1.0/vignettes/PTM_site_quantification.Rmd" class="external-link"><code>vignettes/PTM_site_quantification.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lmb-mass-spec-compbio/biomasslmb/blob/main/vignettes/PTM_site_quantification.Rmd" class="external-link"><code>vignettes/PTM_site_quantification.Rmd</code></a></small>
       <div class="d-none name"><code>PTM_site_quantification.Rmd</code></div>
     </div>
 
@@ -157,7 +157,8 @@ with Proteome Discoverer (PD). The principles apply to any enriched PTM;
 only the search-engine columns differ. MaxQuant’s equivalents are
 <code><a href="../reference/filter_maxquant_ptm.html">filter_maxquant_ptm()</a></code> and
 <code><a href="../reference/add_filter_ptm_pos_rowdata_mq.html">add_filter_ptm_pos_rowdata_mq()</a></code>, which take the same role
-as <code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code> below.</p>
+as <code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code> below, and <a href="#peptides-that-cannot-be-localised">peptides that cannot be
+localised</a> works the same data through both engines side by side.</p>
 <p>Everything up to the localisation step is the routine PSM processing
 covered in <a href="TMT_PSM_QC_Summarisation.html">TMT QC and
 summarisation</a>, so it is run here with less commentary.</p>
@@ -389,7 +390,9 @@ been observed. PD’s ptmRS node scores each candidate site, and
 <p><code>threshold</code> sets the minimum score a site needs. If any
 site on a peptide falls below it, the modifications on that peptide are
 all discarded rather than partially kept — a peptide whose phosphate
-could be on either of two residues tells you nothing about either.</p>
+could be on either of two residues cannot be assigned to either. It is
+not silent about the region, though, and <a href="#peptides-that-cannot-be-localised">peptides that cannot be
+localised</a> below recovers what it does say.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_localised'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd</a></span><span class="op">(</span></span>
 <span>  <span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span>, threshold <span class="op">=</span> <span class="fl">75</span><span class="op">)</span></span>
@@ -493,11 +496,415 @@ position cannot be summarised or compared.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_sites'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_localised'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span></span>
 <span>  <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">site_positions</span><span class="op">$</span><span class="va">start</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">';'</span>, <span class="va">site_positions</span><span class="op">$</span><span class="va">start</span><span class="op">)</span>, <span class="op">]</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="peptides-that-cannot-be-localised">Peptides that cannot be localised<a class="anchor" aria-label="anchor" href="#peptides-that-cannot-be-localised"></a>
+</h2>
+<p>The localisation filter is the only step in this workflow that
+discards data on the strength of a probability rather than a
+measurement, and it is the most expensive one. Applied to the
+quality-filtered PSMs of this dataset at a threshold of 75, it removes a
+little under a quarter of them.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">psm_all_ptms</span> <span class="op">&lt;-</span> <span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">candidates</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/parse_ptm_candidates_pd.html">parse_ptm_candidates_pd</a></span><span class="op">(</span><span class="va">psm_all_ptms</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">resolution</span> <span class="op">&lt;-</span> <span class="va">candidates</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">row</span>, <span class="va">n_ptms</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>n_localised <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">prob</span> <span class="op">&gt;=</span> <span class="fl">0.75</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">'drop'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>resolved <span class="op">=</span> <span class="va">n_localised</span> <span class="op">==</span> <span class="va">n_ptms</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>PSMs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">resolution</span><span class="op">)</span>,</span>
+<span>  discarded <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">resolution</span><span class="op">$</span><span class="va">resolved</span><span class="op">)</span>,</span>
+<span>  percent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">!</span><span class="va">resolution</span><span class="op">$</span><span class="va">resolved</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      PSMs discarded   percent </span></span>
+<span><span class="co">#&gt;    6554.0    1498.0      22.9</span></span></code></pre></div>
+<p><strong>A peptide whose phosphate is tied between two serines is not
+an uninformative peptide.</strong> It establishes that the region is
+phosphorylated and by how much, and leaves open only which of the two
+residues carries the phosphate. The filter throws away the
+quantification along with the ambiguity, and what it throws away is not
+a random subset: serine-rich and threonine-rich regions are exactly the
+ones a spectrum struggles to resolve, so the sites that go missing are
+concentrated in the sequences most worth looking at.</p>
+<p>The alternative is to keep those peptides by pooling them. Peptides
+whose sites all reach the threshold are untouched and keep their own
+single-residue identity. Peptides that do not resolve contribute every
+candidate residue that is still plausible, and candidate sets that
+overlap are merged into one group, which is quantified as a unit. The
+cost is stated plainly at the end of this section: a pooled group names
+a region rather than a residue, and several things you would want to do
+with a site cannot be done with one.</p>
+<div class="section level3">
+<h3 id="reading-every-candidate-residue">Reading every candidate residue<a class="anchor" aria-label="anchor" href="#reading-every-candidate-residue"></a>
+</h3>
+<p><code><a href="../reference/parse_ptm_candidates_pd.html">parse_ptm_candidates_pd()</a></code> reads
+<code>ptmRS.Phospho.Site.Probabilities</code>, <strong>not</strong> the
+<code>ptmRS.Best.Site.Probabilities</code> column that
+<code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code> uses. The distinction is easy to miss
+and fails silently. Best Site reports only the winning isoform’s sites,
+so the alternatives a group would be built from are absent from it, and
+pointing the parser at that column yields groups containing only the
+sites ptmRS already preferred.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">example_row</span> <span class="op">&lt;-</span> <span class="va">resolution</span><span class="op">$</span><span class="va">row</span><span class="op">[</span><span class="op">!</span><span class="va">resolution</span><span class="op">$</span><span class="va">resolved</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu">rowData</span><span class="op">(</span><span class="va">psm_all_ptms</span><span class="op">)</span><span class="op">[</span><span class="va">example_row</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'ptmRS.Best.Site.Probabilities'</span>,</span>
+<span>                                     <span class="st">'ptmRS.Phospho.Site.Probabilities'</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                  17                                                                           </span></span>
+<span><span class="co">#&gt; ptmRS.Best.Site.Probabilities    "S3(Phospho): 46.88; S5(Phospho): 46.88; S9(Phospho): 100; S11(Phospho): 100"</span></span>
+<span><span class="co">#&gt; ptmRS.Phospho.Site.Probabilities "S(1): 6.2; S(3): 46.9; S(5): 46.9; S(9): 100.0; S(11): 100.0"</span></span></code></pre></div>
+<p>The parser returns one row per candidate residue, with the position
+within the peptide, the residue, the probability and the number of
+modifications on the peptide. <code><a href="../reference/parse_ptm_candidates_mq.html">parse_ptm_candidates_mq()</a></code>
+returns the same table from MaxQuant’s
+<code>Phospho..STY..Probabilities</code> column, and everything after
+this point is shared between the two.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">candidates</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   row pep_pos residue prob n_ptms</span></span>
+<span><span class="co">#&gt; 1   1       1       S    0      2</span></span>
+<span><span class="co">#&gt; 2   1       3       S    0      2</span></span>
+<span><span class="co">#&gt; 3   1       4       S    0      2</span></span>
+<span><span class="co">#&gt; 4   1       5       S    0      2</span></span></code></pre></div>
+<p>Probabilities are on a 0 to 1 scale in both parsers, so a threshold
+means the same thing whichever search engine produced the data. ptmRS
+reports percentages and <code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_scores_pd()</a></code> takes its
+<code>threshold</code> as one — 75 above, 0.75 below — which is the one
+place in this workflow where the same quantity is expressed two
+ways.</p>
+</div>
+<div class="section level3">
+<h3 id="the-probabilities-are-a-budget-not-a-score">The probabilities are a budget, not a score<a class="anchor" aria-label="anchor" href="#the-probabilities-are-a-budget-not-a-score"></a>
+</h3>
+<p>Each modification has to sit on some residue, so the probabilities
+reported for a peptide sum to the number of modifications on it. That
+holds in this dataset to within the rounding ptmRS applies.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">candidates</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">row</span>, <span class="va">n_ptms</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>total <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">'drop'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">total</span> <span class="op">/</span> <span class="va">n_ptms</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>            max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">total</span> <span class="op">/</span> <span class="va">n_ptms</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;     min   max</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 0.997  1.00</span></span></code></pre></div>
+<p><strong>This is what makes the pooling quantitative rather than
+cosmetic.</strong> A candidate’s probability is its share of one
+modification, so the summed probability of a set of candidates is the
+chance that the set contains the true site, and the probability left
+outside the set is the chance that it does not. A group is therefore not
+a vague claim about a region; it is a statement with a coverage figure
+attached.</p>
+</div>
+<div class="section level3">
+<h3 id="grouping-the-candidates">Grouping the candidates<a class="anchor" aria-label="anchor" href="#grouping-the-candidates"></a>
+</h3>
+<p>Grouping happens in protein coordinates, so the peptides need placing
+first, as in the previous section — this time before the localisation
+filter has been applied rather than after.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">psm_all_ptms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_peptide_positions_from_cleavage.html">add_peptide_positions_from_cleavage</a></span><span class="op">(</span></span>
+<span>  <span class="va">psm_all_ptms</span>, <span class="va">proteome_fasta</span>, master_protein_col <span class="op">=</span> <span class="st">'Master.Protein.Accessions'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">psm_all_ptms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_ambiguous_ptm_group_rowdata.html">add_ambiguous_ptm_group_rowdata</a></span><span class="op">(</span></span>
+<span>  <span class="va">psm_all_ptms</span>, <span class="va">candidates</span>,</span>
+<span>  master_protein_col <span class="op">=</span> <span class="st">'Master.Protein.Accessions'</span>,</span>
+<span>  min_prob <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
+<p>Candidate residues are nodes, and two residues are joined when they
+are candidates on the same peptide. The groups are the connected
+components of that graph, so a “S32 or S33” peptide and a “S33 or S37”
+peptide share a node and become one group over all three residues. The
+graph is built separately for each protein and each modification count,
+which stops a singly phosphorylated peptide from merging with a doubly
+phosphorylated one covering the same residues: they overlap in sequence
+but are different molecular species.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grouped</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">psm_all_ptms</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>resolved_PSMs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">grouped</span><span class="op">$</span><span class="va">ptm_group_resolved</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  pooled_PSMs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">grouped</span><span class="op">$</span><span class="va">ptm_group_resolved</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="cn">TRUE</span> <span class="op">&amp;</span></span>
+<span>                      <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">grouped</span><span class="op">$</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  unassigned <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">grouped</span><span class="op">$</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; resolved_PSMs   pooled_PSMs    unassigned </span></span>
+<span><span class="co">#&gt;          5054          1498           205</span></span></code></pre></div>
+<p>The PSMs the filter would have kept are unchanged — each still
+reports its own residue — and the PSMs it would have discarded are now
+distributed over a much smaller number of quantifiable groups.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span>pooled <span class="op">=</span> <span class="op">!</span><span class="va">ptm_group_resolved</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>PSMs <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, features <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt;   pooled  PSMs features</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FALSE   <span style="text-decoration: underline;">5</span>054     <span style="text-decoration: underline;">1</span>351</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> TRUE    <span style="text-decoration: underline;">1</span>498      535</span></span></code></pre></div>
+<p>A pooled group’s size is set by how much genuine ambiguity there is,
+not by how many PSMs fell into it.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">ptm_group_resolved</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="cn">TRUE</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">ptm_group_id</span>, <span class="va">ptm_group_n_candidates</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">ptm_group_n_candidates</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; .</span></span>
+<span><span class="co">#&gt;   2   3   4   5   6   7   8   9  10  11 </span></span>
+<span><span class="co">#&gt; 142 148 117  51  31  17  15   9   3   2</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="the-same-grouping-from-maxquant-output">The same grouping from MaxQuant output<a class="anchor" aria-label="anchor" href="#the-same-grouping-from-maxquant-output"></a>
+</h3>
+<p>Everything from <code><a href="../reference/add_ambiguous_ptm_group_rowdata.html">add_ambiguous_ptm_group_rowdata()</a></code>
+onwards is the same for either search engine, because the parser has
+already reduced the output to one candidate table. Only the step that
+produces that table differs, and <code>psm_tmt_phospho_mq</code> — the
+phospho-enriched fraction of the TMT18plex whose total fraction is
+<code>psm_tmt_factorial</code> — is the MaxQuant equivalent of the data
+used above.</p>
+<p>The PSM filtering is the MaxQuant workflow’s, covered in <a href="TMT_PSM_QC_Summarisation.html">TMT QC and summarisation</a>:
+reporter intensities of exactly zero become <code>NA</code>, contaminant
+accessions come from <code><a href="../reference/get_maxquant_cont_accessions.html">get_maxquant_cont_accessions()</a></code>, and
+the decoy hits MaxQuant leaves in the export are removed.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_qf</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/readQFeatures.html" class="external-link">readQFeatures</a></span><span class="op">(</span>assayData <span class="op">=</span> <span class="va">psm_tmt_phospho_mq</span>,</span>
+<span>                               colData <span class="op">=</span> <span class="va">tmt_factorial_design</span>,</span>
+<span>                               quantCols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">tmt_factorial_design</span><span class="op">)</span>,</span>
+<span>                               name <span class="op">=</span> <span class="st">'psm_raw'</span><span class="op">)</span></span>
+<span><span class="va">mq_qf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sync_coldata.html">sync_coldata</a></span><span class="op">(</span><span class="va">mq_qf</span>, <span class="st">'psm_raw'</span><span class="op">)</span></span>
+<span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_raw'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">QFeatures</span><span class="fu">::</span><span class="fu"><a href="https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html" class="external-link">zeroIsNA</a></span><span class="op">(</span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_features_mq_dda.html">filter_features_mq_dda</a></span><span class="op">(</span></span>
+<span>  <span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_raw'</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  contaminant_proteins <span class="op">=</span> <span class="fu"><a href="../reference/get_maxquant_cont_accessions.html">get_maxquant_cont_accessions</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  filter_contaminant <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  filter_associated_contaminant <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_psms</span> <span class="op">&lt;-</span> <span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span></span>
+<span>  <span class="fu">rowData</span><span class="op">(</span><span class="va">mq_qf</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">Phospho..STY..Probabilities</span> <span class="op">!=</span> <span class="st">''</span>, <span class="op">]</span></span></code></pre></div>
+<p>MaxQuant writes the probabilities inline in the peptide sequence
+rather than as a separate list, so a residue’s position is implied by
+how much sequence precedes its value.
+<code><a href="../reference/parse_ptm_candidates_mq.html">parse_ptm_candidates_mq()</a></code> reads that format and returns the
+identical five columns.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">rowData</span><span class="op">(</span><span class="va">mq_psms</span><span class="op">)</span><span class="op">$</span><span class="va">Phospho..STY..Probabilities</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "AAAAAAS(0.003)AGS(0.144)S(0.814)AS(0.039)SGNQPPQELGLGELLEEFSR"</span></span>
+<span></span>
+<span><span class="va">mq_candidates</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/parse_ptm_candidates_mq.html">parse_ptm_candidates_mq</a></span><span class="op">(</span><span class="va">mq_psms</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mq_candidates</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   row pep_pos residue  prob n_ptms</span></span>
+<span><span class="co">#&gt; 1   1       7       S 0.003      1</span></span>
+<span><span class="co">#&gt; 2   1      10       S 0.144      1</span></span>
+<span><span class="co">#&gt; 3   1      11       S 0.814      1</span></span></code></pre></div>
+<p>The probabilities are already on a 0 to 1 scale here, and they obey
+the same budget — MaxQuant’s rounding is finer than ptmRS’s, so the
+totals sit closer to one.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mq_proteome_fasta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>, <span class="st">"tmt_phospho_mq_proteome.fasta.gz"</span>, package <span class="op">=</span> <span class="st">"biomasslmb"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_psms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_peptide_positions_from_cleavage.html">add_peptide_positions_from_cleavage</a></span><span class="op">(</span><span class="va">mq_psms</span>, <span class="va">mq_proteome_fasta</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mq_psms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_ambiguous_ptm_group_rowdata.html">add_ambiguous_ptm_group_rowdata</a></span><span class="op">(</span><span class="va">mq_psms</span>, <span class="va">mq_candidates</span>, min_prob <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
+<p>That call is identical to the Proteome Discoverer one except for
+<code>master_protein_col</code>, which defaults to MaxQuant’s
+<code>Leading.razor.protein</code>. Supporting a third search engine
+would mean writing a third parser and changing nothing else.</p>
+<p><strong>The two engines disagree about how much is ambiguous, not
+about what to do with it.</strong> Compared at the same threshold, ptmRS
+leaves a larger share of PSMs unlocalised and spreads each one over
+roughly twice as many candidate residues, so it produces fewer but not
+smaller groups from a similar number of PSMs.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">engine_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">candidates</span>, <span class="va">engine</span>, <span class="va">min_prob</span> <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">unresolved</span> <span class="op">&lt;-</span> <span class="va">candidates</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">row</span>, <span class="va">n_ptms</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>resolved <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">prob</span> <span class="op">&gt;=</span> <span class="va">min_prob</span><span class="op">)</span> <span class="op">==</span> <span class="va">n_ptms</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, .groups <span class="op">=</span> <span class="st">'drop'</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    engine <span class="op">=</span> <span class="va">engine</span>,</span>
+<span>    PSMs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">unresolved</span><span class="op">)</span>,</span>
+<span>    pc_unresolved <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">!</span><span class="va">unresolved</span><span class="op">$</span><span class="va">resolved</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    candidates_per_PSM <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">candidates</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">candidates</span><span class="op">$</span><span class="va">row</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    pc_candidates_at_zero <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">candidates</span><span class="op">$</span><span class="va">prob</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    lowest_prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">candidates</span><span class="op">$</span><span class="va">prob</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu">engine_summary</span><span class="op">(</span><span class="va">mq_candidates</span>, <span class="st">'MaxQuant'</span><span class="op">)</span>,</span>
+<span>      <span class="fu">engine_summary</span><span class="op">(</span><span class="va">candidates</span>, <span class="st">'ptmRS'</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     engine PSMs pc_unresolved candidates_per_PSM pc_candidates_at_zero</span></span>
+<span><span class="co">#&gt; 1 MaxQuant 6790          18.3               2.14                   0.0</span></span>
+<span><span class="co">#&gt; 2    ptmRS 6554          22.9               4.16                  34.7</span></span>
+<span><span class="co">#&gt;   lowest_prob</span></span>
+<span><span class="co">#&gt; 1       0.001</span></span>
+<span><span class="co">#&gt; 2       0.000</span></span></code></pre></div>
+<p>The last two columns are the practical difference, and they change
+what <code>min_candidate_prob</code> does. MaxQuant never writes a
+probability below 0.001, so its lowest values are a reporting floor and
+a threshold of 0.02 sits an order of magnitude above it. ptmRS writes
+exact zeros and writes a great many of them — a third of all its
+candidates here — so on Proteome Discoverer data any threshold above
+zero clears that block out before the particular value chosen starts to
+matter.</p>
+<p>A threshold of 0.75 is used above so that the two engines are
+compared on equal terms. MaxQuant pipelines commonly use 0.501 instead,
+which is the <code>min_prob</code> default, and on this dataset it
+halves the share of PSMs that fail to localise, from 18.3% to 9.2%.</p>
+</div>
+<div class="section level3">
+<h3 id="choosing-min_candidate_prob">Choosing min_candidate_prob<a class="anchor" aria-label="anchor" href="#choosing-min_candidate_prob"></a>
+</h3>
+<p><code>min_candidate_prob</code> is the probability below which a
+residue on an unresolved peptide is treated as ruled out rather than
+kept as a candidate. Because the probabilities are a budget, it is a
+coverage guarantee: the mass it discards is the chance the resulting
+group excludes the real site. <code><a href="../reference/summarise_ptm_groups.html">summarise_ptm_groups()</a></code>
+reports both sides of that trade at a given value.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">threshold</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="../reference/summarise_ptm_groups.html">summarise_ptm_groups</a></span><span class="op">(</span><span class="va">psm_all_ptms</span>, <span class="va">candidates</span>, <span class="va">threshold</span>, min_prob <span class="op">=</span> <span class="fl">0.75</span>,</span>
+<span>                       master_protein_col <span class="op">=</span> <span class="st">'Master.Protein.Accessions'</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">min_candidate_prob</span>, <span class="va">pooled_groups</span>, <span class="va">median_size</span>, <span class="va">pc_size_5_plus</span>,</span>
+<span>         <span class="va">p95_span</span>, <span class="va">pc_miss_over_5</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   min_candidate_prob pooled_groups median_size pc_size_5_plus p95_span</span></span>
+<span><span class="co">#&gt; 1               0.01           535           3           23.9       18</span></span>
+<span><span class="co">#&gt; 2               0.02           535           3           23.9       18</span></span>
+<span><span class="co">#&gt; 3               0.05           535           3           23.9       18</span></span>
+<span><span class="co">#&gt; 4               0.10           535           3           23.9       18</span></span>
+<span><span class="co">#&gt; 5               0.20           535           3           23.9       18</span></span>
+<span><span class="co">#&gt;   pc_miss_over_5</span></span>
+<span><span class="co">#&gt; 1           0.00</span></span>
+<span><span class="co">#&gt; 2           0.33</span></span>
+<span><span class="co">#&gt; 3           4.54</span></span>
+<span><span class="co">#&gt; 4          18.29</span></span>
+<span><span class="co">#&gt; 5          29.91</span></span></code></pre></div>
+<p><strong>Raising the threshold buys very little resolution and pays
+for it steeply in coverage.</strong> The number of groups barely moves,
+because the same peptides are pooled either way and only the size of the
+group they land in changes; the median group holds three candidates at
+every value in the table. What does move is the miss rate, which is the
+argument for keeping the threshold low.</p>
+<p>The default of <code>min_candidate_prob = 0.02</code> is not taken
+from this subset, which is too small to settle it — 410 proteins, and
+the sweep above rests on 1498 pooled PSMs. It comes from applying the
+same criterion to two complete datasets: the largest threshold at which
+under 1% of pooled peptides have more than a 5% chance of excluding the
+true site. That gives 0.03 on a whole-proteome MaxQuant phosphoproteome
+and 0.02 on a complete Proteome Discoverer one, and the stricter of the
+two is the default. At 0.02, 0.10% and 0.62% of pooled peptides
+respectively exceed a 5% miss rate.</p>
+</div>
+<div class="section level3">
+<h3 id="the-span-guard">The span guard<a class="anchor" aria-label="anchor" href="#the-span-guard"></a>
+</h3>
+<p><code>max_group_span</code> caps how far apart the first and last
+candidate in a group may be. It is a distance in residues, not a count
+of sites, and it exists to stop a chain of overlapping missed-cleavage
+peptides fusing genuinely unrelated regions of a protein into one
+group.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">ptm_group_resolved</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="cn">TRUE</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">ptm_group_id</span>, <span class="va">ptm_group_members</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">ptm_group_members</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="st">';'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">pos</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">pos</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 33</span></span></code></pre></div>
+<p>The default of 50 is insurance rather than a tuning parameter. The
+widest group that forms unaided covers 33 residues here, 39 in the
+complete MaxQuant dataset and 43 in the complete Proteome Discoverer
+one, so on all three it never acts. Lowering it to 30 or below starts to
+cut groups, and a peptide whose candidates end up on both sides of a cut
+has no single group and is left unassigned rather than being forced into
+one.</p>
+</div>
+<div class="section level3">
+<h3 id="what-a-pooled-group-cannot-do">What a pooled group cannot do<a class="anchor" aria-label="anchor" href="#what-a-pooled-group-cannot-do"></a>
+</h3>
+<p>A pooled group is a feature you can quantify and test, and
+<code>ptm_group_id</code> is usable directly as an <code>fcol</code> for
+<code><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">aggregateFeatures()</a></code> in place of the <code>site</code>
+identifier built earlier. Four things do not carry over.</p>
+<p>A pooled group has no single residue, so it has no surrounding
+sequence. <code><a href="../reference/add_site_sequence.html">add_site_sequence()</a></code> and the <code>site_seq</code>
+column it produces are undefined for one, and kinase and motif
+enrichment cannot consume pooled groups as they stand.</p>
+<p>A pooled group must never be labelled as though it were a residue.
+<code>ptm_group_id</code> keeps the candidates visible, and
+<code>ptm_group_n_candidates</code> is the column to carry through to
+any label drawn elsewhere — a group reported as <code>S32</code> when it
+is one of four candidates is a claim the data does not support.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">group_labels</span> <span class="op">&lt;-</span> <span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">ptm_group_id</span>, <span class="va">ptm_group_members</span>, <span class="va">ptm_group_n_candidates</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">group_labels</span>, <span class="va">ptm_group_n_candidates</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">group_labels</span>, <span class="va">ptm_group_n_candidates</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                     ptm_group_id   ptm_group_members ptm_group_n_candidates</span></span>
+<span><span class="co">#&gt; 2              Q8BTI8_n2_911;913             911;913                      1</span></span>
+<span><span class="co">#&gt; 17 Q8BL97_n3_252;254;256;260;262 252;254;256;260;262                      5</span></span></code></pre></div>
+<p><code>ptm_group_n_candidates</code> counts possible assignments
+rather than residues, which is why the localised peptide above reports
+two positions and a count of 1: it carries two phosphates, both placed,
+and there is one way to assign them. A count above 1 marks a pooled
+group, and its members are alternatives to one another rather than sites
+that co-occur. The distinction is the whole content of the column, and
+it is what any downstream label has to preserve.</p>
+<p>Pooling sums intensity across residues, so a group containing two
+sites that move in opposite directions reports their average, which may
+be no change at all. The filter’s answer to this case is to report
+nothing; pooling’s is to report something attenuated, and neither is the
+site-level answer.</p>
+<p>And the residues in a pooled group may also be quantified as resolved
+sites in their own right, from peptides that did localise. The same
+modification event then contributes to two features, which matters for
+multiple testing and for any enrichment analysis that treats features as
+independent.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">resolved_sites</span> <span class="op">&lt;-</span> <span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">ptm_group_resolved</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">ptm_group_members</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pooled_members</span> <span class="op">&lt;-</span> <span class="va">grouped</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">ptm_group_resolved</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="cn">TRUE</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ptm_group_id</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">ptm_group_id</span>, <span class="va">ptm_group_members</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>pooled_groups <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pooled_members</span><span class="op">)</span>,</span>
+<span>  overlapping_a_resolved_site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="va">pooled_members</span><span class="op">$</span><span class="va">ptm_group_members</span>, <span class="st">';'</span><span class="op">)</span>,</span>
+<span>    <span class="kw">function</span><span class="op">(</span><span class="va">pos</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="va">pos</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">resolved_sites</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;               pooled_groups overlapping_a_resolved_site </span></span>
+<span><span class="co">#&gt;                         535                         484</span></span></code></pre></div>
+<p><strong>That overlap is the rule rather than the exception.</strong>
+Nearly every pooled group in this dataset contains at least one residue
+that is also measured as a localised site, which is unsurprising — a
+region gets pooled because some spectra could not place the modification
+there, not because none ever could. The consequence is that pooled and
+localised features are not two disjoint sets of measurements, and the
+number of independent tests is smaller than the number of features. How
+much smaller is not quantified: the overlap is easy to count, as above,
+but its effect on FDR depends on the test applied downstream, and this
+vignette does not attempt a correction for it.</p>
+<p>Whether to group at all follows from the question. An analysis that
+rests on individual residues — a motif, a kinase substrate, a site to
+mutate — needs the localised sites and nothing else. An analysis asking
+which proteins and which regions respond to a treatment is the one that
+pays most for the filter, and it is the one grouping is for.</p>
 <p>Finally, the identifier the PSMs will be summarised over. A site is
 only meaningful with its protein attached — <code>S614</code> names a
 residue in some protein, not a measurable thing — so the accession and
 the site name are pasted together.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">rowData</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_sites'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">site</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
 <span>  <span class="fu">rowData</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_sites'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">Master.Protein.Accessions</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">' '</span>, <span class="st">''</span>, <span class="fu">rowData</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_sites'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">ptm_name</span><span class="op">)</span>,</span>
@@ -507,6 +914,7 @@ the site name are pasted together.</p>
 <span><span class="co">#&gt; [1] "Q8BTI8_S911;S913"   "Q9CYI0_S55"         "Q8BTI8_S2036;S2037"</span></span>
 <span><span class="co">#&gt; [4] "Q6ZQ58_S302"        "Q8BTI8_S1457;S1458" "Q8BTI8_S268;S270"</span></span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
 <h2 id="summarising-to-sites-and-proteins">Summarising to sites and proteins<a class="anchor" aria-label="anchor" href="#summarising-to-sites-and-proteins"></a>
 </h2>
@@ -514,7 +922,7 @@ the site name are pasted together.</p>
 any TMT experiment: drop the PSMs with missing values, sum the rest, and
 log-transform. The enriched fraction is summarised over the site
 identifier, the total fraction over the master protein.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_complete'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">filterNA</a></span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'psm_sites'</span><span class="op">]</span><span class="op">]</span>, <span class="fl">0</span><span class="op">)</span></span>
 <span><span class="va">total</span><span class="op">[[</span><span class="st">'psm_complete'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ProtGenerics/man/protgenerics.html" class="external-link">filterNA</a></span><span class="op">(</span><span class="va">total</span><span class="op">[[</span><span class="st">'psm_quality'</span><span class="op">]</span><span class="op">]</span>, <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
@@ -536,7 +944,7 @@ the quantification belongs to the doubly-modified form of that peptide,
 and there is no way to divide it between the two residues. Peptides
 carrying one of the sites alone, if they were observed, form their own
 separate feature.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>sites_per_feature <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="fu">rowData</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">ptm_name</span>, <span class="st">'; '</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; sites_per_feature</span></span>
@@ -565,7 +973,7 @@ median is a legitimate estimate of them. <code><a href="../reference/get_medians
 extracts the per-sample medians, and
 <code><a href="../reference/center_normalise_to_ref.html">center_normalise_to_ref()</a></code> applies them to whichever assay
 you pass.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">total_medians</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_medians.html">get_medians</a></span><span class="op">(</span><span class="va">total</span><span class="op">[[</span><span class="st">'protein_raw'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">total</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/center_normalise_to_ref.html">center_normalise_to_ref</a></span><span class="op">(</span></span>
@@ -579,7 +987,7 @@ medians have themselves been centred on their mean, so it applies the
 <em>relative</em> differences between samples and leaves the overall
 level of the data alone. That is why the same reference can be applied
 to two assays on quite different scales.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_quant.html">plot_quant</a></span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site_raw'</span><span class="op">]</span><span class="op">]</span>, log2transform <span class="op">=</span> <span class="cn">FALSE</span>, method <span class="op">=</span> <span class="st">'density'</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/theme_biomasslmb.html">theme_biomasslmb</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">9</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.key.height <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">3</span>, <span class="st">'mm'</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -590,7 +998,7 @@ to two assays on quite different scales.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.key.height <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">3</span>, <span class="st">'mm'</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Site abundance (log2)'</span>, title <span class="op">=</span> <span class="st">'After normalisation'</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="PTM_site_quantification_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="Site-level abundance distributions, before and after normalisation" width="50%"><img src="PTM_site_quantification_files/figure-html/unnamed-chunk-17-2.png" class="r-plt" alt="Site-level abundance distributions, before and after normalisation" width="50%"><p class="caption">
+<img src="PTM_site_quantification_files/figure-html/unnamed-chunk-33-1.png" class="r-plt" alt="Site-level abundance distributions, before and after normalisation" width="50%"><img src="PTM_site_quantification_files/figure-html/unnamed-chunk-33-2.png" class="r-plt" alt="Site-level abundance distributions, before and after normalisation" width="50%"><p class="caption">
 Site-level abundance distributions, before and after normalisation
 </p>
 </div>
@@ -607,7 +1015,7 @@ them. The result is often called occupancy or stoichiometry, though
 neither name is quite right — an enrichment step does not preserve
 absolute proportions, so this is a relative measure, comparable between
 samples but not interpretable as “x% of the protein is modified”.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">site_protein</span> <span class="op">&lt;-</span> <span class="fu">rowData</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">Master.Protein.Accessions</span></span>
 <span><span class="va">has_protein</span> <span class="op">&lt;-</span> <span class="va">site_protein</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">total</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
@@ -629,7 +1037,7 @@ subset.</p>
 <p>Both matrices can go into <code>limma</code> in the usual way. The
 design here has a treatment and a timepoint, and the question is about
 the treatment, so the timepoint enters as a blocking factor.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">condition</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site'</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">Condition</span>,</span>
 <span>                    levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Control'</span>, <span class="st">'Treated'</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">timepoint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site'</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">Timepoint</span><span class="op">)</span></span>
@@ -659,7 +1067,7 @@ between these two. Only 1 of the 419 proteins quantified in the total
 fraction changes detectably with treatment, so for most sites there is
 nothing for the correction to remove, and the two site-level answers
 mostly agree.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">occupancy</span><span class="op">)</span>,</span>
 <span>  protein <span class="op">=</span> <span class="va">site_protein</span><span class="op">[</span><span class="va">has_protein</span><span class="op">]</span>,</span>
@@ -681,7 +1089,7 @@ mostly agree.</p>
 <span><span class="co">#&gt;           both        neither occupancy only      site only </span></span>
 <span><span class="co">#&gt;              4           1313              2              2</span></span></code></pre></div>
 <p>The interesting cases are the disagreements.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">comparison</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">called</span> <span class="op">!=</span> <span class="st">'neither'</span>, <span class="va">called</span> <span class="op">!=</span> <span class="st">'both'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">called</span>, <span class="va">site_logFC</span>, <span class="va">site_padj</span>,</span>
@@ -697,7 +1105,7 @@ mostly agree.</p>
 <span><span class="co">#&gt; 2          0.035        -0.039      0.95000</span></span>
 <span><span class="co">#&gt; 3          0.059        -0.039      0.99000</span></span>
 <span><span class="co">#&gt; 4          0.035        -0.063      0.87000</span></span></code></pre></div>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">comparison</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">site_logFC</span>, <span class="va">occupancy_logFC</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, colour <span class="op">=</span> <span class="st">'grey80'</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span>, colour <span class="op">=</span> <span class="st">'grey80'</span><span class="op">)</span> <span class="op">+</span></span>
@@ -710,7 +1118,7 @@ mostly agree.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Site abundance (log2 fold change)'</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">'Occupancy (log2 fold change)'</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="PTM_site_quantification_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="Site-level against occupancy-level fold change. Points off the diagonal are sites whose protein also moved." width="528"><p class="caption">
+<img src="PTM_site_quantification_files/figure-html/unnamed-chunk-38-1.png" class="r-plt" alt="Site-level against occupancy-level fold change. Points off the diagonal are sites whose protein also moved." width="528"><p class="caption">
 Site-level against occupancy-level fold change. Points off the diagonal
 are sites whose protein also moved.
 </p>
@@ -750,7 +1158,7 @@ let it do the subtraction as part of the model. Stack the protein and
 site abundances into one matrix, one row per site, with a
 <code>type</code> factor saying which kind of measurement each column
 holds.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">site_mat</span> <span class="op">&lt;-</span> <span class="fu">assay</span><span class="op">(</span><span class="va">phospho</span><span class="op">[[</span><span class="st">'site'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="va">has_protein</span>, <span class="op">]</span></span>
 <span><span class="va">protein_mat</span> <span class="op">&lt;-</span> <span class="fu">assay</span><span class="op">(</span><span class="va">total</span><span class="op">[[</span><span class="st">'protein'</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="va">site_protein</span><span class="op">[</span><span class="va">has_protein</span><span class="op">]</span>, <span class="op">]</span></span>
 <span></span>
@@ -773,7 +1181,7 @@ protein is <code>conditionTreated</code>; the extra effect on the site,
 over and above the protein’s, is <code>conditionTreated:typesite</code>.
 That interaction is the quantity occupancy was constructed to
 isolate.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">joint_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span> <span class="va">joint_timepoint</span> <span class="op">+</span> <span class="va">joint_condition</span> <span class="op">*</span> <span class="va">joint_type</span> <span class="op">+</span></span>
 <span>                               <span class="va">joint_timepoint</span><span class="op">:</span><span class="va">joint_type</span><span class="op">)</span></span>
 <span></span>
@@ -791,12 +1199,12 @@ correlation within blocks, and <code>lmFit</code> uses it to weight the
 fit. <a href="gotcha_technical_replicates.html">Technical replicates</a>
 covers the same machinery applied to repeated acquisitions of one
 sample.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/dupcor.html" class="external-link">duplicateCorrelation</a></span><span class="op">(</span><span class="va">joint</span>, <span class="va">joint_design</span>, block <span class="op">=</span> <span class="va">joint_sample</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">corfit</span><span class="op">$</span><span class="va">consensus.correlation</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.233</span></span></code></pre></div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">joint_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></span><span class="op">(</span><span class="va">joint</span>, <span class="va">joint_design</span>, block <span class="op">=</span> <span class="va">joint_sample</span>,</span>
 <span>                          correlation <span class="op">=</span> <span class="va">corfit</span><span class="op">$</span><span class="va">consensus.correlation</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -814,7 +1222,7 @@ only on the uncertainty.</strong> The interaction coefficient and the
 occupancy fold change are the same number to machine precision, which
 they have to be — both are the difference between the site’s response
 and the protein’s.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">joint_res</span><span class="op">$</span><span class="va">logFC</span> <span class="op">-</span> <span class="va">occupancy_res</span><span class="op">$</span><span class="va">logFC</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3.497203e-15</span></span></code></pre></div>
 <p>What differs is the standard error each is divided by, and that is
@@ -822,7 +1230,7 @@ enough to move a few sites across the threshold in both directions. The
 gain is modest here because the pairing is weak in this dataset — a
 consensus correlation of 0.233 — but it is the block term that delivers
 it, and dropping it gives back most of the difference.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">unblocked</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></span><span class="op">(</span><span class="va">joint</span>, <span class="va">joint_design</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>blocked <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">joint_res</span><span class="op">$</span><span class="va">adj.P.Val</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>,</span>
@@ -857,7 +1265,13 @@ identification. <code><a href="../reference/parse_PTM_scores_pd.html">parse_PTM_
 discards peptides whose sites cannot be placed confidently. Positions
 then have to be converted from peptide coordinates to protein
 coordinates with <code><a href="../reference/add_ptm_positions.html">add_ptm_positions()</a></code>, dropping the peptides
-that occur at more than one position in their protein.</li>
+that occur at more than one position in their protein. Discarding is not
+the only option: <code><a href="../reference/parse_ptm_candidates_pd.html">parse_ptm_candidates_pd()</a></code> and
+<code><a href="../reference/add_ambiguous_ptm_group_rowdata.html">add_ambiguous_ptm_group_rowdata()</a></code> keep the unlocalised
+peptides by pooling their candidate residues into a group with a stated
+chance of containing the true site, which buys back a quarter of the
+PSMs here at the price of a feature that names a region rather than a
+residue.</li>
 <li>
 <strong>Normalisation.</strong> The enriched fraction’s own median
 is not a valid reference, because a global change in modification is
@@ -893,7 +1307,7 @@ rather than guessing — it is far easier to help while an analysis is in
 progress than to unpick a decision afterwards, and easier still before
 the samples are run. <a href="biomasslmb.html">Getting started</a> sets
 out which article applies to which experiment.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
@@ -935,7 +1349,7 @@ out which article applies to which experiment.</p>
 <span><span class="co">#&gt; [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        </span></span>
 <span><span class="co">#&gt; [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         </span></span>
 <span><span class="co">#&gt; [22] visdat_0.6.0            ragg_1.5.2              purrr_1.2.2            </span></span>
-<span><span class="co">#&gt; [25] bit_4.6.0               xfun_0.60               cachem_1.1.0           </span></span>
+<span><span class="co">#&gt; [25] bit_4.6.0               xfun_0.61               cachem_1.1.0           </span></span>
 <span><span class="co">#&gt; [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.1    </span></span>
 <span><span class="co">#&gt; [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.12.0           </span></span>
 <span><span class="co">#&gt; [34] stringi_1.8.9           RColorBrewer_1.1-3      genefilter_1.92.0      </span></span>

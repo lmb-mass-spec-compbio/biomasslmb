@@ -274,7 +274,8 @@ dir(system.file("extdata", package = "biomasslmb"))
 #> [18] "spectronaut_report.tsv.gz"           
 #> [19] "tmt_2plex_PeptideGroups.txt.gz"      
 #> [20] "tmt_pd_PSMs.tsv"                     
-#> [21] "tmt_phospho_proteome.fasta.gz"
+#> [21] "tmt_phospho_mq_proteome.fasta.gz"    
+#> [22] "tmt_phospho_proteome.fasta.gz"
 ```
 
 `tmt_qf_mq` and `tmt_qf_factorial` are the same TMT pipeline run from

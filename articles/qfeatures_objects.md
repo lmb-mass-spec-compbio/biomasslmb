@@ -366,9 +366,11 @@ tmt_qf[['protein']] <- logTransform(tmt_qf[['protein']], base = 2)
 tmt_qf[['peptides_norm']] <- normalize(tmt_qf[['peptides']], method = 'diff.median')
 ```
 
+The `diff.median` method used here expects log-scale values; not every
+method
 [`normalize()`](https://rdrr.io/pkg/BiocGenerics/man/normalize.html)
-expects log-scale values. Where a later step needs the original scale —
-summing PSMs, for instance — the vignettes exponentiate back with
+offers does. Where a later step needs the original scale — summing PSMs,
+for instance — the vignettes exponentiate back with
 `assay(x) <- 2^assay(x)`.
 
 ## Joining assays
@@ -485,6 +487,6 @@ sessionInfo()
 #> [79] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
 #> [82] lattice_0.22-9          backports_1.5.1         png_0.1-9              
 #> [85] memoise_2.0.1           bslib_0.12.0            Rcpp_1.1.2             
-#> [88] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.60              
+#> [88] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.61              
 #> [91] MsCoreUtils_1.22.1      fs_2.1.0                pkgconfig_2.0.3
 ```

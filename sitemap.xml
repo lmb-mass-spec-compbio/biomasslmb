@@ -25,6 +25,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/authors.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/index.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/news/index.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ambiguous_ptm_group_rowdata.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_filter_ptm_pos_rowdata_mq.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_gene_long_protein_name_pd.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_independent_filtering_padj.html</loc></url>
@@ -90,6 +91,8 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_index.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/mnar_score.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_mq.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_pd.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_cor_samples.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_go.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/plot_go_terms_upset.html</loc></url>
@@ -109,6 +112,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_factorial.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_per2_mq.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_phospho.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_phospho_mq.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_phospho_total.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_total.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/qfeatures_long.html</loc></url>
@@ -120,6 +124,7 @@
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/remove_x.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/restrict_imputation.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/sub_crap.html</loc></url>
+<url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/summarise_ptm_groups.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/sync_coldata.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/theme_biomasslmb.html</loc></url>
 <url><loc>https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/tls.html</loc></url>

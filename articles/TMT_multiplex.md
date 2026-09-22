@@ -523,6 +523,6 @@ sessionInfo()
 #> [79] textshaping_1.0.5       evaluate_1.0.5          lattice_0.22-9         
 #> [82] backports_1.5.1         png_0.1-9               memoise_2.0.1          
 #> [85] bslib_0.12.0            Rcpp_1.1.2              checkmate_2.3.4        
-#> [88] SparseArray_1.10.10     xfun_0.60               MsCoreUtils_1.22.1     
+#> [88] SparseArray_1.10.10     xfun_0.61               MsCoreUtils_1.22.1     
 #> [91] fs_2.1.0                pkgconfig_2.0.3
 ```

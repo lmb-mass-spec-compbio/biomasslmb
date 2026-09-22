@@ -246,10 +246,11 @@ rbindRowData(dia_qf, i = names(dia_qf)) %>%
 ## Filter precursors
 
 DIA-NN assigns a Q-value to each precursor and protein group
-identification, representing the local false discovery rate (FDR) at
-that score threshold. This data was processed with match-between-runs
-enabled, which is why both the run-level and library-level Q-values are
-filtered (`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value`
+identification, representing the minimum FDR at which that
+identification is still accepted at that score threshold. This data was
+processed with match-between-runs enabled, which is why both the
+run-level and library-level Q-values are filtered
+(`Q.Value`/`PG.Q.Value` and `Lib.Q.Value`/`Lib.PG.Q.Value`
 respectively), at a standard 1% FDR threshold. Filtering only the
 run-level pair would accept identifications that MBR transferred on weak
 library-level evidence. Passing no `i` argument to `filterFeatures`
@@ -828,7 +829,7 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] readxl_1.5.0                arrow_25.0.1               
+#>  [1] readxl_1.5.0.1              arrow_25.0.1               
 #>  [3] dplyr_1.2.1                 tidyr_1.3.2                
 #>  [5] ggplot2_4.0.3               biomasslmb_0.1.0           
 #>  [7] QFeatures_1.20.0            MultiAssayExperiment_1.36.2
@@ -848,7 +849,7 @@ sessionInfo()
 #> [19] XVector_0.50.0          labeling_0.4.3          utf8_1.2.6             
 #> [22] rmarkdown_2.32          UpSetR_1.4.1            visdat_0.6.0           
 #> [25] ragg_1.5.2              purrr_1.2.2             bit_4.6.0              
-#> [28] xfun_0.60               cachem_1.1.0            jsonlite_2.0.0         
+#> [28] xfun_0.61               cachem_1.1.0            jsonlite_2.0.0         
 #> [31] blob_1.3.0              DelayedArray_0.36.1     cluster_2.1.8.2        
 #> [34] R6_2.6.1                bslib_0.12.0            stringi_1.8.9          
 #> [37] RColorBrewer_1.1-3      genefilter_1.92.0       cellranger_1.1.0       

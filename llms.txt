@@ -210,7 +210,8 @@ values](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/articles/ha
 ## Post-translational modifications
 
 Localising a modification to a residue, placing it within the protein
-and summarising to sites. Worked through in [PTM site
+and summarising to sites, and pooling the peptides that cannot be
+localised rather than discarding them. Worked through in [PTM site
 quantification](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/articles/PTM_site_quantification.md).
 
 - [`parse_PTM_scores_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_PTM_scores_pd.md)
@@ -228,6 +229,16 @@ quantification](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/art
   sequence
 - [`add_site_sequence()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_site_sequence.md)
   : Add a column with amino acid sequence around a PTM
+- [`parse_ptm_candidates_mq()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_mq.md)
+  : Parse MaxQuant PTM localisation probabilities into candidate
+  residues
+- [`parse_ptm_candidates_pd()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/parse_ptm_candidates_pd.md)
+  : Parse Proteome Discoverer ptmRS site probabilities into candidate
+  residues
+- [`add_ambiguous_ptm_group_rowdata()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/add_ambiguous_ptm_group_rowdata.md)
+  : Group ambiguously localised PTM sites by candidate residue overlap
+- [`summarise_ptm_groups()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/summarise_ptm_groups.md)
+  : Summarise the PTM groups formed at a given min_candidate_prob
 
 ## Peptides, sequences and FASTA files
 
@@ -369,6 +380,9 @@ the articles, so that every example can be run without your own data.
   :
 
   Experimental design for `psm_tmt_phospho` and `psm_tmt_phospho_total`
+
+- [`psm_tmt_phospho_mq`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_phospho_mq.md)
+  : PSM-level MaxQuant output for a phospho-enriched TMT18plex fraction
 
 - [`psm_tmt_total`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/psm_tmt_total.md)
   : PSM-level PD output for total proteome TMT10-plex data

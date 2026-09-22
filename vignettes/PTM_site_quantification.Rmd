@@ -33,7 +33,7 @@ With TMT-label, pool then enrich experiment design, there are three important co
 - **The enriched fraction cannot be normalised against itself.** A treatment that changes phosphorylation globally is the signal, and median-centring the enriched data would remove it. The total fraction supplies the reference instead.
 - **A site can change because its protein changed.** Dividing the site out by its protein separates the two, and the answer is not always the same as the site abundance.
 
-This vignette works through a phosphoproteomics experiment searched with Proteome Discoverer (PD). The principles apply to any enriched PTM; only the search-engine columns differ. MaxQuant's equivalents are `filter_maxquant_ptm()` and `add_filter_ptm_pos_rowdata_mq()`, which take the same role as `parse_PTM_scores_pd()` below.
+This vignette works through a phosphoproteomics experiment searched with Proteome Discoverer (PD). The principles apply to any enriched PTM; only the search-engine columns differ. MaxQuant's equivalents are `filter_maxquant_ptm()` and `add_filter_ptm_pos_rowdata_mq()`, which take the same role as `parse_PTM_scores_pd()` below, and [peptides that cannot be localised](#peptides-that-cannot-be-localised) works the same data through both engines side by side.
 
 Everything up to the localisation step is the routine PSM processing covered in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html), so it is run here with less commentary.
 
@@ -286,6 +286,77 @@ grouped %>%
   table()
 ```
 
+## The same grouping from MaxQuant output
+
+Everything from `add_ambiguous_ptm_group_rowdata()` onwards is the same for either search engine, because the parser has already reduced the output to one candidate table. Only the step that produces that table differs, and `psm_tmt_phospho_mq` — the phospho-enriched fraction of the TMT18plex whose total fraction is `psm_tmt_factorial` — is the MaxQuant equivalent of the data used above.
+
+The PSM filtering is the MaxQuant workflow's, covered in [TMT QC and summarisation](TMT_PSM_QC_Summarisation.html): reporter intensities of exactly zero become `NA`, contaminant accessions come from `get_maxquant_cont_accessions()`, and the decoy hits MaxQuant leaves in the export are removed.
+
+```{r, message=FALSE, warning=FALSE}
+mq_qf <- QFeatures::readQFeatures(assayData = psm_tmt_phospho_mq,
+                               colData = tmt_factorial_design,
+                               quantCols = rownames(tmt_factorial_design),
+                               name = 'psm_raw')
+mq_qf <- sync_coldata(mq_qf, 'psm_raw')
+mq_qf[['psm_raw']] <- QFeatures::zeroIsNA(mq_qf[['psm_raw']])
+
+mq_qf[['psm_quality']] <- filter_features_mq_dda(
+  mq_qf[['psm_raw']],
+  contaminant_proteins = get_maxquant_cont_accessions(),
+  filter_contaminant = TRUE,
+  filter_associated_contaminant = TRUE)
+
+mq_psms <- mq_qf[['psm_quality']][
+  rowData(mq_qf[['psm_quality']])$Phospho..STY..Probabilities != '', ]
+```
+
+MaxQuant writes the probabilities inline in the peptide sequence rather than as a separate list, so a residue's position is implied by how much sequence precedes its value. `parse_ptm_candidates_mq()` reads that format and returns the identical five columns.
+
+```{r}
+rowData(mq_psms)$Phospho..STY..Probabilities[1]
+
+mq_candidates <- parse_ptm_candidates_mq(mq_psms)
+head(mq_candidates, 3)
+```
+
+The probabilities are already on a 0 to 1 scale here, and they obey the same budget — MaxQuant's rounding is finer than ptmRS's, so the totals sit closer to one.
+
+```{r, message=FALSE, warning=FALSE}
+mq_proteome_fasta <- system.file(
+  "extdata", "tmt_phospho_mq_proteome.fasta.gz", package = "biomasslmb")
+
+mq_psms <- add_peptide_positions_from_cleavage(mq_psms, mq_proteome_fasta)
+
+mq_psms <- add_ambiguous_ptm_group_rowdata(mq_psms, mq_candidates, min_prob = 0.75)
+```
+
+That call is identical to the Proteome Discoverer one except for `master_protein_col`, which defaults to MaxQuant's `Leading.razor.protein`. Supporting a third search engine would mean writing a third parser and changing nothing else.
+
+**The two engines disagree about how much is ambiguous, not about what to do with it.** Compared at the same threshold, ptmRS leaves a larger share of PSMs unlocalised and spreads each one over roughly twice as many candidate residues, so it produces fewer but not smaller groups from a similar number of PSMs.
+
+```{r}
+engine_summary <- function(candidates, engine, min_prob = 0.75) {
+  unresolved <- candidates %>%
+    group_by(row, n_ptms) %>%
+    summarise(resolved = sum(prob >= min_prob) == n_ptms[1], .groups = 'drop')
+
+  data.frame(
+    engine = engine,
+    PSMs = nrow(unresolved),
+    pc_unresolved = round(100 * mean(!unresolved$resolved), 1),
+    candidates_per_PSM = round(nrow(candidates) / n_distinct(candidates$row), 2),
+    pc_candidates_at_zero = round(100 * mean(candidates$prob == 0), 1),
+    lowest_prob = min(candidates$prob))
+}
+
+rbind(engine_summary(mq_candidates, 'MaxQuant'),
+      engine_summary(candidates, 'ptmRS'))
+```
+
+The last two columns are the practical difference, and they change what `min_candidate_prob` does. MaxQuant never writes a probability below 0.001, so its lowest values are a reporting floor and a threshold of 0.02 sits an order of magnitude above it. ptmRS writes exact zeros and writes a great many of them — a third of all its candidates here — so on Proteome Discoverer data any threshold above zero clears that block out before the particular value chosen starts to matter.
+
+A threshold of 0.75 is used above so that the two engines are compared on equal terms. MaxQuant pipelines commonly use 0.501 instead, which is the `min_prob` default, and on this dataset it halves the share of PSMs that fail to localise, from 18.3% to 9.2%.
+
 ## Choosing min_candidate_prob
 
 `min_candidate_prob` is the probability below which a residue on an unresolved peptide is treated as ruled out rather than kept as a candidate. Because the probabilities are a budget, it is a coverage guarantee: the mass it discards is the chance the resulting group excludes the real site. `summarise_ptm_groups()` reports both sides of that trade at a given value.
@@ -303,8 +374,6 @@ lapply(c(0.01, 0.02, 0.05, 0.1, 0.2), function(threshold) {
 **Raising the threshold buys very little resolution and pays for it steeply in coverage.** The number of groups barely moves, because the same peptides are pooled either way and only the size of the group they land in changes; the median group holds three candidates at every value in the table. What does move is the miss rate, which is the argument for keeping the threshold low.
 
 The default of `min_candidate_prob = 0.02` is not taken from this subset, which is too small to settle it — 410 proteins, and the sweep above rests on `r sum(!resolution$resolved)` pooled PSMs. It comes from applying the same criterion to two complete datasets: the largest threshold at which under 1% of pooled peptides have more than a 5% chance of excluding the true site. That gives 0.03 on a whole-proteome MaxQuant phosphoproteome and 0.02 on a complete Proteome Discoverer one, and the stricter of the two is the default. At 0.02, 0.10% and 0.62% of pooled peptides respectively exceed a 5% miss rate.
-
-The two search engines put the threshold to different work, which is worth knowing before adjusting it. MaxQuant never writes a probability below 0.001, so its low values are a reporting floor and 0.02 sits an order of magnitude above it. ptmRS writes exact zeros, and does so freely — they were 31% of all candidates in the dataset the default was measured on — so on Proteome Discoverer data any threshold above zero removes a large block of candidates before the value of the threshold matters at all.
 
 ## The span guard
 

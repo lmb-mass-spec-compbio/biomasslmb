@@ -223,6 +223,7 @@ reference:
   - psm_tmt_phospho
   - psm_tmt_phospho_total
   - tmt_phospho_design
+  - psm_tmt_phospho_mq
   - psm_tmt_total
   - tmt_qf
   - tmt_qf_mq

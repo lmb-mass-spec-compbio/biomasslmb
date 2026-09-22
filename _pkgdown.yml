@@ -140,7 +140,8 @@ reference:
 - title: Post-translational modifications
   desc: >
     Localising a modification to a residue, placing it within the protein and
-    summarising to sites. Worked through in
+    summarising to sites, and pooling the peptides that cannot be localised
+    rather than discarding them. Worked through in
     [PTM site quantification](articles/PTM_site_quantification.html).
   contents:
   - parse_PTM_scores_pd
@@ -149,6 +150,10 @@ reference:
   - add_ptm_pos_rowdata_mq
   - add_filter_ptm_pos_rowdata_mq
   - add_site_sequence
+  - parse_ptm_candidates_mq
+  - parse_ptm_candidates_pd
+  - add_ambiguous_ptm_group_rowdata
+  - summarise_ptm_groups
 
 - title: Peptides, sequences and FASTA files
   desc: >
@@ -218,6 +223,7 @@ reference:
   - psm_tmt_phospho
   - psm_tmt_phospho_total
   - tmt_phospho_design
+  - psm_tmt_phospho_mq
   - psm_tmt_total
   - tmt_qf
   - tmt_qf_mq

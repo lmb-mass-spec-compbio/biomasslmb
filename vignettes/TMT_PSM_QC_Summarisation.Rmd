@@ -24,7 +24,7 @@ Quantitative proteomics using isobaric tagging such as Tandem Mass Tags (TMT) ha
 
 Because TMT quantifies from the same MS1 ion for all samples, this standardises the features quantified in each sample, which simplifies the comparison between samples and increases quantification accuracy of summarised features such as proteins.
 
-However, TMT does suffer from ratio compression, caused by co-isolation of contaminating precursor ions that get fragmented alongside the target peptide and inflate the reporter ion signal. This should be avoided by performing quantification with SPS MS3 [@http://zotero.org/users/5634351/items/ZK69WYZ2].
+However, TMT does suffer from ratio compression, caused by co-isolation of contaminating precursor ions that get fragmented alongside the target peptide and inflate the reporter ion signal. This is substantially reduced by performing quantification with SPS MS3, though co-isolation among the SPS-selected fragment ions themselves means it is not eliminated entirely [@http://zotero.org/users/5634351/items/ZK69WYZ2].
 
 This vignette works through one typical experiment from end to end: a whole-proteome comparison between two conditions, labelled in a single TMT plex and searched with Proteome Discoverer (PD). That combination covers the majority of TMT experiments, and the choices made below are the conventional ones for it.
 

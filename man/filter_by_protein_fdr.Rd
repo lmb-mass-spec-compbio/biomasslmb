@@ -10,7 +10,8 @@ filter_by_protein_fdr(
   protein_col_peptide = "Master.Protein.Accessions",
   protein_col_protein = "Accession",
   protein_FDR_col = "Protein.FDR.Confidence.Combined",
-  retain_proteins = NULL
+  retain_proteins = NULL,
+  multi_accession = c("remove", "all", "any")
 )
 }
 \arguments{
@@ -29,6 +30,14 @@ the protein-level \code{protein_fdr_filename}}
 
 \item{retain_proteins}{\verb{character vector}. Vector of protein accessions to always retain,
 even if they do not pass the FDR threshold. Default is NULL.}
+
+\item{multi_accession}{\code{string}. How to treat features whose master protein is
+a group of several accessions, separated by ";". \code{"remove"} (default) matches
+the whole string, so a group is removed unless the protein-level output
+contains that same string. \code{"all"} retains the feature if every accession has
+'High' confidence, with an accession absent from the protein-level output
+counting as not 'High'. \code{"any"} retains the feature if at least one accession
+has 'High' confidence. Features with a single accession are unaffected.}
 }
 \value{
 Returns a \code{SummarisedExperiment} with the filtered Proteome Discoverer output.
@@ -42,9 +51,17 @@ passing the FDR threshold
 
 Note that peptides whose master protein has no row in
 \code{protein_fdr_filename} are also removed, since no FDR confidence can be
-established for them. This includes every peptide whose master protein is a
-group of several accessions, which cannot match a single-accession row in
-the protein-level output. Applying this function after filtering to unique
-master proteins (see \code{filter_features_pd_dda(unique_master = TRUE)}) keeps
-the two effects separate. Accessions listed in \code{retain_proteins} are exempt.
+established for them. With the default \code{multi_accession = "remove"}, this
+includes every peptide whose master protein is a group of several accessions,
+which cannot match a single-accession row in the protein-level output.
+Applying this function after filtering to unique master proteins (see
+\code{filter_features_pd_dda(unique_master = TRUE)}) keeps the two effects
+separate. Where groups have been kept (\code{unique_master = FALSE}),
+\code{multi_accession = "all"} or \code{"any"} assesses them on the confidence of their
+member accessions. Accessions listed in \code{retain_proteins} are exempt.
+
+Groups retained by \code{multi_accession = "all"} or \code{"any"} keep their compound
+accession string; they are not split or reassigned. On aggregation to protein
+level they become separate compound rows, which can overlap the rows for
+their member accessions.
 }

@@ -206,7 +206,7 @@ c(no_matching_protein_row = sum(!master_protein %in% proteins$Accession),
                                  !grepl('; ', master_protein)))
 ```
 
-Most are peptides whose master protein is a group of several accessions: the protein table has one row per protein, so a `Q9Y294; O00566` master matches nothing and the peptide goes. The remainder are proteins the peptide table names but the protein table does not, because Proteome Discoverer grouped them under a different representative.
+Most are peptides whose master protein is a group of several accessions: the protein table has one row per protein, so a `Q9Y294; O00566` master matches nothing and, by default, the peptide goes. The remainder are proteins the peptide table names but the protein table does not, because Proteome Discoverer grouped them under a different representative.
 
 Neither is unreasonable behaviour — a peptide whose protein is absent from the protein-level output cannot have a protein-level FDR — but it means the step removes far more than its name suggests, and how much depends on what you did beforehand. Filtering to unique master proteins first separates the two effects:
 
@@ -223,6 +223,8 @@ c(before = nrow(unique_master_only),
 
 **Apply it after unique-master filtering**, so that what it removes is what it is meant to remove.
 
+Where the groups are worth keeping — filtering with `unique_master = FALSE` — `multi_accession` sets how `filter_by_protein_fdr()` treats them. `"all"` retains a group if every member accession is high confidence, with a member absent from the protein table counting against it; `"any"` retains it if at least one is. Peptides with a single master protein are unaffected, so one whose accession is simply absent is still removed. The cost comes at aggregation: a retained group keeps its compound accession, so it becomes a separate row that can overlap the rows for its members, and the same protein can then be represented more than once.
+
 As for the FDR filtering itself: in most Proteome Discoverer exports the protein table contains nothing but `High`, so the step does nothing, which is why it is easy to omit without noticing. Omitting it is still the wrong habit, for the same reason as everything else here — the export where it would have mattered looks exactly like the export where it did not. Check the distribution above on your own data; `Medium` and `Low` entries mean the filter is doing real work, and skipping it means quantifying proteins the search engine was not confident it had identified at all.
 
 `retain_proteins` exists for the case where a protein of specific interest — a bait, a tagged construct — falls below the threshold and you want to keep it knowingly rather than lose it silently.
@@ -233,7 +235,7 @@ As for the FDR filtering itself: in most Proteome Discoverer exports the protein
 - `get_contaminant_fasta_accessions()` and `get_maxquant_cont_accessions()` return **differently formatted** accessions. Passing both the prefixed and bare forms costs nothing and covers the case where the search database was not renamed — which is the case where the list is the only defence you have.
 - `filter_associated_contaminant = TRUE` also removes real proteins that share a peptide with a contaminant. This is intentional and aggressive; check it first if a protein you expected has vanished.
 - Protein-level FDR is a separate control from PSM-level FDR and lives in a separate file. `filter_by_protein_fdr()` applies it, and usually removes nothing on that count — which is not a reason to omit it.
-- That function also silently drops every peptide whose master protein has no row in the protein table, including all peptides with a multi-protein master. Run it **after** `unique_master = TRUE` so the two effects are not confused.
+- That function also silently drops every peptide whose master protein has no row in the protein table, including, by default, all peptides with a multi-protein master. `multi_accession = "all"` or `"any"` assesses those on their member accessions; otherwise, run it **after** `unique_master = TRUE` so the two effects are not confused.
 
 # Getting help
 

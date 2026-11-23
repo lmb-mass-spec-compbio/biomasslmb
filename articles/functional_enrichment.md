@@ -493,11 +493,11 @@ sets out which article applies to which experiment.
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -515,7 +515,7 @@ sessionInfo()
 #> other attached packages:
 #>  [1] goseq_1.62.0                geneLenDataBase_1.46.0     
 #>  [3] BiasedUrn_2.0.12            limma_3.66.0               
-#>  [5] dplyr_1.2.1                 ggplot2_4.0.3              
+#>  [5] dplyr_1.2.1                 ggplot2_4.0.4              
 #>  [7] biomasslmb_0.1.0            QFeatures_1.20.0           
 #>  [9] MultiAssayExperiment_1.36.2 SummarizedExperiment_1.40.0
 #> [11] Biobase_2.70.0              GenomicRanges_1.62.1       
@@ -531,21 +531,21 @@ sessionInfo()
 #>  [10] BiocIO_1.20.0            ragg_1.5.2               vctrs_0.7.3             
 #>  [13] memoise_2.0.1            Rsamtools_2.26.0         RCurl_1.98-1.20         
 #>  [16] htmltools_0.5.9          S4Arrays_1.10.1          BiocBaseUtils_1.12.0    
-#>  [19] progress_1.2.3           curl_8.0.0               SparseArray_1.10.10     
-#>  [22] sass_0.4.10              uniprotREST_1.0.0        bslib_0.12.0            
+#>  [19] progress_1.2.3           curl_8.1.0               SparseArray_1.10.10     
+#>  [22] sass_0.5.0               uniprotREST_1.0.0        bslib_0.12.0            
 #>  [25] htmlwidgets_1.6.4        desc_1.4.3               plyr_1.8.9              
 #>  [28] httr2_1.3.0              cachem_1.1.0             GenomicAlignments_1.46.0
-#>  [31] igraph_2.3.3             lifecycle_1.0.5          pkgconfig_2.0.3         
+#>  [31] igraph_2.3.4             lifecycle_1.0.5          pkgconfig_2.0.3         
 #>  [34] Matrix_1.7-4             R6_2.6.1                 fastmap_1.2.0           
 #>  [37] clue_0.3-68              digest_0.6.39            AnnotationDbi_1.72.0    
-#>  [40] textshaping_1.0.5        RSQLite_3.53.3           labeling_0.4.3          
+#>  [40] textshaping_1.1.0        RSQLite_3.53.3           labeling_0.4.3          
 #>  [43] filelock_1.0.3           mgcv_1.9-4               httr_1.4.9              
 #>  [46] abind_1.4-8              compiler_4.5.3           bit64_4.8.6             
-#>  [49] withr_3.0.3              S7_0.2.2                 backports_1.5.1         
+#>  [49] withr_3.0.3              S7_1.0.0                 backports_1.5.1         
 #>  [52] BiocParallel_1.44.0      DBI_1.3.0                UpSetR_1.4.1            
 #>  [55] biomaRt_2.66.2           MASS_7.3-65              DelayedArray_0.36.1     
-#>  [58] rjson_0.2.23             tools_4.5.3              otel_0.2.0              
-#>  [61] visdat_0.6.0             glue_1.8.1               restfulr_0.0.17         
+#>  [58] rjson_0.2.23             tools_4.5.3              otel_0.3.0              
+#>  [61] visdat_0.6.1             glue_1.8.1               restfulr_0.0.17         
 #>  [64] nlme_3.1-168             grid_4.5.3               checkmate_2.3.4         
 #>  [67] cluster_2.1.8.2          reshape2_1.4.5           gtable_0.3.6            
 #>  [70] tidyr_1.3.2              hms_1.1.4                XVector_0.50.0          
@@ -554,14 +554,14 @@ sessionInfo()
 #>  [79] lattice_0.22-9           survival_3.8-6           rtracklayer_1.70.1      
 #>  [82] bit_4.6.0                annotate_1.88.0          tidyselect_1.2.1        
 #>  [85] GO.db_3.22.0             Biostrings_2.78.0        knitr_1.52              
-#>  [88] gridExtra_2.3.1          ProtGenerics_1.42.0      xfun_0.61               
-#>  [91] statmod_1.5.2            DEoptimR_1.2-1           stringi_1.8.9           
+#>  [88] gridExtra_2.3.1          ProtGenerics_1.42.0      xfun_0.62               
+#>  [91] statmod_1.5.2            DEoptimR_1.2-2           stringi_1.8.9           
 #>  [94] UCSC.utils_1.6.1         lazyeval_0.2.3           yaml_2.3.12             
 #>  [97] evaluate_1.0.5           codetools_0.2-20         cigarillo_1.0.0         
 #> [100] MsCoreUtils_1.22.1       tibble_3.3.1             cli_3.6.6               
-#> [103] xtable_1.8-8             systemfonts_1.3.2        jquerylib_0.1.4         
+#> [103] xtable_1.8-8             systemfonts_1.3.4        jquerylib_0.1.4         
 #> [106] Rcpp_1.1.2               GenomeInfoDb_1.46.2      dbplyr_2.6.0            
-#> [109] png_0.1-9                XML_3.99-0.24            parallel_4.5.3          
+#> [109] png_0.1-9                XML_3.99-0.25            parallel_4.5.3          
 #> [112] pkgdown_2.2.1            blob_1.3.0               prettyunits_1.2.0       
 #> [115] AnnotationFilter_1.34.0  bitops_1.1-0             txdbmaker_1.6.2         
 #> [118] scales_1.4.0             purrr_1.2.2              crayon_1.5.3            

@@ -1,5 +1,19 @@
 # Changelog
 
+## biomasslmb (development version)
+
+### New features
+
+- [`filter_by_protein_fdr()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.md)
+  gains `multi_accession`, which sets how features whose master protein
+  is a group of several accessions are treated. The default, `"remove"`,
+  is the existing behaviour: the group is matched as a whole string, so
+  it is removed when the protein-level output has one accession per row.
+  `"all"` and `"any"` retain the feature if every accession, or at least
+  one, has high confidence. Retained groups keep their compound
+  accession string. An accession with more than one confidence value in
+  the protein-level output raises an error.
+
 ## biomasslmb 0.1.0
 
 ### Breaking changes

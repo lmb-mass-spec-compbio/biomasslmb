@@ -304,9 +304,9 @@ c(no_matching_protein_row = sum(!master_protein %in% proteins$Accession),
 
 Most are peptides whose master protein is a group of several accessions:
 the protein table has one row per protein, so a `Q9Y294; O00566` master
-matches nothing and the peptide goes. The remainder are proteins the
-peptide table names but the protein table does not, because Proteome
-Discoverer grouped them under a different representative.
+matches nothing and, by default, the peptide goes. The remainder are
+proteins the peptide table names but the protein table does not, because
+Proteome Discoverer grouped them under a different representative.
 
 Neither is unreasonable behaviour — a peptide whose protein is absent
 from the protein-level output cannot have a protein-level FDR — but it
@@ -330,6 +330,18 @@ c(before = nrow(unique_master_only),
 
 **Apply it after unique-master filtering**, so that what it removes is
 what it is meant to remove.
+
+Where the groups are worth keeping — filtering with
+`unique_master = FALSE` — `multi_accession` sets how
+[`filter_by_protein_fdr()`](https://lmb-mass-spec-compbio.github.io/biomasslmb/reference/filter_by_protein_fdr.md)
+treats them. `"all"` retains a group if every member accession is high
+confidence, with a member absent from the protein table counting against
+it; `"any"` retains it if at least one is. Peptides with a single master
+protein are unaffected, so one whose accession is simply absent is still
+removed. The cost comes at aggregation: a retained group keeps its
+compound accession, so it becomes a separate row that can overlap the
+rows for its members, and the same protein can then be represented more
+than once.
 
 As for the FDR filtering itself: in most Proteome Discoverer exports the
 protein table contains nothing but `High`, so the step does nothing,
@@ -366,9 +378,10 @@ you want to keep it knowingly rather than lose it silently.
   applies it, and usually removes nothing on that count — which is not a
   reason to omit it.
 - That function also silently drops every peptide whose master protein
-  has no row in the protein table, including all peptides with a
-  multi-protein master. Run it **after** `unique_master = TRUE` so the
-  two effects are not confused.
+  has no row in the protein table, including, by default, all peptides
+  with a multi-protein master. `multi_accession = "all"` or `"any"`
+  assesses those on their member accessions; otherwise, run it **after**
+  `unique_master = TRUE` so the two effects are not confused.
 
 ## Getting help
 
@@ -385,11 +398,11 @@ sets out which article applies to which experiment.
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -415,34 +428,34 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1        farver_2.1.2            blob_1.3.0             
-#>  [4] Biostrings_2.78.0       S7_0.2.2                fastmap_1.2.0          
-#>  [7] lazyeval_0.2.3          XML_3.99-0.24           digest_0.6.39          
+#>  [4] Biostrings_2.78.0       S7_1.0.0                fastmap_1.2.0          
+#>  [7] lazyeval_0.2.3          XML_3.99-0.25           digest_0.6.39          
 #> [10] lifecycle_1.0.5         cluster_2.1.8.2         ProtGenerics_1.42.0    
 #> [13] survival_3.8-6          KEGGREST_1.50.0         RSQLite_3.53.3         
 #> [16] magrittr_2.0.5          genefilter_1.92.0       compiler_4.5.3         
-#> [19] rlang_1.3.0             sass_0.4.10             tools_4.5.3            
-#> [22] igraph_2.3.3            yaml_2.3.12             corrplot_0.95          
+#> [19] rlang_1.3.0             sass_0.5.0              tools_4.5.3            
+#> [22] igraph_2.3.4            yaml_2.3.12             corrplot_0.95          
 #> [25] knitr_1.52              S4Arrays_1.10.1         htmlwidgets_1.6.4      
 #> [28] bit_4.6.0               DelayedArray_0.36.1     plyr_1.8.9             
 #> [31] RColorBrewer_1.1-3      abind_1.4-8             withr_3.0.3            
 #> [34] purrr_1.2.2             desc_1.4.3              grid_4.5.3             
-#> [37] xtable_1.8-8            ggplot2_4.0.3           scales_1.4.0           
+#> [37] xtable_1.8-8            ggplot2_4.0.4           scales_1.4.0           
 #> [40] MASS_7.3-65             cli_3.6.6               rmarkdown_2.32         
-#> [43] crayon_1.5.3            ragg_1.5.2              otel_0.2.0             
+#> [43] crayon_1.5.3            ragg_1.5.2              otel_0.3.0             
 #> [46] robustbase_0.99-7       httr_1.4.9              reshape2_1.4.5         
 #> [49] BiocBaseUtils_1.12.0    DBI_1.3.0               cachem_1.1.0           
 #> [52] stringr_1.6.0           splines_4.5.3           AnnotationDbi_1.72.0   
 #> [55] AnnotationFilter_1.34.0 XVector_0.50.0          vctrs_0.7.3            
 #> [58] Matrix_1.7-4            jsonlite_2.0.0          naniar_1.1.0           
-#> [61] visdat_0.6.0            bit64_4.8.6             clue_0.3-68            
-#> [64] systemfonts_1.3.2       tidyr_1.3.2             jquerylib_0.1.4        
-#> [67] annotate_1.88.0         glue_1.8.1              DEoptimR_1.2-1         
+#> [61] visdat_0.6.1            bit64_4.8.6             clue_0.3-68            
+#> [64] systemfonts_1.3.4       tidyr_1.3.2             jquerylib_0.1.4        
+#> [67] annotate_1.88.0         glue_1.8.1              DEoptimR_1.2-2         
 #> [70] pkgdown_2.2.1           uniprotREST_1.0.0       stringi_1.8.9          
 #> [73] gtable_0.3.6            tibble_3.3.1            pillar_1.11.1          
-#> [76] htmltools_0.5.9         R6_2.6.1                textshaping_1.0.5      
+#> [76] htmltools_0.5.9         R6_2.6.1                textshaping_1.1.0      
 #> [79] evaluate_1.0.5          lattice_0.22-9          backports_1.5.1        
 #> [82] png_0.1-9               memoise_2.0.1           bslib_0.12.0           
 #> [85] Rcpp_1.1.2              checkmate_2.3.4         SparseArray_1.10.10    
-#> [88] xfun_0.61               MsCoreUtils_1.22.1      fs_2.1.0               
+#> [88] xfun_0.62               MsCoreUtils_1.22.1      fs_2.1.0               
 #> [91] pkgconfig_2.0.3
 ```

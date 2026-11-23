@@ -9,12 +9,20 @@ proteins passing the FDR threshold
 
 Note that peptides whose master protein has no row in
 `protein_fdr_filename` are also removed, since no FDR confidence can be
-established for them. This includes every peptide whose master protein
-is a group of several accessions, which cannot match a single-accession
-row in the protein-level output. Applying this function after filtering
-to unique master proteins (see
-`filter_features_pd_dda(unique_master = TRUE)`) keeps the two effects
-separate. Accessions listed in `retain_proteins` are exempt.
+established for them. With the default `multi_accession = "remove"`,
+this includes every peptide whose master protein is a group of several
+accessions, which cannot match a single-accession row in the
+protein-level output. Applying this function after filtering to unique
+master proteins (see `filter_features_pd_dda(unique_master = TRUE)`)
+keeps the two effects separate. Where groups have been kept
+(`unique_master = FALSE`), `multi_accession = "all"` or `"any"` assesses
+them on the confidence of their member accessions. Accessions listed in
+`retain_proteins` are exempt.
+
+Groups retained by `multi_accession = "all"` or `"any"` keep their
+compound accession string; they are not split or reassigned. On
+aggregation to protein level they become separate compound rows, which
+can overlap the rows for their member accessions.
 
 ## Usage
 
@@ -25,7 +33,8 @@ filter_by_protein_fdr(
   protein_col_peptide = "Master.Protein.Accessions",
   protein_col_protein = "Accession",
   protein_FDR_col = "Protein.FDR.Confidence.Combined",
-  retain_proteins = NULL
+  retain_proteins = NULL,
+  multi_accession = c("remove", "all", "any")
 )
 ```
 
@@ -59,6 +68,17 @@ filter_by_protein_fdr(
 
   `character vector`. Vector of protein accessions to always retain,
   even if they do not pass the FDR threshold. Default is NULL.
+
+- multi_accession:
+
+  `string`. How to treat features whose master protein is a group of
+  several accessions, separated by ";". `"remove"` (default) matches the
+  whole string, so a group is removed unless the protein-level output
+  contains that same string. `"all"` retains the feature if every
+  accession has 'High' confidence, with an accession absent from the
+  protein-level output counting as not 'High'. `"any"` retains the
+  feature if at least one accession has 'High' confidence. Features with
+  a single accession are unaffected.
 
 ## Value
 

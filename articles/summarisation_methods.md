@@ -1092,11 +1092,11 @@ sets out which article applies to which experiment.
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -1113,7 +1113,7 @@ sessionInfo()
 #> 
 #> other attached packages:
 #>  [1] dplyr_1.2.1                 tidyr_1.3.2                
-#>  [3] ggplot2_4.0.3               biomasslmb_0.1.0           
+#>  [3] ggplot2_4.0.4               biomasslmb_0.1.0           
 #>  [5] QFeatures_1.20.0            MultiAssayExperiment_1.36.2
 #>  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             
 #>  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              
@@ -1123,13 +1123,13 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1        farver_2.1.2            blob_1.3.0             
-#>  [4] Biostrings_2.78.0       S7_0.2.2                fastmap_1.2.0          
-#>  [7] lazyeval_0.2.3          XML_3.99-0.24           digest_0.6.39          
+#>  [4] Biostrings_2.78.0       S7_1.0.0                fastmap_1.2.0          
+#>  [7] lazyeval_0.2.3          XML_3.99-0.25           digest_0.6.39          
 #> [10] lifecycle_1.0.5         cluster_2.1.8.2         ProtGenerics_1.42.0    
 #> [13] survival_3.8-6          KEGGREST_1.50.0         RSQLite_3.53.3         
 #> [16] magrittr_2.0.5          genefilter_1.92.0       compiler_4.5.3         
-#> [19] rlang_1.3.0             sass_0.4.10             tools_4.5.3            
-#> [22] utf8_1.2.6              igraph_2.3.3            yaml_2.3.12            
+#> [19] rlang_1.3.0             sass_0.5.0              tools_4.5.3            
+#> [22] utf8_1.2.6              igraph_2.3.4            yaml_2.3.12            
 #> [25] corrplot_0.95           knitr_1.52              labeling_0.4.3         
 #> [28] S4Arrays_1.10.1         htmlwidgets_1.6.4       bit_4.6.0              
 #> [31] DelayedArray_0.36.1     plyr_1.8.9              RColorBrewer_1.1-3     
@@ -1137,20 +1137,20 @@ sessionInfo()
 #> [37] desc_1.4.3              grid_4.5.3              xtable_1.8-8           
 #> [40] scales_1.4.0            MASS_7.3-65             cli_3.6.6              
 #> [43] rmarkdown_2.32          crayon_1.5.3            ragg_1.5.2             
-#> [46] otel_0.2.0              robustbase_0.99-7       httr_1.4.9             
+#> [46] otel_0.3.0              robustbase_0.99-7       httr_1.4.9             
 #> [49] reshape2_1.4.5          BiocBaseUtils_1.12.0    DBI_1.3.0              
 #> [52] cachem_1.1.0            stringr_1.6.0           splines_4.5.3          
 #> [55] AnnotationDbi_1.72.0    AnnotationFilter_1.34.0 XVector_0.50.0         
 #> [58] vctrs_0.7.3             Matrix_1.7-4            jsonlite_2.0.0         
-#> [61] naniar_1.1.0            visdat_0.6.0            bit64_4.8.6            
-#> [64] clue_0.3-68             systemfonts_1.3.2       jquerylib_0.1.4        
-#> [67] annotate_1.88.0         glue_1.8.1              DEoptimR_1.2-1         
+#> [61] naniar_1.1.0            visdat_0.6.1            bit64_4.8.6            
+#> [64] clue_0.3-68             systemfonts_1.3.4       jquerylib_0.1.4        
+#> [67] annotate_1.88.0         glue_1.8.1              DEoptimR_1.2-2         
 #> [70] pkgdown_2.2.1           uniprotREST_1.0.0       stringi_1.8.9          
 #> [73] gtable_0.3.6            tibble_3.3.1            pillar_1.11.1          
-#> [76] htmltools_0.5.9         R6_2.6.1                textshaping_1.0.5      
+#> [76] htmltools_0.5.9         R6_2.6.1                textshaping_1.1.0      
 #> [79] evaluate_1.0.5          lattice_0.22-9          backports_1.5.1        
 #> [82] png_0.1-9               memoise_2.0.1           bslib_0.12.0           
 #> [85] Rcpp_1.1.2              checkmate_2.3.4         SparseArray_1.10.10    
-#> [88] xfun_0.61               MsCoreUtils_1.22.1      fs_2.1.0               
+#> [88] xfun_0.62               MsCoreUtils_1.22.1      fs_2.1.0               
 #> [91] pkgconfig_2.0.3
 ```

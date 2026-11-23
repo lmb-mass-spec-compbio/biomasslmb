@@ -429,11 +429,11 @@ sets out which article applies to which experiment.
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -459,34 +459,34 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1        dplyr_1.2.1             farver_2.1.2           
-#>  [4] blob_1.3.0              Biostrings_2.78.0       S7_0.2.2               
-#>  [7] fastmap_1.2.0           lazyeval_0.2.3          XML_3.99-0.24          
+#>  [4] blob_1.3.0              Biostrings_2.78.0       S7_1.0.0               
+#>  [7] fastmap_1.2.0           lazyeval_0.2.3          XML_3.99-0.25          
 #> [10] digest_0.6.39           lifecycle_1.0.5         cluster_2.1.8.2        
 #> [13] ProtGenerics_1.42.0     survival_3.8-6          KEGGREST_1.50.0        
 #> [16] RSQLite_3.53.3          magrittr_2.0.5          genefilter_1.92.0      
-#> [19] compiler_4.5.3          rlang_1.3.0             sass_0.4.10            
-#> [22] tools_4.5.3             igraph_2.3.3            yaml_2.3.12            
+#> [19] compiler_4.5.3          rlang_1.3.0             sass_0.5.0             
+#> [22] tools_4.5.3             igraph_2.3.4            yaml_2.3.12            
 #> [25] corrplot_0.95           knitr_1.52              labeling_0.4.3         
 #> [28] S4Arrays_1.10.1         htmlwidgets_1.6.4       bit_4.6.0              
 #> [31] DelayedArray_0.36.1     plyr_1.8.9              RColorBrewer_1.1-3     
 #> [34] abind_1.4-8             withr_3.0.3             purrr_1.2.2            
 #> [37] desc_1.4.3              grid_4.5.3              xtable_1.8-8           
-#> [40] ggplot2_4.0.3           scales_1.4.0            MASS_7.3-65            
+#> [40] ggplot2_4.0.4           scales_1.4.0            MASS_7.3-65            
 #> [43] cli_3.6.6               rmarkdown_2.32          crayon_1.5.3           
-#> [46] ragg_1.5.2              otel_0.2.0              robustbase_0.99-7      
+#> [46] ragg_1.5.2              otel_0.3.0              robustbase_0.99-7      
 #> [49] httr_1.4.9              reshape2_1.4.5          BiocBaseUtils_1.12.0   
 #> [52] DBI_1.3.0               cachem_1.1.0            stringr_1.6.0          
 #> [55] splines_4.5.3           AnnotationDbi_1.72.0    AnnotationFilter_1.34.0
 #> [58] XVector_0.50.0          vctrs_0.7.3             Matrix_1.7-4           
-#> [61] jsonlite_2.0.0          naniar_1.1.0            visdat_0.6.0           
-#> [64] bit64_4.8.6             clue_0.3-68             systemfonts_1.3.2      
+#> [61] jsonlite_2.0.0          naniar_1.1.0            visdat_0.6.1           
+#> [64] bit64_4.8.6             clue_0.3-68             systemfonts_1.3.4      
 #> [67] tidyr_1.3.2             jquerylib_0.1.4         annotate_1.88.0        
-#> [70] glue_1.8.1              DEoptimR_1.2-1          pkgdown_2.2.1          
+#> [70] glue_1.8.1              DEoptimR_1.2-2          pkgdown_2.2.1          
 #> [73] uniprotREST_1.0.0       stringi_1.8.9           gtable_0.3.6           
 #> [76] tibble_3.3.1            pillar_1.11.1           htmltools_0.5.9        
-#> [79] R6_2.6.1                textshaping_1.0.5       evaluate_1.0.5         
+#> [79] R6_2.6.1                textshaping_1.1.0       evaluate_1.0.5         
 #> [82] lattice_0.22-9          backports_1.5.1         png_0.1-9              
 #> [85] memoise_2.0.1           bslib_0.12.0            Rcpp_1.1.2             
-#> [88] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.61              
+#> [88] checkmate_2.3.4         SparseArray_1.10.10     xfun_0.62              
 #> [91] MsCoreUtils_1.22.1      fs_2.1.0                pkgconfig_2.0.3
 ```

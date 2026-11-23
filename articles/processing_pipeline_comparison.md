@@ -503,11 +503,11 @@ sets out which article applies to which experiment.
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -524,7 +524,7 @@ sessionInfo()
 #> 
 #> other attached packages:
 #>  [1] limma_3.66.0                dplyr_1.2.1                
-#>  [3] tidyr_1.3.2                 ggplot2_4.0.3              
+#>  [3] tidyr_1.3.2                 ggplot2_4.0.4              
 #>  [5] biomasslmb_0.1.0            QFeatures_1.20.0           
 #>  [7] MultiAssayExperiment_1.36.2 SummarizedExperiment_1.40.0
 #>  [9] Biobase_2.70.0              GenomicRanges_1.62.1       
@@ -535,32 +535,32 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] DBI_1.3.0               rlang_1.3.0             magrittr_2.0.5         
-#>  [4] clue_0.3-68             otel_0.2.0              compiler_4.5.3         
+#>  [4] clue_0.3-68             otel_0.3.0              compiler_4.5.3         
 #>  [7] RSQLite_3.53.3          mgcv_1.9-4              png_0.1-9              
-#> [10] systemfonts_1.3.2       vctrs_0.7.3             reshape2_1.4.5         
+#> [10] systemfonts_1.3.4       vctrs_0.7.3             reshape2_1.4.5         
 #> [13] stringr_1.6.0           ProtGenerics_1.42.0     pkgconfig_2.0.3        
 #> [16] crayon_1.5.3            fastmap_1.2.0           backports_1.5.1        
 #> [19] XVector_0.50.0          labeling_0.4.3          rmarkdown_2.32         
-#> [22] visdat_0.6.0            ragg_1.5.2              purrr_1.2.2            
-#> [25] bit_4.6.0               xfun_0.61               cachem_1.1.0           
+#> [22] visdat_0.6.1            ragg_1.5.2              purrr_1.2.2            
+#> [25] bit_4.6.0               xfun_0.62               cachem_1.1.0           
 #> [28] jsonlite_2.0.0          blob_1.3.0              DelayedArray_0.36.1    
 #> [31] cluster_2.1.8.2         R6_2.6.1                bslib_0.12.0           
 #> [34] stringi_1.8.9           RColorBrewer_1.1-3      genefilter_1.92.0      
 #> [37] jquerylib_0.1.4         Rcpp_1.1.2              knitr_1.52             
 #> [40] BiocBaseUtils_1.12.0    Matrix_1.7-4            splines_4.5.3          
-#> [43] igraph_2.3.3            tidyselect_1.2.1        abind_1.4-8            
+#> [43] igraph_2.3.4            tidyselect_1.2.1        abind_1.4-8            
 #> [46] yaml_2.3.12             lattice_0.22-9          tibble_3.3.1           
 #> [49] plyr_1.8.9              withr_3.0.3             KEGGREST_1.50.0        
-#> [52] S7_0.2.2                evaluate_1.0.5          uniprotREST_1.0.0      
+#> [52] S7_1.0.0                evaluate_1.0.5          uniprotREST_1.0.0      
 #> [55] desc_1.4.3              survival_3.8-6          Biostrings_2.78.0      
 #> [58] pillar_1.11.1           corrplot_0.95           checkmate_2.3.4        
 #> [61] scales_1.4.0            xtable_1.8-8            glue_1.8.1             
 #> [64] lazyeval_0.2.3          tools_4.5.3             robustbase_0.99-7      
-#> [67] annotate_1.88.0         fs_2.1.0                XML_3.99-0.24          
+#> [67] annotate_1.88.0         fs_2.1.0                XML_3.99-0.25          
 #> [70] grid_4.5.3              MsCoreUtils_1.22.1      AnnotationDbi_1.72.0   
 #> [73] nlme_3.1-168            naniar_1.1.0            cli_3.6.6              
-#> [76] textshaping_1.0.5       S4Arrays_1.10.1         AnnotationFilter_1.34.0
-#> [79] gtable_0.3.6            DEoptimR_1.2-1          sass_0.4.10            
+#> [76] textshaping_1.1.0       S4Arrays_1.10.1         AnnotationFilter_1.34.0
+#> [79] gtable_0.3.6            DEoptimR_1.2-2          sass_0.5.0             
 #> [82] digest_0.6.39           SparseArray_1.10.10     htmlwidgets_1.6.4      
 #> [85] farver_2.1.2            memoise_2.0.1           htmltools_0.5.9        
 #> [88] pkgdown_2.2.1           lifecycle_1.0.5         httr_1.4.9             
